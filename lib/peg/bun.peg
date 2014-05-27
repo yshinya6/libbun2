@@ -1,0 +1,23 @@
+_              <- [ \t]+;
+
+TopLevel       <- 'bun' _ {$Signature _? '{' _? '\n' ($Section)* '}' #bun};
+Signature      <- {$FunctorName _? $Params _? $BunAnno? #signature};
+FunctorName    <- {'#'? [A-Za-z0-9_.]+ #symbol};
+Params         <- {'(' _? ($Param (_? ',' _? $Param)*)? _? ')' #params};
+Param          <- {$BunName _? $BunAnno? #param};
+Section        <- {!'}' ($SectionLabel)? ($SectionLine)* #bun.sec};
+SectionLabel   <- {$BunName ':' (!'\n' _? $FunctorName)* '\n' #bun.label};
+SectionLine    <- {([|\t] ($Chank)? ($SectionCommand $Chank)* '\n') #bun.line};
+Chank          <- {(![\n$] .)* #bun.chunk};
+SectionCommand <- {'${' $BunName (_ $BunName)? '}' #bun.cmd} / {'$$' #bun.chunk};
+
+BunName       <- {[A-Za-z_] [A-Za-z0-9_]*  #symbol};
+BunAnno       <- ':' _? BunType;
+BunType       <- NodeType / ValueType / Type;
+NodeType      <- {'#' [A-Za-z0-9_.]+  #bun.nodetype};
+ValueType     <- {"'" (!"'" .)* "'"   #bun.valuetype};
+Type          <- {[A-Za-z] [A-Za-z0-9_]*   #type};
+Type          <- {'Array<' _? $Type _? '>' #atype} / Type;
+Type          <- {'Func<' _? $Type (',' _? $Type)? _? '>' #ptype} / Type;
+
+

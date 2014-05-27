@@ -1,0 +1,24 @@
+
+_          <- [ \t]+;
+
+Name       <- {[A-Za-z_] [A-Za-z0-9_]* #symbol};
+Functor    <- {(![ \t\;(){}] .)* #symbol};
+
+Type   <- {[A-Za-z] [A-Za-z0-9_]* #T};
+Type   <- {'Array<' _? $Type _? '>' #Tarray};
+Type   <- {'Func<' _? $Type (',' _? $Type)? _? '>' #Tfunc};
+TypeAnno <- ':' $Type;
+
+Stmt          <- 'define' _? {$Signature _? '{' _? '\n' ($Section)* '}' #define};
+Signature     <- {$Functor $Params $TypeAnno? #signature};
+Params        <- {'(' ($Param (',' $Param)*)? ')' #params};
+Param         <- {$Name $TypeAnno? #param};
+Section       <- {!'}' ($SectionLabel)? $Source #section};
+SectionLabel  <- {$Name ':' (!'\n' _? $Functor)* '\n' #sectionlabel};
+Source        <- {([|\t] $Line2 '\n')* #source};
+Line          <- {(!'\n' .)* #line};
+
+Line2         <- {($Chank)? ($Op $Chank)* '\n' #line};
+Chank         <- {(![\n$] .)* #chunk};
+Op            <- {'${' $Name (_ $Name)? '}' #op} / {'$$' #chunk};
+

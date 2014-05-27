@@ -1,0 +1,16 @@
+
+bun #add(a,b) {
+	(${a}+${b})
+}
+
+bun #mul(a,b) {
+	(${a}*${b})
+}
+
+bun #div(a:int, b:int):int {
+	(${a}/${b})
+}
+
+bun #group(expr: alpha):alpha {
+	(${expr})
+}

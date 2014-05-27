@@ -1,0 +1,44 @@
+
+_          <- [ \t]+
+Label      <- {[A-Za-z_] [A-Za-z0-9_]* @symbol}
+Functor    <- {(![ \t\;(){}] .)* @symbol}
+String     <- {"'" (!"'" .)* "'" @string} 
+String     <- {'"' (!'"' .)* '"' @string}
+
+CharSet    <- {'[' (!']' .)* ']' @pegset}
+PegAny     <- {'.' @pegany}
+
+PegTerm       <- Label
+PegTerm       <- CharSet
+PegTerm       <- String
+PegTerm       <- PegAny
+PegTerm       <- '(' $PegExpr ')'
+PegTerm       <- {'{' $PegExpr '}' @pegnew}
+PegTerm       <- {'{$' _ $PegExpr '}' @pegnew}  
+
+TermNtime  <- PegTerm {$ '*' @pegzero}
+TermNtime  <- PegTerm {$ '+'  @pegmore}
+TermNtime  <- PegTerm {$ '?' @pegoptional}
+
+PegPredicated  <- TermNtime
+PegPredicated  <- {'&' $TermNtime @pegand}
+PegPredicated  <- {'!' $TermNtime @pegnot}
+PegPredicated  <- {'$' $TermNtime @pegset}
+PegPredicated  <- {'@' $Functor   @pegname}
+
+PegSequence   <- PegPredicated {$ _ $PegPredicated @pegseq}*
+
+PegChoice     <- PegSequence {$ _ '/' _ $PegSequence @pegchoice}*
+PegExpr       <- PegChoice
+Stmt          <- {'peg' _? $Label _? '<-' _? $PegExpr _? ';' _? @pegrule}
+
+Stmt          <- 'define' _? {$Node '{{{' _? '\n' $Body '}}}' @define}
+Node          <- {$Functor '(' $Params ')' $TypeAnno? @node}
+Params        <- {'(' ($Param (',' $Param)*)? ')' @params}
+Param         <- {$Name $TypeAnno? @param}
+Body          <- {(&'\t' $Source)? $Section* @body}
+Section       <- {!'}}}' $Label _? ':' _? $Libs? _? '\n' $Source @section};
+Libs          <- {(!'\n' $Symbol)* $Symbol? @libs};
+Source        <- {('\t' $Line '\n')* @source};
+Line          <- {(!'\n' .)* @line};
+

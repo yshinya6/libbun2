@@ -1,0 +1,31 @@
+
+TopLevel   <- Expr / _ ;
+
+_          <- ([ \t]+ / Comment)*;
+Spacing    <- [ \t]+  ;
+Comment    <- '/*' (!'*/' .)* '*/' / '//' (![\r\n] .)* [\r\n] ;
+Name       <- {[A-Za-z_] [A-Za-z0-9_]*   #name};
+Number     <- {[0-9]+                    #integer};
+String     <- {'"' ('\\"' / !'"' .)* '"' #string};
+
+Value      <- {'(' _ $Expr _ ')' #group} / String / Number / Name;
+Product    <- Value {$ _ ('*' #mul / '/' #div / '%' #mod) _ $Value}* ;
+Sum        <- Product {$ _ ('+' #add / '-' #sub) _ $Product}*;
+Expr       <- Sum;
+Stmt       <- Expr;
+
+Type        <- {[A-Za-z] [A-Za-z0-9_]*   #type};
+Type        <- $Type {$ '[]'             #atype} / Type;
+Type        <- $Name {$ '<' _ $Type (_ ',' _ $Type)? _ '>' #ptype} / Type;
+TypeAnno    <- ':' _ Type;
+Param       <- {$Name _ ($TypeAnno)? #param};
+Params      <- {'(' _ ($Param ( _ ',' _ $Param)*)? _ ')' #params};
+
+Function    <- {'function' _ $Name _ $Params ($TypeAnno)? $Block  #function};
+Block       <- {'{' _ (';' _ / $Stmt _ )* '}' #block};
+TopLevel    <- Function / TopLevel;
+
+IfStmt      <- {'if' _ '(' $Expr ')' _ $Block _ ('else' _ $Block)? #if};
+Stmt        <- IfStmt / Stmt;
+
+ 
