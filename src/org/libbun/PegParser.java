@@ -40,7 +40,7 @@ public final class PegParser {
 	public void setPegRule(String name, Peg e) {
 		Peg checked = this.checkPegRule(name, e);
 		if(checked != null) {
-			this.pegMap.put(name, e);
+			this.pegMap.put(name, checked);
 			this.pegCache = null;
 		}
 	}
@@ -62,6 +62,7 @@ public final class PegParser {
 				if(defined == null) {
 					e.warning("undefined self reference: " + name);
 				}
+//				System.out.println("name " + name + ", " + ((PegLabel) e).symbol + " " + defined);
 				return defined;
 			}
 		}

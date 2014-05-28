@@ -250,7 +250,7 @@ class TemplateFunctor extends Functor {
 		if(node.typed == null) {  // unresolved greek type
 			node.matched = null;
 		}
-		//System.out.println("** " + node);
+		System.out.println("**typed " + node);
 	}
 	
 	private MetaType[] getGreekContext() {

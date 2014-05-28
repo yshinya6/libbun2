@@ -7,7 +7,7 @@ public class DebugDriver extends BunDriver {
 		if(!Main.PegDebuggerMode) {
 			gamma.setType("void",    new VoidType("void"));
 			gamma.setType("boolean", new BooleanType("bool"));
-			gamma.setType("int",     new IntType("int"));
+			gamma.setType("int",     new IntType("int_t"));
 			gamma.setType("float",   new FloatType("float"));
 			gamma.setType("String",  new IntType("str"));
 			gamma.setType("any",     new AnyType("var"));

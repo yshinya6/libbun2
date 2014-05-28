@@ -623,7 +623,7 @@ class PegChoice extends PegList {
 		int stackPosition = source.getStackPosition(this);
 		PegObject node = inNode;
 		for(int i = 0; i < this.size(); i++) {
-			Peg e  = this.list.ArrayValues[i];
+			Peg e  = this.get(i);
 			boolean nextChoice = true;
 			if(i + 1 == this.size()) {
 				nextChoice = hasNextChoice;
