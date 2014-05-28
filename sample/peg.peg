@@ -1,0 +1,27 @@
+
+_ <- ( [ \t\r\n]+ / Comment )* ;
+Comment <- '/*' (!'*/' .)* '*/'
+        / '//' (![\r\n] .)* [\r\n] ;
+
+Label      <- {[A-z0-9_]+ #name};
+String     <- {"'" (!"'" .)* "'" #string} / {'"' (!'"' .)* '"' #string};
+Character  <- {'[' (!']' .)* ']' #character};
+Any        <- {'.' #any};
+ObjectLabel <- {'#' [A-z0-9_.]+ #label};
+
+Term  <- '(' Expr ')' 
+	/ {'{' $Expr '}' #new} 
+	/ {'{$' _ $Expr '}' #newjoin} 
+	/ String 
+	/ Character 
+	/ Any 
+	/ Label;
+
+TermNtime  <- Term {$ ('*' #zero / '+' #one / '?' #option)}? ;
+Predicated  <- {('&' #and / '!' #not / '$' #set) $TermNtime} / TermNtime ;
+Sequence   <- Predicated {$ (_ $Predicated)+ #seq}? ;
+Choice     <- Sequence {$ _ '/' _ $Sequence #choice}*  ;
+Expr       <- Choice ;
+Rule       <- {$Label _ '<-' _ $Expr #rule} ';' ;
+TopLevel   <- Rule;
+

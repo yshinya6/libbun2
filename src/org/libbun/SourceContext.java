@@ -78,15 +78,6 @@ public class SourceContext {
 		return '\0';
 	}
 
-	public final int matchZeroMore(UniCharset charset) {
-		for(;this.hasChar(); this.consume(1)) {
-			char ch = this.charAt(this.sourcePosition);
-			if(!charset.match(ch)) {
-				break;
-			}
-		}
-		return this.sourcePosition;
-	}
 
 	public final boolean match(char ch) {
 		if(ch == this.getChar()) {
@@ -104,6 +95,35 @@ public class SourceContext {
 		return false;
 	}
 
+	public final int matchZeroMore(UniCharset charset) {
+		for(;this.hasChar(); this.consume(1)) {
+			char ch = this.charAt(this.sourcePosition);
+			if(!charset.match(ch)) {
+				break;
+			}
+		}
+		return this.sourcePosition;
+	}
+
+	public final void skipComment(UniCharset skipChars) {
+		while(this.hasChar()) {
+			this.matchZeroMore(skipChars);
+			int pos = this.getPosition();
+			if(this.match('/') && this.match('/')) {
+				while(this.hasChar()) {
+					char ch = this.nextChar();
+					if(ch == '\n') {
+						break;
+					}
+				}
+			}
+			else {
+				this.rollback(pos);
+				return;
+			}
+		}
+	}
+	
 	//	public boolean checkSymbolLetter(int plus) {
 	//		char ch = this.getChar(plus);
 	//		if(this.isSymbolLetter(ch)) {

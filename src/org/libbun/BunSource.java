@@ -21,20 +21,16 @@ public class BunSource {
 		return new SourceToken(createdPeg, this, startIndex, endIndex, token);
 	}
 
+	public final String substring(int startIndex, int endIndex) {
+		return this.sourceText.substring(startIndex, endIndex);
+	}
+
 	public final char charAt(int n) {
 		if(0 <= n && n < this.sourceText.length()) {
 			return Main._GetChar(this.sourceText, n);
 		}
 		return '\0';
 	}
-
-	public final String substring(int startIndex, int endIndex) {
-		return this.sourceText.substring(startIndex, endIndex);
-	}
-
-	//	public final BToken newToken(int startIndex, int endIndex) {
-	//		return new BToken(this, startIndex, endIndex);
-	//	}
 
 	public final int getLineNumber(int Position) {
 		int LineNumber = this.lineNumber;

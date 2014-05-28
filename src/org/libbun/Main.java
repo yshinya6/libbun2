@@ -21,7 +21,7 @@ public class Main {
 	public final static String  License = "BSD-Style Open Source";
 
 	// -l konoha.peg
-	private static String LanguagePeg = "konoha.peg"; // default
+	private static String LanguagePeg = "lib/peg/konoha.peg"; // default
 
 	// -d driver
 	private static String DriverName = "debug";  // default
@@ -39,7 +39,7 @@ public class Main {
 	public static boolean EnableVerbose = false;
 	
 	// --verbose:peg
-	public static boolean pegDebugger = false;
+	public static boolean PegDebuggerMode = false;
 
 	private static void parseCommandArgument(String[] args) {
 		int index = 0;
@@ -51,7 +51,7 @@ public class Main {
 			index = index + 1;
 			if (argument.equals("--peg") && (index < args.length)) {
 				LanguagePeg = args[index];
-				pegDebugger = true;
+				PegDebuggerMode = true;
 				index = index + 1;
 			}
 			else if (argument.equals("-l") && (index < args.length)) {
@@ -71,9 +71,9 @@ public class Main {
 			}
 			else if(argument.startsWith("--verbose")) {
 				EnableVerbose = true;
-				if(argument.equals("--verbose:peg")) {
-					pegDebugger = true;
-				}
+//				if(argument.equals("--verbose:peg")) {
+//					pegDebugger = true;
+//				}
 			}
 			else {
 				ShowUsage("unknown option: " + argument);
@@ -161,6 +161,9 @@ public class Main {
 
 
 	private static BunDriver loadDriver(String driverName) {
+		if(PegDebuggerMode) {
+			return new DebugDriver();
+		}
 		BunDriver driver = new DebugDriver();
 		return driver;
 	}
@@ -186,7 +189,7 @@ public class Main {
 				PegParserContext context =  gamma.namespace.newParserContext("main", source);
 				PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), "TopLevel", false/*hasNextChoice*/);
 				node.gamma = gamma;
-				if(pegDebugger) {
+				if(PegDebuggerMode) {
 					System.out.println("parsed:\n" + node.toString());
 					if(context.hasChar()) {
 						System.out.println("** uncosumed: '" + context + "' **");
@@ -201,7 +204,7 @@ public class Main {
 					}
 					else {
 						if(EnableVerbose) {
-							System.out.println("parsed: " + node.toString());
+							System.out.println("undefined: " + node.toString());
 						}
 					}
 				}

@@ -47,16 +47,14 @@ public final class PegParser {
 
 	private Peg checkPegRule(String name, Peg e) {
 		if(e instanceof PegChoice) {
-			PegChoice choice = (PegChoice)e;
-			choice.firstExpr = this.checkPegRule(name, choice.firstExpr);
-			choice.secondExpr = this.checkPegRule(name, choice.secondExpr);
-			if(choice.firstExpr == null) {
-				return choice.secondExpr;
+			PegChoice newnode = new PegChoice();
+			for(int i = 0; i < e.size(); i++) {
+				newnode.add( this.checkPegRule(name, e.get(i)));
 			}
-			if(choice.secondExpr == null) {
-				return choice.firstExpr;
+			if(newnode.size() == 1) {
+				return newnode.get(0);
 			}
-			return choice;
+			return newnode;
 		}
 		if(e instanceof PegLabel) {  // self reference
 			if(name.equals(((PegLabel) e).symbol)) {
@@ -89,7 +87,7 @@ public final class PegParser {
 		for(int i = 0; i < list.size(); i++) {
 			String key = list.ArrayValues[i];
 			Peg e = this.pegCache.get(key, null);
-			if(Main.pegDebugger) {
+			if(Main.PegDebuggerMode) {
 				System.out.println(e.toPrintableString(key));
 			}
 			if(!e.verify(this)) {
@@ -133,9 +131,9 @@ public final class PegParser {
 
 	private void removeLeftRecursion(String name, Peg e) {
 		if(e instanceof PegChoice) {
-			PegChoice choice = (PegChoice)e;
-			this.removeLeftRecursion(name, choice.firstExpr);
-			this.removeLeftRecursion(name, choice.secondExpr);
+			for(int i = 0; i < e.size(); i++) {
+				this.removeLeftRecursion(name, e.get(i));
+			}
 			return;
 		}
 		if(e instanceof PegSequence) {
@@ -169,10 +167,12 @@ public final class PegParser {
 
 	private boolean hasLabel(String name, Peg e) {
 		if(e instanceof PegChoice) {
-			if(this.hasLabel(name, ((PegChoice) e).firstExpr)) {
-				return true;
+			for(int i = 0; i < e.size(); i++) {
+				if(this.hasLabel(name, e.get(i))) {
+					return true;
+				}
 			}
-			return this.hasLabel(name, ((PegChoice) e).secondExpr);
+			return false;
 		}
 		if(e instanceof PegLabel) {
 			String label = ((PegLabel) e).symbol;
@@ -188,7 +188,7 @@ public final class PegParser {
 	private void appendPegCache(String name, Peg e) {
 		Peg defined = this.pegCache.get(name, null);
 		if(defined != null) {
-			e = new PegChoice(null, defined, e);
+			e = defined.appendAsChoice(e);
 		}
 		this.pegCache.put(name, e);
 	}

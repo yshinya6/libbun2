@@ -1,0 +1,10 @@
+
+_          <- ([ \t]+)* ;
+
+Stmt       <- {[A-Za-z]+ #name};
+Block <- {'{' (BlockIndent? ( ';' / $Stmt))* _ '}' #block};
+BlockIndent <- [ \t\n]+ ;
+
+TopLevel    <- Block;
+
+

@@ -15,7 +15,7 @@ public class PegParserParser extends SourceContext {
 	}
 
 	public boolean hasRule() {
-		this.matchZeroMore(UniCharset.SemiColon);
+		this.skipComment(UniCharset.SemiColon);
 		return this.hasChar();
 	}
 
@@ -27,7 +27,7 @@ public class PegParserParser extends SourceContext {
 		}
 		this.matchZeroMore(UniCharset.NameSymbol);
 		String label = this.substring(startIndex, this.getPosition());
-		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
+		this.skipComment(UniCharset.WhiteSpaceNewLine);
 		if(!this.match('<', '-')) {
 			this.showErrorMessage("expected <-");
 			return null;
@@ -88,13 +88,13 @@ public class PegParserParser extends SourceContext {
 	private Peg parsePostfix(String leftName, Peg left) {
 		if(left != null) {
 			if(this.match('*')) {
-				return new PegZeroMoreExpr(leftName, left);
+				return new PegZeroMore(leftName, left);
 			}
 			if(this.match('+')) {
-				return new PegOneMoreExpr(leftName, left);
+				return new PegOneMore(leftName, left);
 			}
 			if(this.match('?')) {
-				return new PegOptionalExpr(leftName, left);
+				return new PegOptional(leftName, left);
 			}
 		}
 		return left;
@@ -106,7 +106,7 @@ public class PegParserParser extends SourceContext {
 
 	private Peg parseSingleExpr(String leftLabel) {
 		Peg right = null;
-		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
+		this.skipComment(UniCharset.WhiteSpaceNewLine);
 		if(this.match(';')) {
 			this.consume(-1);
 			return null;
@@ -227,18 +227,18 @@ public class PegParserParser extends SourceContext {
 		if(left == null) {
 			return left;
 		}
-		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
+		this.skipComment(UniCharset.WhiteSpaceNewLine);
 		if(this.hasChar()) {
-			this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
+			this.skipComment(UniCharset.WhiteSpaceNewLine);
 			char ch = this.getChar();
 			if(ch == '/') {
 				this.consume(1);
-				this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
+				this.skipComment(UniCharset.WhiteSpaceNewLine);
 				return left;
 			}
 			Peg right = this.parseSequenceExpr(leftLabel);
 			if(right != null) {
-				left = left.append(right);
+				left = left.appendAsSequence(right);
 			}
 		}
 		return left;
@@ -246,14 +246,14 @@ public class PegParserParser extends SourceContext {
 
 	public final Peg parsePegExpr(String leftLabel) {
 		Peg left = this.parseSequenceExpr(leftLabel);
-		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
+		this.skipComment(UniCharset.WhiteSpaceNewLine);
 		if(this.match(';')) {
 			return left;
 		}
 		if(this.hasChar()) {
 			Peg right = this.parsePegExpr(leftLabel);
 			if(right != null) {
-				return new PegChoice(leftLabel, left, right);
+				left = left.appendAsChoice(right);
 			}
 		}
 		return left;

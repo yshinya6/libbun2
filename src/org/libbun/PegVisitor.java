@@ -22,17 +22,17 @@ public class PegVisitor {
 
 	}
 
-	public void visitPegOptional(PegOptionalExpr pegOptionalExpr) {
+	public void visitPegOptional(PegOptional pegOptionalExpr) {
 		// TODO Auto-generated method stub
 
 	}
 
-	public void visitOneMore(PegOneMoreExpr pegOneMoreExpr) {
+	public void visitOneMore(PegOneMore pegOneMoreExpr) {
 		// TODO Auto-generated method stub
 
 	}
 
-	public void visitZeroMore(PegZeroMoreExpr pegZeroMoreExpr) {
+	public void visitZeroMore(PegZeroMore pegZeroMoreExpr) {
 		// TODO Auto-generated method stub
 
 	}

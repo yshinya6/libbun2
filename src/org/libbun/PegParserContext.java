@@ -155,16 +155,8 @@ public class PegParserContext extends SourceContext {
 	public final PegObject parseRightPegNode(PegObject left, String symbol) {
 		String key = this.parser.nameRightJoinName(symbol);
 		Peg e = this.parser.getPattern(key, this.getFirstChar());
-		while(e != null) {
-			Peg sec = e;
-			if(e instanceof PegChoice) {
-				sec = ((PegChoice) e).firstExpr;
-				e = ((PegChoice) e).secondExpr;
-			}
-			else {
-				e = null;
-			}
-			PegObject right = sec.debugMatch(left, this, true);
+		if(e != null) {
+			PegObject right = e.debugMatch(left, this, true);
 			if(!right.isErrorNode()) {
 				left = right;
 			}

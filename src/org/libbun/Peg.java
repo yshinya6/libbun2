@@ -17,6 +17,8 @@ public abstract class Peg {
 	protected abstract PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice);
 	protected abstract boolean verify(PegParser parser);
 	public abstract void accept(PegVisitor visitor);
+	public abstract int size();
+	public abstract Peg get(int index);
 
 	@Override public String toString() {
 		UniStringBuilder sb = new UniStringBuilder();
@@ -24,7 +26,7 @@ public abstract class Peg {
 		return sb.toString();
 	}
 
-	public PegSequence append(Peg e) {
+	public final PegSequence appendAsSequence(Peg e) {
 		if(e instanceof PegSequence) {
 			((PegSequence)e).list.add(0, this);
 			return ((PegSequence)e);
@@ -35,11 +37,23 @@ public abstract class Peg {
 		}
 		else {
 			PegSequence seq = new PegSequence(this);
-			seq.append(e);
+			seq.appendAsSequence(e);
 			return seq;
 		}
 	}
 
+	public final PegChoice appendAsChoice(Peg e) {
+		if(this instanceof PegChoice) {
+			((PegChoice)this).add(e);
+			return ((PegChoice)this);
+		}
+		else {
+			PegChoice choice = new PegChoice(this);
+			choice.add(e);
+			return choice;
+		}
+	}
+	
 	protected PegObject debugMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
 		if(this.debug) {
 			PegObject node2 = this.lazyMatch(inNode, source, false);
@@ -64,9 +78,12 @@ public abstract class Peg {
 
 	private void joinPrintableString(UniStringBuilder sb, Peg e) {
 		if(e instanceof PegChoice) {
-			((PegChoice)e).firstExpr.stringfy(sb, true);
-			sb.append("\n\t/ ");
-			this.joinPrintableString(sb, ((PegChoice)e).secondExpr);
+			for(int i = 0; i < e.size(); i++) {
+				if(i > 0) {
+					sb.append("\n\t/ ");
+				}
+				e.get(i).stringfy(sb, true);
+			}
 		}
 		else {
 			e.stringfy(sb, true);
@@ -88,7 +105,7 @@ public abstract class Peg {
 	}
 
 	protected void warning(String msg) {
-		if(Main.pegDebugger) {
+		if(Main.PegDebuggerMode) {
 			Main._PrintLine("PEG warning: " + msg);
 		}
 	}
@@ -105,7 +122,16 @@ abstract class PegAtom extends Peg {
 	protected boolean verify(PegParser parser) {
 		return true;
 	}
+	
+	@Override
+	public final int size() {
+		return 0;
+	}
 
+	@Override
+	public final Peg get(int index) {
+		return this;  // just avoid NullPointerException
+	}
 }
 
 class PegString extends PegAtom {
@@ -134,6 +160,7 @@ class PegString extends PegAtom {
 		}
 		return source.newExpectedErrorNode(this, this, hasNextChoice);
 	}
+
 
 }
 
@@ -231,7 +258,17 @@ abstract class PegSuffixed extends Peg {
 		super(leftLabel);
 		this.innerExpr = e;
 	}
-	
+
+	@Override
+	public final int size() {
+		return 1;
+	}
+
+	@Override
+	public final Peg get(int index) {
+		return this.innerExpr;
+	}
+
 	@Override
 	protected final void stringfy(UniStringBuilder sb, boolean debugMode) {
 		if(this.innerExpr instanceof PegAtom) {
@@ -254,8 +291,8 @@ abstract class PegSuffixed extends Peg {
 
 }
 
-class PegOptionalExpr extends PegSuffixed {
-	public PegOptionalExpr(String leftLabel, Peg e) {
+class PegOptional extends PegSuffixed {
+	public PegOptional(String leftLabel, Peg e) {
 		super(leftLabel, e);
 	}
 
@@ -281,8 +318,8 @@ class PegOptionalExpr extends PegSuffixed {
 	}
 }
 
-class PegOneMoreExpr extends PegSuffixed {
-	public PegOneMoreExpr(String leftLabel, Peg e) {
+class PegOneMore extends PegSuffixed {
+	public PegOneMore(String leftLabel, Peg e) {
 		super(leftLabel, e);
 	}
 
@@ -293,7 +330,6 @@ class PegOneMoreExpr extends PegSuffixed {
 
 	@Override
 	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
-		int startPosition = source.getPosition();
 		PegObject prevNode = parentNode;
 		int count = 0;
 		while(source.hasChar()) {
@@ -301,6 +337,7 @@ class PegOneMoreExpr extends PegSuffixed {
 			if(count < 1) {
 				aChoice = hasNextChoice;
 			}
+			int startPosition = source.getPosition();
 			PegObject node = this.innerExpr.debugMatch(prevNode, source, aChoice);
 			if(node.isErrorNode()) {
 				break;
@@ -328,8 +365,8 @@ class PegOneMoreExpr extends PegSuffixed {
 	}
 }
 
-class PegZeroMoreExpr extends PegSuffixed {
-	public PegZeroMoreExpr(String leftLabel, Peg e) {
+class PegZeroMore extends PegSuffixed {
+	public PegZeroMore(String leftLabel, Peg e) {
 		super(leftLabel, e);
 	}
 
@@ -340,10 +377,10 @@ class PegZeroMoreExpr extends PegSuffixed {
 
 	@Override
 	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
-		int startPosition = source.getPosition();
 		PegObject prevNode = parentNode;
 		int count = 0;
 		while(source.hasChar()) {
+			int startPosition = source.getPosition();
 			PegObject node = this.innerExpr.debugMatch(prevNode, source, true);
 			if(node.isErrorNode()) {
 				break;
@@ -373,6 +410,17 @@ abstract class PegPredicate extends Peg {
 		super(leftLabel);
 		this.innerExpr = e;
 	}
+
+	@Override
+	public final int size() {
+		return 1;
+	}
+
+	@Override
+	public final Peg get(int index) {
+		return this.innerExpr;
+	}
+
 	@Override
 	protected final void stringfy(UniStringBuilder sb, boolean debugMode) {
 		sb.append(this.getOperator());
@@ -446,16 +494,38 @@ class PegNotPredicate extends PegPredicate {
 	public void accept(PegVisitor visitor) {
 		visitor.visitPegNot(this);
 	}
-
 }
 
-class PegSequence extends Peg {
-	UniArray<Peg> list;
+abstract class PegList extends Peg {
+	protected UniArray<Peg> list;
+	PegList() {
+		super(null);
+		this.list = new UniArray<Peg>(new Peg[2]);
+	}
 
-	PegSequence(Peg first) {
+	PegList(Peg first) {
 		super(first.name);
 		this.list = new UniArray<Peg>(new Peg[2]);
-		this.list.add(first);
+		this.add(first);
+	}
+
+	public final int size() {
+		return this.list.size();
+	}
+	
+	public final Peg get(int index) {
+		return this.list.ArrayValues[index];
+	}
+
+	public void add(Peg e) {
+		this.list.add(e);
+	}
+}
+
+class PegSequence extends PegList {
+
+	PegSequence(Peg first) {
+		super(first);
 	}
 
 	@Override protected void stringfy(UniStringBuilder sb, boolean debugMode) {
@@ -503,14 +573,6 @@ class PegSequence extends Peg {
 	public void accept(PegVisitor visitor) {
 		visitor.visitSequence(this);
 	}
-
-	public int size() {
-		return this.list.size();
-	}
-	
-	public Peg get(int index) {
-		return this.list.ArrayValues[index];
-	}
 	
 	public Peg cdr() {
 		PegSequence seq = new PegSequence(this.get(1)); 
@@ -520,49 +582,69 @@ class PegSequence extends Peg {
 		}
 		return seq;
 	}
-
 }
 
-class PegChoice extends Peg {
-	Peg firstExpr;
-	Peg secondExpr;
-	PegChoice(String leftLabel, Peg e, Peg e2) {
-		super(leftLabel);
-		this.firstExpr = e;
-		this.secondExpr = e2;
+class PegChoice extends PegList {
+	PegChoice() {
+		super();
+	}
+	
+	PegChoice(Peg first) {
+		super(first);
+	}
+
+	public void add(Peg e) {
+		if(e instanceof PegChoice) {
+			for(int i = 0; i < e.size(); i++) {
+				this.add(e.get(i));
+			}
+		}
+		else if(e != null) {
+			if(this.name == null) {
+				this.name = e.name;
+			}
+			this.list.add(e);
+		}
+	}
+
+	
+	@Override protected void stringfy(UniStringBuilder sb, boolean debugMode) {
+		for(int i = 0; i < this.size(); i++) {
+			if(i > 0) {
+				sb.append(" / ");
+			}
+			Peg e = this.list.ArrayValues[i];
+			e.stringfy(sb, debugMode);
+		}
 	}
 
 	@Override
-	protected void stringfy(UniStringBuilder sb, boolean debugMode) {
-		this.firstExpr.stringfy(sb, debugMode);
-		sb.append(" / ");
-		this.secondExpr.stringfy(sb, debugMode);
-	}
-
-	@Override
-	protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
-		Peg e = this;
+	protected PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
 		int stackPosition = source.getStackPosition(this);
-		while(e instanceof PegChoice) {
-			PegObject node = parentNode;
-			node = ((PegChoice) e).firstExpr.debugMatch(node, source, true);
+		PegObject node = inNode;
+		for(int i = 0; i < this.size(); i++) {
+			Peg e  = this.list.ArrayValues[i];
+			boolean nextChoice = true;
+			if(i + 1 == this.size()) {
+				nextChoice = hasNextChoice;
+			}
+			node = e.debugMatch(inNode, source, nextChoice);
 			if(!node.isErrorNode()) {
 				return node;
 			}
 			source.popBack(stackPosition, Peg._BackTrack);
-			e = ((PegChoice) e).secondExpr;
 		}
-		return e.debugMatch(parentNode, source, hasNextChoice);
+		return node;
 	}
-
+	
 	@Override
 	protected boolean verify(PegParser parser) {
 		boolean noerror = true;
-		if(!this.firstExpr.verify(parser)) {
-			noerror = false;
-		}
-		if(!this.secondExpr.verify(parser)) {
-			noerror = false;
+		for(int i = 0; i < this.list.size(); i++) {
+			Peg e  = this.list.ArrayValues[i];
+			if(!e.verify(parser)) {
+				noerror = false;
+			}
 		}
 		return noerror;
 	}
@@ -571,7 +653,6 @@ class PegChoice extends Peg {
 	public void accept(PegVisitor visitor) {
 		visitor.visitChoice(this);
 	}
-
 }
 
 class PegSetter extends PegPredicate {
@@ -631,6 +712,16 @@ class PegObjectLabel extends Peg {
 	}
 
 	@Override
+	public final int size() {
+		return 0;
+	}
+
+	@Override
+	public final Peg get(int index) {
+		return this;
+	}
+
+	@Override
 	protected final void stringfy(UniStringBuilder sb, boolean debugMode) {
 		if(debugMode) {
 			sb.append(this.objectLabel);
@@ -666,6 +757,17 @@ class PegNewObject extends Peg {
 		this.innerExpr = e;
 		this.leftJoin = leftJoin;
 	}
+	
+	@Override
+	public final int size() {
+		return 1;
+	}
+
+	@Override
+	public final Peg get(int index) {
+		return this.innerExpr;
+	}
+
 
 	@Override
 	protected final void stringfy(UniStringBuilder sb, boolean debugMode) {

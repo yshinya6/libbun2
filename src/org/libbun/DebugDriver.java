@@ -4,25 +4,26 @@ public class DebugDriver extends BunDriver {
 
 	@Override
 	public void initTable(Namespace gamma) {
-		// define type information
-		gamma.setType("void",    new VoidType("void"));
-		gamma.setType("boolean", new BooleanType("bool"));
-		gamma.setType("int",     new IntType("int"));
-		gamma.setType("float",   new FloatType("float"));
-		gamma.setType("String",  new IntType("str"));
-		gamma.setType("any",     new AnyType("var"));
-		gamma.setType("alpha",   new GreekType(0));
-		
-		gamma.addFunctor(new TypeFunctor("#type"));
-		gamma.addFunctor(new NameFunctor("#name"));
-		gamma.addFunctor(new LiteralFunctor("#integer", gamma, "int"));
-		gamma.addFunctor(new LiteralFunctor("#string", gamma, "String"));
-
-		gamma.addFunctor(new FunctionFunctor("#function"));
-
-		gamma.addFunctor(new BunFunctor("#bun"));  // #bun
-		gamma.addFunctor(new ErrorFunctor());
-		gamma.load("lib/python/konoha.bun", this);
+		if(!Main.PegDebuggerMode) {
+			gamma.setType("void",    new VoidType("void"));
+			gamma.setType("boolean", new BooleanType("bool"));
+			gamma.setType("int",     new IntType("int"));
+			gamma.setType("float",   new FloatType("float"));
+			gamma.setType("String",  new IntType("str"));
+			gamma.setType("any",     new AnyType("var"));
+			gamma.setType("alpha",   new GreekType(0));
+			
+			gamma.addFunctor(new TypeFunctor("#type"));
+			gamma.addFunctor(new NameFunctor("#name"));
+			gamma.addFunctor(new LiteralFunctor("#integer", gamma, "int"));
+			gamma.addFunctor(new LiteralFunctor("#string", gamma, "String"));
+	
+			gamma.addFunctor(new FunctionFunctor("#function"));
+	
+			gamma.addFunctor(new BunFunctor("#bun"));  // #bun
+			gamma.addFunctor(new ErrorFunctor());
+			gamma.load("lib/python/konoha.bun", this);
+		}
 	}
 
 	@Override
