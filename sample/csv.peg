@@ -1,0 +1,5 @@
+
+TopLevel <- {$Line*              #data};
+Line     <- {($CSV (',' $CSV)*)+ ('\n' / EOT) #line};
+CSV      <- [ \t]* {(![,\n] .)*    #value};
+EOT      <- !.;
