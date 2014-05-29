@@ -3,7 +3,7 @@
 
 TopLevel = Expr;
 
-Expr     = Expr <<@ ('+' / '-') Expr@ >>*;
-Expr     = Expr <<@ ('*' / '/') Expr@ >>* / Expr;
-Expr     = << [0-9]+ >> / '(' Expr ')' / Expr;
+Expr     = Expr <<@ ('+' #add / '-' #sub) Expr@ >>*;
+Expr     = Expr <<@ ('*' #mul / '/' #div) Expr@ >>* / Expr;
+Expr     = Expr / << [0-9]+ #number >> / '(' Expr ')';
 

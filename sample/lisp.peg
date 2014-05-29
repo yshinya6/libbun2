@@ -3,21 +3,30 @@
 // << >>, # are an extended constructor
 // see www.libbun.org/peg
 
+import Value from value.peg;
+
 TopLevel
   = Expr
   ;
+
+_ = [ \t\n]+;
+
 Expr
-  = '(' _? << (Expr@)? (_ Expr@)* >> ')'
-  / Integer
-  / Symbol
+  = '(' _? << Predicate (Expr@)? (_ Expr@)* >> ')'
+  / Value
   ;
-_
-  = [ \t\n]
-  ;
-Integer
-  = << [0-9]+ #integer >>
-  ;
-Symbol
-  = << ([a-zA-Z]+ #symbol / '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<' #lt / '>' #gt) >>
+
+Predicate
+  = '+'  _+ #add
+  / '-'  _+ #sub
+  / '*'  _+ #mul
+  / '/'  _+ #div
+  / '%'  _+ #mod
+  / '<'  _+ #lt
+  / '<=' _+ #lte
+  / '>'  _+ #gt
+  / '>=' _+ #gte
+  / '==' _+ #eq
+  / '!=' _+ #neq
   ;
 

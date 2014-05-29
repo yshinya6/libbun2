@@ -1,17 +1,19 @@
 package org.libbun;
 
 public class PegParserParser extends SourceContext {
-
-	public PegParserParser(BunSource source, int startIndex, int endIndex) {
+	PegParser parser;
+	public PegParserParser(PegParser parser, BunSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
+		this.parser = parser;
 	}
 
-	public PegParserParser(BunSource source) {
+	public PegParserParser(PegParser parser, BunSource source) {
 		super(source, 0, source.sourceText.length());
+		this.parser = parser;
 	}
 
 	private PegParserParser subParser(int startIndex, int endIndex) {
-		return new PegParserParser(this.source, startIndex, endIndex);
+		return new PegParserParser(this.parser, this.source, startIndex, endIndex);
 	}
 
 	public boolean hasRule() {
@@ -19,7 +21,7 @@ public class PegParserParser extends SourceContext {
 		return this.hasChar();
 	}
 
-	public PegRule parseRule() {
+	public void parseRule() {
 		boolean importFile = false;
 		if(this.match("import")) {
 			this.skipComment(UniCharset.WhiteSpaceNewLine);
@@ -28,48 +30,28 @@ public class PegParserParser extends SourceContext {
 		int startIndex = this.getPosition();
 		if(!this.match(UniCharset.Letter)) {
 			this.showErrorMessage("Is forgotten ; ?");
-			return null;
 		}
 		this.matchZeroMore(UniCharset.NameSymbol);
 		String label = this.substring(startIndex, this.getPosition());
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
-		Peg parsed = null;
 		if(importFile) {
 			if(!this.match("from")) {
 				this.showErrorMessage("expected from");
-				return null;
 			}
 			this.skipComment(UniCharset.WhiteSpaceNewLine);
 			startIndex = this.getPosition();
 			this.matchZeroMore(UniCharset.NodeLabel);
 			String fileName = this.substring(startIndex, this.getPosition());
-			parsed = this.importPeg(label, fileName);
+			fileName = this.source.checkFileName(fileName);
+			this.parser.importPeg(label, fileName);
 		}
 		else {
 			if(!this.match('=') && !this.match('<', '-')) {
 				this.showErrorMessage("Is forgotten ; ?");
-				return null;
 			}
-			parsed = this.parsePegExpr(label);
+			Peg parsed = this.parsePegExpr(label);
+			this.parser.setPegRule(label, parsed);
 		}
-		if(parsed != null) {
-			return new PegRule(label, parsed);
-		}
-		return null;
-	}
-
-	private Peg importPeg(String label, String fileName) {
-		if(Main.PegDebuggerMode) {
-			System.out.println("importing " + fileName);
-		}
-		fileName = this.source.checkFileName(fileName);
-		PegParser p = new PegParser(null);
-		p.loadPegFile(fileName);
-		Peg e = p.getDefinedPeg(label);
-		if(e == null) {
-			this.showErrorMessage("undefined " + label);
-		}
-		return e;
 	}
 
 	private int skipQuotedString(char endChar) {
@@ -329,13 +311,4 @@ public class PegParserParser extends SourceContext {
 		return false;
 	}
 
-}
-
-class PegRule {
-	String label;
-	Peg    peg;
-	public PegRule(String label, Peg p) {
-		this.label = label;
-		this.peg   = p;
-	}
 }

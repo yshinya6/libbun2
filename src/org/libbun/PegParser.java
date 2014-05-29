@@ -25,16 +25,33 @@ public final class PegParser {
 
 	public final boolean loadPegFile(String fileName) {
 		BunSource source = Main.loadSource(fileName);
-		PegParserParser p = new PegParserParser(source);
+		PegParserParser p = new PegParserParser(this, source);
 		while(p.hasRule()) {
-			PegRule rule = p.parseRule();
-			if(rule == null) {
-				break; // this means peg syntax error;
-			}
-			this.setPegRule(rule.label, rule.peg);
+			p.parseRule();
 		}
 		this.resetCache();
 		return true;
+	}
+	
+	void importPeg(String label, String fileName) {
+		if(Main.PegDebuggerMode) {
+			System.out.println("importing " + fileName);
+		}
+		PegParser p = new PegParser(null);
+		p.loadPegFile(fileName);
+		UniArray<String> list = p.makeList(label);
+		String prefix = "";
+		int loc = label.indexOf(":");
+		if(loc > 0) {
+			prefix = label.substring(0, loc+1);
+			label = label.substring(loc+1);
+			this.pegMap.put(label, new PegLabel(label, prefix+label));
+		}
+		for(int i = 0; i < list.size(); i++) {
+			String l = list.ArrayValues[i];
+			Peg e = p.getDefinedPeg(l);
+			this.pegMap.put(prefix + l, e.clone(prefix));
+		}
 	}
 	
 	public void setPegRule(String name, Peg e) {
@@ -88,12 +105,12 @@ public final class PegParser {
 		for(int i = 0; i < list.size(); i++) {
 			String key = list.ArrayValues[i];
 			Peg e = this.pegCache.get(key, null);
-//			if(Main.PegDebuggerMode) {
-//				System.out.println(e.toPrintableString(key, "\n  =", "\n  / ", "\n  ;", true));
-//			}
-//			if(!e.verify(this)) {
-//				noerror = false;
-//			}
+			if(Main.PegDebuggerMode) {
+				System.out.println(e.toPrintableString(key, "\n  = ", "\n  / ", "\n  ;", true));
+			}
+			if(!e.verify(this)) {
+				noerror = false;
+			}
 		}
 		if(!noerror) {
 			Main._Exit(1, "peg error found");

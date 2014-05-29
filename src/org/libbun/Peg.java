@@ -14,6 +14,7 @@ public abstract class Peg {
 		this.name = leftLabel;
 	}
 
+	protected abstract Peg clone(String ns);
 	protected abstract void stringfy(UniStringBuilder sb, boolean debugMode);
 	protected abstract void makeList(PegParser parser, UniArray<String> list, UniMap<String> set);
 	protected abstract PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice);
@@ -160,6 +161,11 @@ class PegString extends PegAtom {
 	}
 
 	@Override
+	protected Peg clone(String ns) {
+		return this;
+	}
+
+	@Override
 	protected void stringfy(UniStringBuilder sb, boolean debugMode) {
 		char Quote = '\'';
 		if(this.symbol.indexOf("'") != -1) {
@@ -189,6 +195,11 @@ class PegAny extends PegAtom {
 	}
 
 	@Override
+	protected Peg clone(String ns) {
+		return this;
+	}
+
+	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitPegAny(this);
 	}
@@ -209,6 +220,11 @@ class PegCharacter extends PegAtom {
 	public PegCharacter(String leftLabel, String token) {
 		super(leftLabel, token);
 		this.charset = new UniCharset(token);
+	}
+
+	@Override
+	protected Peg clone(String ns) {
+		return this;
 	}
 
 	@Override
@@ -236,6 +252,14 @@ class PegCharacter extends PegAtom {
 class PegLabel extends PegAtom {
 	public PegLabel(String leftLabel, String token) {
 		super(leftLabel, token);
+	}
+	
+	@Override
+	protected Peg clone(String ns) {
+		if(ns != null && ns.length() > 0) {
+			return new PegLabel(this.name, ns + this.symbol);
+		}
+		return this;
 	}
 
 	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
@@ -334,6 +358,15 @@ class PegOptional extends PegSuffixed {
 	}
 
 	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegOptional(this.name, e);
+		}
+		return this;
+	}
+
+	@Override
 	protected String getOperator() {
 		return "?";
 	}
@@ -358,6 +391,15 @@ class PegOptional extends PegSuffixed {
 class PegOneMore extends PegSuffixed {
 	public PegOneMore(String leftLabel, Peg e) {
 		super(leftLabel, e);
+	}
+	
+	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegOneMore(this.name, e);
+		}
+		return this;
 	}
 
 	@Override
@@ -408,6 +450,15 @@ class PegZeroMore extends PegSuffixed {
 	}
 
 	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegZeroMore(this.name, e);
+		}
+		return this;
+	}
+
+	@Override
 	protected String getOperator() {
 		return "*";
 	}
@@ -454,6 +505,15 @@ class PegAndPredicate extends PegPredicate {
 	}
 
 	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegAndPredicate(this.name, e);
+		}
+		return this;
+	}
+
+	@Override
 	protected String getOperator() {
 		return "&";
 	}
@@ -477,6 +537,15 @@ class PegAndPredicate extends PegPredicate {
 class PegNotPredicate extends PegPredicate {
 	PegNotPredicate(String leftLabel, Peg e) {
 		super(leftLabel, e);
+	}
+
+	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegNotPredicate(this.name, e);
+		}
+		return this;
 	}
 
 	@Override
@@ -566,9 +635,31 @@ abstract class PegList extends Peg {
 }
 
 class PegSequence extends PegList {
-
+	PegSequence() {
+		super();
+	}
+	
 	PegSequence(Peg first) {
 		super(first);
+	}
+
+	@Override
+	protected Peg clone(String ns) {
+		boolean hasClone = false;
+		for(int i = 0; i < this.list.size(); i++) {
+			Peg e  = this.list.ArrayValues[i].clone(ns);
+			if(e != this.list.ArrayValues[i]) {
+				hasClone = true;
+			}
+		}
+		if(hasClone) {
+			PegList l = new PegSequence();
+			for(int i = 0; i < this.list.size(); i++) {
+				l.add(this.list.ArrayValues[i].clone(ns));
+			}
+			return l;
+		}
+		return this;
 	}
 
 	@Override
@@ -608,6 +699,25 @@ class PegChoice extends PegList {
 		super(first);
 	}
 
+	@Override
+	protected Peg clone(String ns) {
+		boolean hasClone = false;
+		for(int i = 0; i < this.list.size(); i++) {
+			Peg e  = this.list.ArrayValues[i].clone(ns);
+			if(e != this.list.ArrayValues[i]) {
+				hasClone = true;
+			}
+		}
+		if(hasClone) {
+			PegList l = new PegChoice();
+			for(int i = 0; i < this.list.size(); i++) {
+				l.add(this.list.ArrayValues[i].clone(ns));
+			}
+			return l;
+		}
+		return this;
+	}
+	
 	public void add(Peg e) {
 		if(e instanceof PegChoice) {
 			for(int i = 0; i < e.size(); i++) {
@@ -674,6 +784,16 @@ class PegSetter extends PegSuffixed {
 		super(leftLabel, e);
 		this.innerExpr = e;
 	}
+
+	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegSetter(this.name, e);
+		}
+		return this;
+	}
+
 	@Override
 	protected String getOperator() {
 		return "@";
@@ -702,6 +822,11 @@ class PegObjectLabel extends PegAtom {
 
 	public PegObjectLabel(String leftLabel, String objectLabel) {
 		super(leftLabel, objectLabel);
+	}
+	
+	@Override
+	protected Peg clone(String ns) {
+		return this;
 	}
 
 	@Override
@@ -734,11 +859,34 @@ class PegNewObject extends PegList {
 	boolean leftJoin = false;
 	String nodeName = "";
 
+	public PegNewObject(String leftLabel, boolean leftJoin) {
+		super();
+	}
+
 	public PegNewObject(String leftLabel, boolean leftJoin, Peg e) {
 		super(e);
 		this.leftJoin = leftJoin;
 	}
 	
+	@Override
+	protected Peg clone(String ns) {
+		boolean hasClone = false;
+		for(int i = 0; i < this.list.size(); i++) {
+			Peg e  = this.list.ArrayValues[i].clone(ns);
+			if(e != this.list.ArrayValues[i]) {
+				hasClone = true;
+			}
+		}
+		if(hasClone) {
+			PegList l = new PegNewObject(this.name, this.leftJoin);
+			for(int i = 0; i < this.list.size(); i++) {
+				l.add(this.list.ArrayValues[i].clone(ns));
+			}
+			return l;
+		}
+		return this;
+	}
+
 	public void add(Peg e) {
 		if(e instanceof PegSequence) {
 			for(int i =0; i < e.size(); i++) {
@@ -821,6 +969,16 @@ class PegCatch extends PegUnary {
 	PegCatch (String leftLabel, Peg first) {
 		super(leftLabel, first, true);
 	}
+
+	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegCatch(this.name, e);
+		}
+		return this;
+	}
+
 	
 	@Override
 	protected String getOperator() {
@@ -847,6 +1005,11 @@ class PegIndent extends PegAtom {
 	PegIndent(String leftLabel) {
 		super(leftLabel, "indent");
 		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	protected Peg clone(String ns) {
+		return this;
 	}
 
 	@Override
