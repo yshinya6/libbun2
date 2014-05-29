@@ -3,12 +3,9 @@
 // << >>, # are an extended constructor
 // see www.libbun.org/peg
 
-String   
-  = << '"' ('\\"' / !'"' .)* '"' #string >>
-  ;
+Number
+ = << [0-9]+ ('.' [0-9]+ #float / '' #integer) >>
+ ;
 
-TopLevel 
-  = String
-  ;
-
+TopLevel = Number;
 

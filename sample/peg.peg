@@ -1,7 +1,10 @@
 
+// Definiton of Bun's Peg
+
 _ <- ( [ \t\r\n]+ / Comment )* ;
 Comment <- '/*' (!'*/' .)* '*/'
         / '//' (![\r\n] .)* [\r\n] ;
+
 
 Label      <- {[A-z0-9_]+ #name};
 String     <- {"'" (!"'" .)* "'" #string} / {'"' (!'"' .)* '"' #string};

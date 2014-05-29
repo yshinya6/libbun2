@@ -1,0 +1,16 @@
+
+// Bun's Peg example
+// The import statement is used to import an rule from 
+// other peg file :) 
+
+import String from string.peg;
+import Number from number.peg;
+
+TopLevel 
+ = Value
+ ;
+
+Value 
+ = Number / String
+ ;
+

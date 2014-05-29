@@ -1,4 +1,8 @@
 
-A <- {'a' A 'a'} / {'a'};
-TopLevel <- A;
+// This is an important example of PEG
+// @test a
+// @test aaa
+// @test! aaaaa
 
+TopLevel = A;
+A        = 'a' A 'a' / 'a';

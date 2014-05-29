@@ -136,6 +136,14 @@ public class BunSource {
 		return msg;
 	}
 
+	public String checkFileName(String fileName) {
+		int loc = this.fileName.lastIndexOf("/");
+		if(loc > 0) {
+			return this.fileName.substring(0, loc+1) + fileName; 
+		}
+		return fileName;
+	}
+
 //	public final int GetLineHeadPosition(int Position) {
 //		String s = this.sourceText;
 //		int StartIndex = 0;

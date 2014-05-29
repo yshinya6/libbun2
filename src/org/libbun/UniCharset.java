@@ -7,7 +7,7 @@ public class UniCharset {
 	public final static UniCharset Letter = new UniCharset("A-Za-z_");
 	public final static UniCharset NameSymbol = new UniCharset("A-Za-z0-9_");
 	public final static UniCharset NotWhiteSpaceNewLine = new UniCharset("!-:<-~");
-	public final static UniCharset NodeLabel = new UniCharset("A-Za-z0-9_.");
+	public final static UniCharset NodeLabel = new UniCharset("A-Za-z0-9_./");
 
 	String    charSet;
 	boolean[] asciiSet;
@@ -54,7 +54,7 @@ public class UniCharset {
 			}
 			else {
 				this.set(ch);
-				ch = next;
+				ch = next; //r.readChar();
 			}
 		}
 	}
@@ -186,6 +186,10 @@ class CharacterReader {
 		return 0;
 	}
 
+	char getRowChar() {
+		return this.read(this.pos);
+	}
+	
 	char readChar() {
 		if(this.pos < this.text.length()) {
 			char ch = this.read(this.pos);

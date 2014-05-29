@@ -184,36 +184,52 @@ public class Main {
 		int linenum = 1;
 		String Line = null;
 		while ((Line = readMultiLine("\n>>> ", "    ")) != null) {
-			try {
-				BunSource source = new BunSource("(stdin)", linenum, Line, null);
-				PegParserContext context =  gamma.namespace.newParserContext("main", source);
-				PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), "TopLevel", false/*hasNextChoice*/);
-				node.gamma = gamma;
-				if(PegDebuggerMode) {
-					System.out.println("parsed:\n" + node.toString());
-					if(context.hasChar()) {
-						System.out.println("** uncosumed: '" + context + "' **");
-					}
-					System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
-					System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
-					System.out.println();
-				}
-				if(driver != null) {
-					if(gamma.check(node, driver)) {
-						node.matched.build(node, driver);
+			String startPoint = "TopLevel";
+			if(PegDebuggerMode) {
+				if(Line.startsWith("?")) {
+					int loc = Line.indexOf(" ");
+					if(loc > 0) {
+						startPoint = Line.substring(1, loc);
+						Line = Line.substring(loc+1);
 					}
 					else {
-						if(EnableVerbose) {
-							System.out.println("undefined: " + node.toString());
+						PegParser p = gamma.namespace.getParser("main");
+						p.show(Line.substring(1));
+						startPoint = null;
+					}
+				}
+			}
+			if(startPoint != null) {
+				try {
+					BunSource source = new BunSource("(stdin)", linenum, Line, null);
+					PegParserContext context =  gamma.namespace.newParserContext("main", source);
+					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint, false/*hasNextChoice*/);
+					node.gamma = gamma;
+					if(PegDebuggerMode) {
+						System.out.println("parsed:\n" + node.toString());
+						if(context.hasChar()) {
+							System.out.println("** uncosumed: '" + context + "' **");
+						}
+						System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
+						System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
+						System.out.println();
+					}
+					if(driver != null) {
+						if(gamma.check(node, driver)) {
+							node.matched.build(node, driver);
+						}
+						else {
+							if(EnableVerbose) {
+								System.out.println("undefined: " + node.toString());
+							}
 						}
 					}
 				}
-				linenum = linenum + 1;
+				catch (Exception e) {
+					PrintStackTrace(e, linenum);
+				}
 			}
-			catch (Exception e) {
-				PrintStackTrace(e, linenum);
-				linenum = linenum + 1;
-			}
+			linenum = linenum + 1;
 		}
 		Main._PrintLine("");
 	}

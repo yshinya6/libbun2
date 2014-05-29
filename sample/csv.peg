@@ -1,5 +1,10 @@
 
-TopLevel <- {$Line*              #data};
-Line     <- {($CSV (',' $CSV)*)+ ('\n' / EOT) #line};
-CSV      <- [ \t]* {(![,\n] .)*    #value};
-EOT      <- !.;
+// This is a simple example of csv file
+// NOTE: not comformed to any standard
+// 
+
+TopLevel =  << Line@*              #array >>;
+
+Line     =  << (CSV@ (',' CSV@)*)+ ('\n' / EOT) #array >>;
+CSV      =  [ \t]* << (![,\n] .)*    #value >>;
+EOT      =  !.;

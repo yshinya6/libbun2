@@ -1,6 +1,9 @@
 
-TopLevel    <- Expr;
-Expr    <- Expr {$ ('+' / '-') $Expr}*;
-Expr    <- Expr {$ ('*' / '/') $Expr}* / Expr;
-Expr    <- {[0-9]+} / '(' Expr ')' / Expr;
+// Bun's peg allows direct left-recursion
+
+TopLevel = Expr;
+
+Expr     = Expr <<@ ('+' / '-') Expr@ >>*;
+Expr     = Expr <<@ ('*' / '/') Expr@ >>* / Expr;
+Expr     = << [0-9]+ >> / '(' Expr ')' / Expr;
 

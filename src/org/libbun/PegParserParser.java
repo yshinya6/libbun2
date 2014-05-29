@@ -20,23 +20,56 @@ public class PegParserParser extends SourceContext {
 	}
 
 	public PegRule parseRule() {
+		boolean importFile = false;
+		if(this.match("import")) {
+			this.skipComment(UniCharset.WhiteSpaceNewLine);
+			importFile = true;
+		}
 		int startIndex = this.getPosition();
 		if(!this.match(UniCharset.Letter)) {
-			this.showErrorMessage("expected name");
+			this.showErrorMessage("Is forgotten ; ?");
 			return null;
 		}
 		this.matchZeroMore(UniCharset.NameSymbol);
 		String label = this.substring(startIndex, this.getPosition());
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
-		if(!this.match('<', '-')) {
-			this.showErrorMessage("expected <-");
-			return null;
+		Peg parsed = null;
+		if(importFile) {
+			if(!this.match("from")) {
+				this.showErrorMessage("expected from");
+				return null;
+			}
+			this.skipComment(UniCharset.WhiteSpaceNewLine);
+			startIndex = this.getPosition();
+			this.matchZeroMore(UniCharset.NodeLabel);
+			String fileName = this.substring(startIndex, this.getPosition());
+			parsed = this.importPeg(label, fileName);
 		}
-		Peg p = this.parsePegExpr(label);
-		if(p != null) {
-			return new PegRule(label, p);
+		else {
+			if(!this.match('=') && !this.match('<', '-')) {
+				this.showErrorMessage("Is forgotten ; ?");
+				return null;
+			}
+			parsed = this.parsePegExpr(label);
+		}
+		if(parsed != null) {
+			return new PegRule(label, parsed);
 		}
 		return null;
+	}
+
+	private Peg importPeg(String label, String fileName) {
+		if(Main.PegDebuggerMode) {
+			System.out.println("importing " + fileName);
+		}
+		fileName = this.source.checkFileName(fileName);
+		PegParser p = new PegParser(null);
+		p.loadPegFile(fileName);
+		Peg e = p.getDefinedPeg(label);
+		if(e == null) {
+			this.showErrorMessage("undefined " + label);
+		}
+		return e;
 	}
 
 	private int skipQuotedString(char endChar) {
@@ -87,6 +120,9 @@ public class PegParserParser extends SourceContext {
 
 	private Peg parsePostfix(String leftName, Peg left) {
 		if(left != null) {
+			if(this.match('@')) {
+				left = new PegSetter(leftName, left);
+			}
 			if(this.match('*')) {
 				return new PegZeroMore(leftName, left);
 			}
@@ -111,6 +147,10 @@ public class PegParserParser extends SourceContext {
 			this.consume(-1);
 			return null;
 		}
+		if(this.match("indent")) {
+			right = new PegIndent(leftLabel);
+			return this.parsePostfix(leftLabel, right);
+		}
 		if(this.match(UniCharset.Letter)) {
 			int startIndex = this.getPosition() - 1;
 			int endIndex = this.matchZeroMore(UniCharset.NameSymbol);
@@ -123,13 +163,9 @@ public class PegParserParser extends SourceContext {
 			return this.parsePostfix(leftLabel, right);
 		}
 		if(this.match('$')) {
-			boolean allowError = false;
-			if(this.match('$')) {
-				allowError = true;
-			}
 			right = this.parseSingleExpr(leftLabel);
 			if(right != null) {
-				right = new PegSetter(leftLabel, right, allowError);
+				right = new PegSetter(leftLabel, right);
 			}
 			return right;
 		}
@@ -218,6 +254,24 @@ public class PegParserParser extends SourceContext {
 			right = this.parsePostfix(leftLabel, right);
 			return right;
 		}
+		if(this.match("<<")) {
+			boolean leftJoin = false;
+			if(this.match('@', ' ') || this.match('@', '\n')) {
+				leftJoin = true;
+			}
+			int startIndex = this.getPosition();
+			int endIndex = this.skipGroup('<', '>');
+			if(endIndex == -1 || !this.match('>')) {
+				this.rollback(startIndex);
+				this.showErrorMessage("unclosed '>>'");
+				return null;
+			}
+			PegParserParser sub = this.subParser(startIndex, endIndex);
+			right = sub.parsePegExpr(leftLabel);
+			right = new PegNewObject(leftLabel, leftJoin, right);
+			right = this.parsePostfix(leftLabel, right);
+			return right;
+		}
 		this.showErrorMessage("unexpected character '" + this.getChar() + "'");
 		return right;
 	}
@@ -251,9 +305,17 @@ public class PegParserParser extends SourceContext {
 			return left;
 		}
 		if(this.hasChar()) {
-			Peg right = this.parsePegExpr(leftLabel);
-			if(right != null) {
+			if(this.match("catch ") || this.match("catch\n")) {
+				this.skipComment(UniCharset.WhiteSpaceNewLine);
+				Peg right = this.parsePegExpr(leftLabel);
+				right = new PegCatch(leftLabel, right);
 				left = left.appendAsChoice(right);
+			}
+			else {
+				Peg right = this.parsePegExpr(leftLabel);
+				if(right != null) {
+					left = left.appendAsChoice(right);
+				}
 			}
 		}
 		return left;

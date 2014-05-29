@@ -1,0 +1,17 @@
+
+// This is a test for python-style indent
+//
+
+TopLevel
+  = Block
+  ;
+_ 
+  = [ \t]+
+  ;
+Stmt  
+  = << (!'\n' .)* #line>> '\n'
+  ;
+Block 
+  = _? << '{' _? ('\n' / indent _+ Stmt@)* '}' #block >>
+  ;
+

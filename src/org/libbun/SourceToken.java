@@ -74,9 +74,22 @@ public class SourceToken {
 		return null;
 	}
 
+	public final String getIndentText() {
+		int startPosition = this.source.getLineStartPosition(this.startIndex);
+		int i = startPosition;
+		for(; i < this.startIndex; i++) {
+			char ch = this.source.charAt(i);
+			if(ch != ' ' && ch == '\t') {
+				break;
+			}
+		}
+		return this.source.substring(startPosition, i);
+	}
+	
 	public String formatErrorMessage(String errorType, String msg) {
 		return this.source.formatErrorMessage(errorType, this.startIndex, msg);
 	}
+
 
 
 }

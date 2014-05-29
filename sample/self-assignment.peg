@@ -1,0 +1,9 @@
+
+// Bun's peg allows self re-defintion
+// The following means:
+//   TopLevel = 'c' / 'a' / 'b'
+
+TopLevel = 'a';
+TopLevel =  TopLevel / 'b';
+TopLevel =  'c' / TopLevel;
+

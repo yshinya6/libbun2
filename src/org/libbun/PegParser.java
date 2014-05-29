@@ -88,12 +88,12 @@ public final class PegParser {
 		for(int i = 0; i < list.size(); i++) {
 			String key = list.ArrayValues[i];
 			Peg e = this.pegCache.get(key, null);
-			if(Main.PegDebuggerMode) {
-				System.out.println(e.toPrintableString(key));
-			}
-			if(!e.verify(this)) {
-				noerror = false;
-			}
+//			if(Main.PegDebuggerMode) {
+//				System.out.println(e.toPrintableString(key, "\n  =", "\n  / ", "\n  ;", true));
+//			}
+//			if(!e.verify(this)) {
+//				noerror = false;
+//			}
 		}
 		if(!noerror) {
 			Main._Exit(1, "peg error found");
@@ -198,6 +198,10 @@ public final class PegParser {
 		return this.pegMap.get(name, null) != null;
 	}
 
+	public Peg getDefinedPeg(String name) {
+		return this.pegMap.get(name, null);
+	}
+	
 	public final Peg getPattern(String name, char firstChar) {
 		if(this.pegCache == null) {
 			this.resetCache();
@@ -211,5 +215,30 @@ public final class PegParser {
 		}
 		return this.getPattern(this.nameRightJoinName(name), firstChar);
 	}
+	
+	public final UniArray<String> makeList(String startPoint) {
+		UniArray<String> list = new UniArray<String>(new String[100]);
+		UniMap<String> set = new UniMap<String>();
+		Peg e = this.getDefinedPeg(startPoint);
+		if(e != null) {
+			list.add(startPoint);
+			set.put(startPoint, startPoint);
+			e.makeList(this, list, set);
+		}
+		return list;
+	}
+	
+	public final void show(String startPoint) {
+		UniArray<String> list = makeList(startPoint);
+		for(int i = 0; i < list.size(); i++) {
+			String name = list.ArrayValues[i];
+			Peg e = this.getDefinedPeg(name);
+			String rule = e.toPrintableString(name, "\n  = ", "\n  / ", "\n  ;", true);
+			System.out.println(rule);
+		}
+	}
+	
 
 }
+
+

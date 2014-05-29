@@ -1,0 +1,33 @@
+
+
+_      = [ \t\n\r];
+
+TopLevel = XmlTag;
+
+Doc  = XmlTag;
+
+XmlTag
+  = << '<' XmlName@ XmlAttr@* ('/>' / '>' XmlContent@* '</' XmlName '>') #xml >>
+  ;
+XmlName 
+  = << [A-Za-z0-9\-:._]+  #name >>
+  ;
+XmlAttr 
+  = _+ << XmlName '=' String #keyvalue >>
+  ;
+XmlContent
+  = (Text / CDATA / XmlComment / XmlTag)
+  ;
+Text    
+  = << (!'<' !'>' .)+  #string >>
+  ;
+CDATA   
+  = '<![CDATA[' << (!']]>' .)* #cdata >> '[[>'
+  ;
+XmlComment
+  = '<!--' (!'-->' .)* '-->'
+  ;
+String
+  = << '"' ('\\"' / !'"' .)* '"' #string >>
+  ;
+

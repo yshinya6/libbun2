@@ -1,4 +1,7 @@
 
+// This is an old style of peg grammar
+// {} constructor and @ prefix was deprecated
+
 TopLevel    <- Expr;
 Expr    <- Sum;
 Sum     <- Product {$ ('+' #add / '-' #sub) $Product}*;
