@@ -1,11 +1,6 @@
 
-Stmt    <- Expr;
-Expr    <- {'(' _? ($Expr (_ $Expr)*)? ')'}:S  / Integer / Symbol;
-Integer <- { [0-9]+ } :num;
-Symbol  <- { [a-zA-Z]+ } :name;
-Symbol  <- { '+'  /  '-' /  '*' / '/' / '%' / '<' / '>' } :symbol;
+TopLevel    <- Expr;
+Expr    <- '(' _? {($Expr)? (_ $Expr)* } ')' / Integer / Symbol;
+Integer <- { [0-9]+ #integer };
+Symbol  <- { ([a-zA-Z]+ #symbol) / ('+'  #add) /  ('-' #sub) /  ('*' #mul) / ('/' #div) / ('%' #mod) / ('<' #lt) / ('>' #gt) };
 _       <- [ \t\n];
-
-Expr    <- {'(+' _+ $Expr _+ $Expr _? ')' } :add;
-Expr    <- {'(+' _+ $Expr _? ')' } :plus;
-
