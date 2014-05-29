@@ -1,0 +1,76 @@
+
+TopLevel
+  <- {WS $Value WS #JSON};
+
+BeginArray     <- WS '[' WS;
+BeginObject    <- WS '{' WS;
+EndArray       <- WS ']' WS;
+EndObject      <- WS '}' WS;
+NameSeparator  <- WS ':' WS;
+ValueSeparator <- WS ',' WS;
+
+WS <- [ \t\n\r]*;
+
+Value
+  <- False
+  / Null
+  / True
+  / Object
+  / Array
+  / Number
+  / String;
+
+False <- {'false' #False};
+Null  <- {'null' #Null};
+True  <- {'true' #True};
+
+Object
+  <- BeginObject
+    {($Member (ValueSeparator $Member)* )? #Object}
+    EndObject;
+
+Member
+  <- {$String NameSeparator $Value #Member};
+
+Array
+  <- BeginArray
+    {( $Value (ValueSeparator $Value)* )?  #Array}
+    EndArray;
+
+Number
+  <- {Minus? Int Frac? Exp? #Number};
+
+DecimalPoint  <- '.';
+Digit1_9      <- [1-9];
+E             <- [eE];
+Exp           <- E (Minus / Plus)? DIGIT+;
+Frac          <- DecimalPoint DIGIT+;
+Int           <- Zero / (Digit1_9 DIGIT*);
+Minus         <- '-';
+Plus          <- '+';
+Zero          <- '0';
+
+String
+  <- QuotationMark {Char* #String} QuotationMark;
+
+Char
+  <- Unescaped
+  / Escape
+    (
+        '"'
+      / '\\'
+      / '/'
+      / 'b'
+      / 'f'
+      / 'n'
+      / 'r'
+      / 't'
+      / 'u' (HEXDIG HEXDIG HEXDIG HEXDIG)
+    );
+    
+Escape         <- '\\';
+QuotationMark <- '"';
+Unescaped      <- [\x20-\x21\x23-\x5B\x5D-\uFFFF];
+
+DIGIT  <- [0-9];
+HEXDIG <- [0-9a-fA-F];

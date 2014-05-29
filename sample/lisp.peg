@@ -1,6 +1,23 @@
 
-TopLevel    <- Expr;
-Expr    <- '(' _? {($Expr)? (_ $Expr)* } ')' / Integer / Symbol;
-Integer <- { [0-9]+ #integer };
-Symbol  <- { ([a-zA-Z]+ #symbol) / ('+'  #add) /  ('-' #sub) /  ('*' #mul) / ('/' #div) / ('%' #mod) / ('<' #lt) / ('>' #gt) };
-_       <- [ \t\n];
+// Bun's Peg example
+// << >>, # are an extended constructor
+// see www.libbun.org/peg
+
+TopLevel
+  = Expr
+  ;
+Expr
+  = '(' _? << (Expr@)? (_ Expr@)* >> ')'
+  / Integer
+  / Symbol
+  ;
+_
+  = [ \t\n]
+  ;
+Integer
+  = << [0-9]+ #integer >>
+  ;
+Symbol
+  = << ([a-zA-Z]+ #symbol / '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<' #lt / '>' #gt) >>
+  ;
+

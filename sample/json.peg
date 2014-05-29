@@ -1,76 +1,110 @@
 
+// Bun's Peg example
+// << >>, # are an extended constructor
+// see www.libbun.org/peg
+
 TopLevel
-  <- {WS $Value WS #JSON};
-
-BeginArray     <- WS '[' WS;
-BeginObject    <- WS '{' WS;
-EndArray       <- WS ']' WS;
-EndObject      <- WS '}' WS;
-NameSeparator  <- WS ':' WS;
-ValueSeparator <- WS ',' WS;
-
-WS <- [ \t\n\r]*;
-
+  =  WS Value WS
+  ;
+WS
+  = [ \t\n\r]*
+  ;
 Value
-  <- False
+  = False
   / Null
   / True
   / Object
   / Array
   / Number
-  / String;
-
-False <- {'false' #False};
-Null  <- {'null' #Null};
-True  <- {'true' #True};
-
+  / String
+  ;
+False
+  = << 'false' #false >>
+  ;
+Null
+  = << 'null' #null >>
+  ;
+True
+  = << 'true' #true >>
+  ;
 Object
-  <- BeginObject
-    {($Member (ValueSeparator $Member)* )? #Object}
-    EndObject;
-
+  = BeginObject << (Member@ (ValueSeparator Member@)*)? #object >> EndObject
+  ;
+BeginObject
+  = WS '{' WS
+  ;
 Member
-  <- {$String NameSeparator $Value #Member};
-
-Array
-  <- BeginArray
-    {( $Value (ValueSeparator $Value)* )?  #Array}
-    EndArray;
-
-Number
-  <- {Minus? Int Frac? Exp? #Number};
-
-DecimalPoint  <- '.';
-Digit1_9      <- [1-9];
-E             <- [eE];
-Exp           <- E (Minus / Plus)? DIGIT+;
-Frac          <- DecimalPoint DIGIT+;
-Int           <- Zero / (Digit1_9 DIGIT*);
-Minus         <- '-';
-Plus          <- '+';
-Zero          <- '0';
-
+  = << String@ NameSeparator Value@ #keyvalue >>
+  ;
 String
-  <- QuotationMark {Char* #String} QuotationMark;
-
+  = &QuotationMark << QuotationMark Char* #string QuotationMark >>
+  ;
+QuotationMark
+  = '"'
+  ;
 Char
-  <- Unescaped
-  / Escape
-    (
-        '"'
-      / '\\'
-      / '/'
-      / 'b'
-      / 'f'
-      / 'n'
-      / 'r'
-      / 't'
-      / 'u' (HEXDIG HEXDIG HEXDIG HEXDIG)
-    );
-    
-Escape         <- '\\';
-QuotationMark <- '"';
-Unescaped      <- [\x20-\x21\x23-\x5B\x5D-\uFFFF];
+  = Unescaped
+  / Escape ('"' / '\\' / '/' / 'b' / 'f' / 'n' / 'r' / 't' / 'u' HEXDIG HEXDIG HEXDIG HEXDIG)
+  ;
+Unescaped
+  = [\x20-\x21\x23-\x5B\x5D-\uFFFF]
+  ;
+Escape
+  = '\\'
+  ;
+HEXDIG
+  = [0-9a-fA-F]
+  ;
+NameSeparator
+  = WS ':' WS
+  ;
+ValueSeparator
+  = WS ',' WS
+  ;
+EndObject
+  = WS '}' WS
+  ;
+Array
+  = BeginArray << (Value@ (ValueSeparator Value@)*)? #array >> EndArray
+  ;
+BeginArray
+  = WS '[' WS
+  ;
+EndArray
+  = WS ']' WS
+  ;
+Number
+  = << Minus? Int Frac? Exp? #number >>
+  ;
+Minus
+  = '-'
+  ;
+Int
+  = Zero
+  / Digit1_9 DIGIT*
+  ;
+Zero
+  = '0'
+  ;
+Digit1_9
+  = [1-9]
+  ;
+DIGIT
+  = [0-9]
+  ;
+Frac
+  = DecimalPoint DIGIT+
+  ;
+DecimalPoint
+  = '.'
+  ;
+Exp
+  = E (Minus / Plus)? DIGIT+
+  ;
+E
+  = [eE]
+  ;
+Plus
+  = '+'
+  ;
 
-DIGIT  <- [0-9];
-HEXDIG <- [0-9a-fA-F];
