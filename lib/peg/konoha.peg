@@ -1,0 +1,154 @@
+// Bun's Peg example
+// / catch is an extended operator to catch error
+
+import Value from value.peg;
+import Type  from type.peg;
+
+// TopLevel = Expr / _ ;
+
+// Preparation for whitespace control
+
+Spacing    
+  = [ \t]+
+  ;
+_ 
+  = ([ \t]+ / Comment)*
+  ;
+NL 
+  = ([ \t\n]+ / Comment)*
+  ;
+Comment    
+  = '/*' (!'*/' .)* '*/' 
+  / '//' (![\r\n] .)* [\r\n] 
+  ;
+Token
+  = ![A-Za-z0-9_]
+  ;
+Name
+  = <<[A-Za-z_] [A-Za-z0-9_]*   #name>>
+  ;
+
+TopLevel
+  = FuncDecl 
+  / LetDecl
+  / IfStmt
+  / Expr
+  ;
+
+FuncDecl
+  = <<'function' Spacing Name@ _ Params@ _ TypeAnno@? NL Block@  #function>>
+  ;
+
+Params
+  = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #params >>
+  ;
+Param
+  = << Name@ TypeAnno@? #param >>
+  ;
+TypeAnno
+  = _ ':' _ Type     // imported
+  ;
+
+Block
+  = << '{' (NL ( ';' / Stmt / catch BlockSkip )@ )* NL '}' #block>>
+  ;
+
+BlockSkip
+  = (![{}] .)* ('{' BlockSkip '}')?
+  ;
+
+Stmt
+  = IfStmt
+  / VarDecl EOS / LetDecl EOS
+  / << 'return' (Spacing Expr@)? #return >> EOS
+  / << 'while' _ '(' _ Expr@ _ ')' NL $Block #while >>
+  / << 'break' #break >> EOS
+  / Expr EOS
+  ;
+
+EOS   // End of Statement
+ = _ ('\n' / ';')
+ ;
+
+IfStmt
+  = <<'if' _ '(' _ Expr@ _ ')' NL Block@ 
+       (NL 'else' NL (IfStmt@ / Block@) )? #if>>
+  ;
+
+LetDecl
+  = <<'let' Spacing Name@ TypeAnno@? _ '=' _ Expr@ 
+       (_ 'in' _ Block@ #letin / '' #let) >>
+  ;
+
+VarDecl
+  = <<'var' Spacing Name@ TypeAnno@? _ '=' _ Expr@ 
+      (_ 'in' _ Block@ #varin / '' #var) >>
+  ;
+  
+Expr
+  = Assignment
+  ;
+  
+Assignment
+  = Trinary <<@ _ AssignmentLabel Trinary>>*
+  ;
+
+AssignmentLabel
+  = '=' !'=' _  #assign
+  / '+='     _  #assign.add
+  / '-='     _  #assign.sub
+  ;
+
+Trinary
+  = ExprOrExpr <<@ _ '?' _ Expr@ _ ':' _ Trinary@ #trinary >>*
+  ;
+
+ExprOrExpr
+  = ExprAndExpr <<@ _ '||' _ ExprAndExpr@ #or >>*
+  ;
+
+ExprAndExpr
+  = BitwiseBinary <<@ _ '||' _ BitwiseBinary@ #and >>*
+  ;
+
+BitwiseBinary
+  = Equal <<@ _ ('|' !'|' #bitor / '&' !'&' #bitand / '^' #bitxor) _ Equal@ >>*
+  ;
+
+Equal
+  = Relation <<@ _ ('==' #eq / '!=' #noteq) _ Relation@>>*
+  ;
+
+Relation
+  = Shift <<@ _ ('<' !'<' #lt / '<=' #lte / '>' !'>' #gt / '>=' #gte) _ Shift@ >>*
+  ;
+
+Shift
+  = Sum <<@ _ ('<<' #lshift / '>>' #rshift) _ Sum@ >>*
+  ;
+  
+Sum 
+  = Product <<@ ('+' #add / '-' #sub) Product@ >>*
+  ;
+
+Product
+  = Unary <<@ _ ('*' #mul / '/' #div / '%' #mod) _ Unary@ >>*
+  ;
+
+Unary
+  = << ('!' #not / '-' #minus / '+' #plus / '~' #compl) Unary >>
+  / Primary <<@ Selector>>*
+  ;
+
+Selector
+  = '.' Name@ #field
+  / '[' _ Expr@ ']' #index
+  / '(' _ ( Expr@ ( _ ',' _ Expr@ )* )? ')'  #call
+  / '++' #postinc  / '--' #postdec
+  ;
+  
+Primary
+  = << '(' _ Expr@ _ ')' #group >> 
+  / << '[' _ ( Expr@ ( _ ',' _ Expr@ )* )? #array >>
+  / Value / Name
+  ;

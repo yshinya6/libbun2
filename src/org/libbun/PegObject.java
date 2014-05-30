@@ -128,7 +128,7 @@ public class PegObject {
 
 	@Override
 	public String toString() {
-		SourceBuilder sb = new SourceBuilder(null, null);
+		SourceBuilder sb = new SourceBuilder(null);
 		this.stringfy(sb);
 		return sb.toString();
 	}
@@ -136,20 +136,20 @@ public class PegObject {
 
 	final void stringfy(SourceBuilder sb) {
 		if(this.AST == null) {
-			sb.AppendNewLine(this.name+ ": ", this.getText(), "   " + this.info());
+			sb.appendNewLine(this.name+ ": ", this.getText(), "   " + this.info());
 		}
 		else {
-			sb.AppendNewLine(this.name);
-			sb.OpenIndent(" {            " + this.info());
+			sb.appendNewLine(this.name);
+			sb.openIndent(" {            " + this.info());
 			for(int i = 0; i < this.size(); i++) {
 				if(this.AST[i] != null) {
 					this.AST[i].stringfy(sb);
 				}
 				else {
-					sb.AppendNewLine("@missing subnode at " + i);
+					sb.appendNewLine("@missing subnode at " + i);
 				}
 			}
-			sb.CloseIndent("}");
+			sb.closeIndent("}");
 		}
 	}
 
@@ -185,14 +185,12 @@ public class PegObject {
 		return this.typed;
 	}
 
-	public final void build(BunDriver driver) {
+	public final void build(PegDriver driver) {
 		if(this.matched != null) {
 			this.matched.build(this, driver);
 		}
 		else {
-			SymbolTable gamma = this.getSymbolTable();
-			Functor f = gamma.getFunctor(this);
-			System.out.println("*unknown "+ this.name + "/" + f + "*");
+			driver.pushUnknownNode(this);
 		}
 	}
 

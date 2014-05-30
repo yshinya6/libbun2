@@ -1,0 +1,89 @@
+
+bun #coercion(x: unicode): str {
+	str(${x})
+}
+
+bun #coercion(x: str): unicode {
+	ustr(${x})
+}
+
+bun #group(expr :alpha) :alpha {
+	(${expr})
+}
+
+bun #plus(x: alpha) :alpha {
+	+${x}
+}
+
+bun #minus(x: alpha) :alpha {
+	-${x}
+}
+
+bun #not(x: boolean) :boolean {
+	!${x}
+}
+
+bun #compl(x: alpha) :alpha {
+	~${x}
+}
+
+bun #add(a :alpha, b :alpha) :alpha {
+	(${a} + ${b})
+}
+
+bun #add(a :str, b :any) :str {
+	(${a} + str(${b}))
+}
+
+bun #add(a :unicode, b:any): unicode {
+	(${a} + ustr(${b}))
+}
+
+bun #sub(a:alpha, b:alpha): alpha {
+	(${a} - ${b})
+}
+
+bun #mul(a: alpha, b: alpha): alpha {
+	(${a} * ${b})
+}
+
+bun #div(a: alpha, b: alpha): alpha {
+	(${a} / ${b})
+}
+
+bun #mod(a: alpha, b: alpha): alpha {
+	(${a} % ${b})
+}
+
+bun #eq(a: alpha, b: alpha): bool {
+	(${a} == ${b})
+}
+
+bun #noteq(a: alpha, b: alpha): bool {
+	(${a} != ${b})
+}
+
+bun #lt(a: alpha, b: alpha): bool {
+	(${a} < ${b})
+}
+
+bun #lte(a: alpha, b: alpha): bool {
+	(${a} <= ${b})
+}
+
+bun #gt(a: alpha, b: alpha): bool {
+	(${a} > ${b})
+}
+
+bun #gte(a: alpha, b: alpha): bool {
+	(${a} >= ${b})
+}
+
+bun #if(x: bool, then: void): void {
+	if ${x}: ${then}
+}
+
+bun #if(x: bool, then: void, else: void): void {
+	if ${x}: ${then}
+	else ${else}
+}

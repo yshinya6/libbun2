@@ -2,8 +2,10 @@ package org.libbun;
 
 public abstract class MetaType  {
 	protected int         typeId    = -1;
+	protected Object      typeInfo;  // used in Class<?> in JVM (for example)
 
-	MetaType() {
+	MetaType(Object typeInfo) {
+		this.typeInfo = typeInfo;
 		if(!this.hasVarType()) {
 			this.typeId = MetaType._NewTypeId(this);
 		}
@@ -367,6 +369,36 @@ public abstract class MetaType  {
 		return false;
 	}
 
+	// =======================================================================
+	
+	public static MetaType newVoidType(String name, Object typeInfo) {
+		return new VoidType(name, typeInfo);
+	}
+
+	public static MetaType newBooleanType(String name, Object typeInfo) {
+		return new BooleanType(name, typeInfo);
+	}
+
+	public static MetaType newIntType(String name, int size, Object typeInfo) {
+		return new IntType(name, size, typeInfo);
+	}
+
+	public static MetaType newFloatType(String name, int size, Object typeInfo) {
+		return new FloatType(name, size, typeInfo);
+	}
+
+	public static MetaType newStringType(String name, Object typeInfo) {
+		return new StringType(name, typeInfo);
+	}
+
+	public static MetaType newAnyType(String name, Object typeInfo) {
+		return new AnyType(name, typeInfo);
+	}
+
+	public static MetaType newGreekType(String name, int greekId, Object typeInfo) {
+		return new GreekType(name, greekId, typeInfo);
+	}
+
 
 }
 
@@ -375,7 +407,7 @@ class VarType extends MetaType {
 	private MetaType realType;
 
 	public VarType(int varId) {
-		super();
+		super(null);
 		this.varId = varId;
 		this.realType = null;
 	}
@@ -435,8 +467,8 @@ class VarType extends MetaType {
 class ValueType extends MetaType {
 	
 	protected String name;
-	public ValueType(String name) {
-		super();
+	public ValueType(String name, Object typeInfo) {
+		super(typeInfo);
 		this.name = name;
 	}
 
@@ -487,15 +519,16 @@ class ValueType extends MetaType {
 
 class GreekType extends MetaType {
 	public final int GreekId;
-
-	GreekType(int GreekId) {
-		super();
+	public final String name;
+	GreekType(String name, int GreekId, Object typeInfo) {
+		super(typeInfo);
+		this.name = name;
 		this.GreekId = GreekId;
 	}
 
 	@Override
 	public void stringfy(UniStringBuilder sb) {
-		sb.append(Main._GreekNames[GreekId]);
+		sb.append(name);
 	}
 
 	@Override
@@ -729,7 +762,7 @@ class FuncType extends GenericType {
 
 class UntypedType extends ValueType {
 	public UntypedType() {
-		super("untyped");
+		super("untyped", null);
 	}
 	public boolean is(MetaType valueType, MetaType[] greekContext) {
 		return true;
@@ -741,8 +774,8 @@ class UntypedType extends ValueType {
 }
 
 class VoidType extends ValueType {
-	public VoidType(String name) {
-		super(name);
+	public VoidType(String name, Object typeInfo) {
+		super(name, typeInfo);
 	}
 	public boolean is(MetaType valueType, MetaType[] greekContext) {
 		return true;
@@ -754,8 +787,8 @@ class VoidType extends ValueType {
 }
 
 class AnyType extends ValueType {
-	public AnyType(String name) {
-		super(name);
+	public AnyType(String name, Object typeInfo) {
+		super(name, typeInfo);
 	}
 	public boolean is(MetaType valueType, MetaType[] greekContext) {
 		return true;
@@ -767,39 +800,41 @@ class AnyType extends ValueType {
 }
 
 
-class BooleanType extends NumberType {
-	public BooleanType(String name) {
-		super(name);
+class BooleanType extends ValueType {
+	public BooleanType(String name, Object typeInfo) {
+		super(name, typeInfo);
 	}
 }
 
 class NumberType extends ValueType {
-	public NumberType(String name) {
-		super(name);
+	public NumberType(String name, Object typeInfo) {
+		super(name, typeInfo);
 	}
 }
 
 class IntType extends NumberType {
-	public IntType(String name) {
-		super(name);
+	int size;
+	public IntType(String name, int size, Object typeInfo) {
+		super(name, typeInfo);
 	}
 }
 
 class FloatType extends NumberType {
-	public FloatType(String name) {
-		super(name);
+	int size;
+	public FloatType(String name, int size, Object typeInfo) {
+		super(name, typeInfo);
 	}
 }
 
 class StringType extends ValueType {
-	public StringType(String name) {
-		super(name);
+	public StringType(String name, Object typeInfo) {
+		super(name, typeInfo);
 	}
 }
 
 class ObjectType extends ValueType {
-	public ObjectType(String name) {
-		super(name);
+	public ObjectType(String name, Object typeInfo) {
+		super(name, typeInfo);
 	}
 }
 

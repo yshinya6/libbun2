@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-
 public class Main {
 	public final static String  ProgName  = "libbun";
 	public final static String  CodeName  = "yokohama";
@@ -160,11 +159,11 @@ public class Main {
 	//	}
 
 
-	private static BunDriver loadDriver(String driverName) {
+	private static PegDriver loadDriver(String driverName) {
 		if(PegDebuggerMode) {
-			return new DebugDriver();
+			return new DubugDriver();
 		}
-		BunDriver driver = new DebugDriver();
+		PegDriver driver = new PythonDriver();
 		return driver;
 	}
 
@@ -173,12 +172,12 @@ public class Main {
 		PegParser p = new PegParser(null);
 		p.loadPegFile(LanguagePeg);
 		Namespace gamma = new Namespace(p);
-		BunDriver driver = loadDriver(DriverName);
+		PegDriver driver = loadDriver(DriverName);
 		driver.initTable(gamma);
 		performShell(gamma, driver);
 	}
 
-	public final static void performShell(Namespace gamma, BunDriver driver) {
+	public final static void performShell(Namespace gamma, PegDriver driver) {
 		Main._PrintLine(ProgName + Version + " (" + CodeName + ") on " + Main._GetPlatform());
 		Main._PrintLine(Copyright);
 		int linenum = 1;
@@ -215,6 +214,7 @@ public class Main {
 						System.out.println();
 					}
 					if(driver != null) {
+						driver.startTransaction(null);
 						if(gamma.check(node, driver)) {
 							node.matched.build(node, driver);
 						}
@@ -223,6 +223,7 @@ public class Main {
 								System.out.println("undefined: " + node.toString());
 							}
 						}
+						driver.endTransaction();
 					}
 				}
 				catch (Exception e) {
