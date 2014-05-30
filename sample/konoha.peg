@@ -1,50 +1,149 @@
+// Bun's Peg example
+// / catch is an extended operator to catch error
 
-TopLevel   <- Expr / _ ;
+import Value from value.peg;
+import Type  from type.peg;
 
-_          <- ([ \t]+ / Comment)*;
-Spacing    <- [ \t]+  ;
-Comment    <- '/*' (!'*/' .)* '*/' / '//' (![\r\n] .)* [\r\n] ;
-Name       <- {[A-Za-z_] [A-Za-z0-9_]*   #name};
-Number     <- {[0-9]+                    #integer};
-String     <- {'"' ('\\"' / !'"' .)* '"' #string};
+// TopLevel = Expr / _ ;
 
-Value      <- {'(' _ $Expr _ ')' #group} / String / Number / Name;
+// Preparation for whitespace control
 
-PostfixExpr <- Value ${ '[' $Expr ']' #index 
-				/ '(' _ ($Expr (_ ',' _ $Expr)*)? _ ')' #call
-				/ '.' $Name          #field
-			}*;
+Spacing    
+  = [ \t]+
+  ;
+_ 
+  = ([ \t]+ / Comment)*
+  ;
+NL 
+  = ([ \t\n]+ / Comment)*
+  ;
+Comment    
+  = '/*' (!'*/' .)* '*/' 
+  / '//' (![\r\n] .)* [\r\n] 
+  ;
+Token
+  = ![A-Za-z0-9_]
+  ;
+Name
+  = <<[A-Za-z_] [A-Za-z0-9_]*   #name>>
+  ;
 
-UnaryExpr   <- PostfixExpr 
-	/ { ('-' #minus / '+' #plus / '!' #not) $CastExpr};
+TopLevel
+  = FuncDecl 
+  / LetDecl
+  / Expr
+  ;
 
-CastExpr <- { ('(' $Type ')')+ $UnaryExpr #cast} / UnaryExpr;
+FuncDecl
+  = <<'function' Spacing Name@ _ Params@ _ TypeAnno@? NL Block@  #function>>
+  ;
 
-Product    <- Value {$ _ ('*' #mul / '/' #div / '%' #mod) _ $Value}* ;
-Sum        <- Product {$ _ ('+' #add / '-' #sub) _ $Product}*;
-Expr       <- Sum;
-Stmt       <- Expr;
+Params
+  = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #params >>
+  ;
+Param
+  = << Name@ TypeAnno@? #param >>
+  ;
+TypeAnno
+  = _ ':' _ Type     // imported
+  ;
 
-Type        <- {[A-Za-z] [A-Za-z0-9_]*   #type};
-Type        <- Type {$ '[]'             #atype} / Type;
-Type        <- Type {$ '<' _ $Type (_ ',' _ $Type)? _ '>' #ptype} / Type;
-TypeAnno    <- ':' _ Type;
-Param       <- {$Name _ ($TypeAnno)? #param};
-Params      <- {'(' _ ($Param ( _ ',' _ $Param)*)? _ ')' #params};
+Block
+  = << '{' (NL ( ';' / Stmt@) )* NL '}' #block>>
+  ;
 
-Function    <- {'function' Spacing $Name _ $Params _ ($TypeAnno)? _ $Block  #function};
-TopLevel    <- Function / TopLevel;
+Stmt
+  = IfStmt
+  / VarDecl EOS / LetDecl EOS
+  / << 'return' (Spacing Expr@)? #return >> EOS
+  / << 'while' _ '(' _ Expr@ _ ')' NL $Block #while >>
+  / << 'break' #break >> EOS
+  / Expr EOS
+  ;
 
-Block <- {'{' (BlockIndent? ( ';' / $Stmt))* _ '}' #block};
-BlockIndent <- [ \t\n]* ;
+EOS   // End of Statement
+ = _ ('\n' / ';')
+ ;
 
-IfStmt      <- {'if' _ '(' _ $Expr _ ')' _ $Block (_ 'else' _? $(IfStmt / Block))? #if};
-WhileStmt   <- {'while' _ '(' _ $Expr _ ')' _ $Block #while};
-BreakStmt   <- {'break' #break};
-ReturnStmt  <- {'return' (Spacing $Expr)? #return};
-VarStmt     <- {'var' Spacing $Name _ ($TypeAnno)? _ '=' _ $Expr (_ 'in' _ $Block)? #var};
-LetStmt     <- {'let' Spacing $Name _ ($TypeAnno)? _ '=' _ $Expr (_ 'in' _ $Block)? #let};
+IfStmt
+  = <<'if' _ '(' _ Expr@ _ ')' NL Block@ 
+       (NL 'else' NL (IfStmt@ / Block@) )? #if>>
+  ;
 
-Stmt        <- IfStmt / WhileStmt / BreakStmt/ ReturnStmt / VarStmt / LetStmt / Stmt;
-TopLevel    <- IfStmt / BreakStmt / LetStmt / TopLevel;
+LetDecl
+  = <<'let' Spacing Name@ TypeAnno@? _ '=' _ Expr@ 
+       (_ 'in' _ Block@ #letin / '' #let) >>
+  ;
 
+VarDecl
+  = <<'var' Spacing Name@ TypeAnno@? _ '=' _ Expr@ 
+      (_ 'in' _ Block@ #varin / '' #var) >>
+  ;
+  
+Expr
+  = Assignment
+  ;
+  
+Assignment
+  = Trinary <<@ _ AssignmentLabel Trinary>>*
+  ;
+
+AssignmentLabel
+  = '=' !'=' _  #assign
+  / '+='     _  #assign.add
+  / '-='     _  #assign.sub
+  ;
+
+Trinary
+  = ExprOrExpr <<@ _ '?' _ Expr@ _ ':' _ Trinary@ #trinary >>*
+  ;
+
+ExprOrExpr
+  = ExprAndExpr <<@ _ '||' _ ExprAndExpr@ #or >>*
+  ;
+
+ExprAndExpr
+  = BitwiseBinary <<@ _ '||' _ BitwiseBinary@ #and >>*
+  ;
+
+BitwiseBinary
+  = Equal <<@ _ ('|' !'|' #bitor / '&' !'&' #bitand / '^' #bitxor) _ Equal@ >>*
+  ;
+
+Equal
+  = Relation <<@ _ ('==' #eq / '!=' #noteq) _ Relation@>>*
+  ;
+
+Relation
+  = Shift <<@ _ ('<' !'<' #lt / '<=' #lte / '>' !'>' #gt / '>=' #gte) _ Shift@ >>*
+  ;
+
+Shift
+  = Sum <<@ _ ('<<' #lshift / '>>' #rshift) _ Sum@ >>*
+  ;
+  
+Sum 
+  = Product <<@ ('+' #add / '-' #sub) Product@ >>*
+  ;
+
+Product
+  = Unary <<@ _ ('*' #mul / '/' #div / '%' #mod) _ Unary@ >>*
+  ;
+
+Unary
+  = << ('!' #not / '-' #minus / '+' #plus / '~' #compl) Unary >>
+  / Primary <<@ Selector>>*
+  ;
+
+Selector
+  = '.' Name@ #field
+  / '[' _ Expr@ ']' #index
+  / '(' _ ( Expr@ ( _ ',' _ Expr@ )* )? ')'  #call
+  / '++' #postinc  / '--' #postdec
+  ;
+  
+Primary
+  = << '(' _ Expr@ _ ')' #group >> 
+  / << '[' _ ( Expr@ ( _ ',' _ Expr@ )* )? #array >>
+  / Value / Name
+  ;
