@@ -183,7 +183,7 @@ public class Main {
 		Main._PrintLine(Copyright);
 		int linenum = 1;
 		String Line = null;
-		while ((Line = readMultiLine("\n>>> ", "    ")) != null) {
+		while ((Line = readMultiLine(">>> ", "    ")) != null) {
 			String startPoint = "TopLevel";
 			if(PegDebuggerMode) {
 				if(Line.startsWith("?")) {
@@ -236,46 +236,42 @@ public class Main {
 
 	private static jline.ConsoleReader ConsoleReader = null;
 
+	private final static String readSingleLine(String prompt) {
+		try {
+			return ConsoleReader.readLine(prompt);
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	private final static String readMultiLine(String prompt, String prompt2) {
 		if(ConsoleReader == null) {
 			try {
 				ConsoleReader = new jline.ConsoleReader();
-				//ConsoleReader.setExpandEvents(false);
 			}
-			catch (IOException e) {
+			catch(IOException e) {
 				throw new RuntimeException(e);
 			}
 		}
-		String Line;
-		try {
-			Line = ConsoleReader.readLine(prompt);
-		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		if(Line == null) {
+		String line = readSingleLine(prompt);
+		if(line == null) {
 			System.exit(0);
 		}
 		if(prompt2 != null) {
 			int level = 0;
-			while((level = CheckBraceLevel(Line)) > 0) {
-				String Line2;
-				try {
-					Line2 = ConsoleReader.readLine(prompt2);
-					//Line2 = ConsoleReader.readLine(Prompt2 + ZenUtils.JoinStrings("  ", level));
-				}
-				catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-				Line += "\n" + Line2;
+			while((level = CheckBraceLevel(line)) > 0) {
+				String line2 = readSingleLine(prompt2);
+				line += "\n" + line2;
 			}
 			if(level < 0) {
-				Line = "";
+				line = "";
 				Main._PrintLine(" .. canceled");
 			}
 		}
-		ConsoleReader.getHistory().addToHistory(Line);
-		return Line;
+		ConsoleReader.getHistory().addToHistory(line);
+		return line;
 	}
 
 	private static void PrintStackTrace(Exception e, int linenum) {
@@ -296,16 +292,14 @@ public class Main {
 
 	private final static int CheckBraceLevel(String Text) {
 		int level = 0;
-		int i = 0;
-		while(i < Text.length()) {
+		for(int i = 0; i < Text.length(); i++) {
 			char ch = Text.charAt(i);
-			if(ch == '{' || ch == '[') {
-				level = level + 1;
+			if(ch == '{') {
+				level++;
 			}
-			if(ch == '}' || ch == ']') {
-				level = level - 1;
+			if(ch == '}') {
+				level--;
 			}
-			i = i + 1;
 		}
 		return level;
 	}
