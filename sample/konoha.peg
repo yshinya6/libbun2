@@ -31,6 +31,7 @@ Name
 TopLevel
   = FuncDecl 
   / LetDecl
+  / IfStmt
   / Expr
   ;
 
@@ -49,7 +50,11 @@ TypeAnno
   ;
 
 Block
-  = << '{' (NL ( ';' / Stmt@) )* NL '}' #block>>
+  = << '{' (NL ( ';' / Stmt / catch BlockSkip )@ )* NL '}' #block>>
+  ;
+
+BlockSkip
+  = (![{}] .)* ('{' BlockSkip '}')?
   ;
 
 Stmt

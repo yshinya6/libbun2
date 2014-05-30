@@ -14,6 +14,12 @@ public class PegObject {
 		this.name = functor;
 	}
 
+	PegObject(String functor, BunSource source) {
+		this.name = functor;
+		  // created to store error position
+		this.source = source.newToken(null, 0, 0);
+	}
+
 	public boolean is(String functor) {
 		return this.name.startsWith(functor);
 	}

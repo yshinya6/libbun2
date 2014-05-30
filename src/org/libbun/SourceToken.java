@@ -1,7 +1,7 @@
 package org.libbun;
 
 public class SourceToken {
-	final Peg createdPeg;
+	Peg createdPeg;
 	final BunSource source;
 	int  startIndex;
 	int  endIndex;
