@@ -171,8 +171,8 @@ public class Main {
 		parseCommandArgument(args);
 		PegParser p = new PegParser(null);
 		p.loadPegFile(LanguagePeg);
-		Namespace gamma = new Namespace(p);
 		PegDriver driver = loadDriver(DriverName);
+		Namespace gamma = new Namespace(p, driver);
 		driver.initTable(gamma);
 		performShell(gamma, driver);
 	}
@@ -215,13 +215,11 @@ public class Main {
 					}
 					if(driver != null) {
 						driver.startTransaction(null);
-						if(gamma.check(node, driver)) {
+						if(gamma.tryMatch(node)) {
 							node.matched.build(node, driver);
 						}
 						else {
-							if(EnableVerbose) {
-								System.out.println("undefined: " + node.toString());
-							}
+							driver.pushUnknownNode(node);
 						}
 						driver.endTransaction();
 					}

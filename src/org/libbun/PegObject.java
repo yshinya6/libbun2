@@ -44,7 +44,7 @@ public class PegObject {
 	}
 
 	// AST[]
-
+	
 	public final int size() {
 		if(this.AST == null) {
 			return 0;
@@ -105,26 +105,29 @@ public class PegObject {
 		childNode.parent = this;
 	}
 
-
-	//	public final BType getTypeAt(int Index) {
-	//		if(Index < this.AST.length) {
-	//			return this.AST[Index].typed.GetRealType();
-	//		}
-	//		return BType.VoidType;  // to retrieve RecvType
-	//	}
-	//
-	//	public final void setTypeAt(int Index, BType Type) {
-	//		if(this.AST[Index] != null) {
-	//			this.AST[Index].typed = Type;
-	//		}
-	//	}
-
 	public final String getTextAt(int index, String defaultValue) {
 		if(index < this.size()) {
 			return this.AST[index].getText();
 		}
 		return defaultValue;
 	}
+	
+	public MetaType getTypeAt(SymbolTable gamma, int index, MetaType defaultType) {
+		if(index < this.size()) {
+			PegObject node = this.AST[index];
+			if(node.typed != null) {
+				return node.typed;
+			}
+			if(node.matched == null && gamma != null) {
+				gamma.tryMatch(node);
+			}
+			if(node.matched != null) {
+				return node.getType(defaultType);
+			}
+		}
+		return defaultType;
+	}
+
 
 	@Override
 	public String toString() {
@@ -132,7 +135,6 @@ public class PegObject {
 		this.stringfy(sb);
 		return sb.toString();
 	}
-
 
 	final void stringfy(SourceBuilder sb) {
 		if(this.AST == null) {
@@ -164,8 +166,8 @@ public class PegObject {
 			return ":" + this.getType(null) + " by " + this.matched;
 		}
 	}
-	
-	final SymbolTable getSymbolTable() {
+		
+	public final SymbolTable getSymbolTable() {
 		PegObject node = this;
 		while(node.gamma == null) {
 			node = node.parent;
@@ -173,6 +175,33 @@ public class PegObject {
 		return node.gamma;
 	}
 
+	public final PegObject findParentNode(String name) {
+		PegObject node = this;
+		while(node != null) {
+			if(node.is(name)) {
+				return node;
+			}
+			node = node.parent;
+		}
+		return null;
+	}
+
+	public void setName(String name, MetaType type, PegObject initValue) {
+		if(this.gamma == null) {
+			SymbolTable parent = this.getSymbolTable();
+			this.gamma = new SymbolTable(parent.namespace);
+		}
+		this.gamma.setName(name, type, initValue);
+	}
+
+	public void setName(PegObject nameNode, MetaType type, PegObject initValue) {
+		if(this.gamma == null) {
+			SymbolTable parent = this.getSymbolTable();
+			this.gamma = new SymbolTable(parent.namespace);
+		}
+		this.gamma.setName(nameNode, type, initValue);
+	}
+	
 	public final MetaType getType(MetaType defaultType) {
 		if(this.typed == null) {
 			if(this.matched != null) {
@@ -193,5 +222,7 @@ public class PegObject {
 			driver.pushUnknownNode(this);
 		}
 	}
+
+
 
 }

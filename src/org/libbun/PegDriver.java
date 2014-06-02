@@ -37,6 +37,7 @@ public abstract class PegDriver {
 	public abstract void pushRawLiteral(PegObject node, String text, MetaType type);
 	public abstract void pushGlobalName(PegObject node, String name);
 	public abstract void pushLocalName(PegObject node, String name);
+	public abstract void pushUndefinedName(PegObject node, String name);
 
 	// Template Engine
 	public abstract void pushNewLine();
@@ -47,5 +48,8 @@ public abstract class PegDriver {
 	public void report(PegObject node, String errorType, String msg) {
 		System.err.println(node.source.formatErrorMessage(errorType, msg));
 	}
+
+	public abstract void openIndent();
+	public abstract void closeIndent();
 
 }

@@ -36,7 +36,6 @@ public abstract class MetaType  {
 
 	public abstract void stringfy(UniStringBuilder sb);
 	public abstract boolean is(MetaType valueType, MetaType[] greekContext);
-	public abstract PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext);
 	
 //	public int getGenericSize() {
 //		return 0;
@@ -342,7 +341,7 @@ public abstract class MetaType  {
 		return newFuncType(TypeList);
 	}
 
-	public final static FuncType _LookupFuncType2(MetaType R) {
+	public final static FuncType newFuncType(MetaType R) {
 		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[2]);
 		TypeList.add(R);
 		return newFuncType(TypeList);
@@ -403,19 +402,44 @@ public abstract class MetaType  {
 }
 
 class VarType extends MetaType {
-	private int varId = 0;
 	private MetaType realType;
+	private String genericName;
+	private UniArray<MetaType> typeList;
 
-	public VarType(int varId) {
+	public VarType(String genericName) {
 		super(null);
-		this.varId = varId;
+		this.genericName = genericName;
 		this.realType = null;
+		this.typeList = null;
 	}
 
+	public MetaType newVarType(MetaType type) {
+		if(this.typeList == null) {
+			this.typeList = new UniArray<MetaType>(new MetaType[2]);
+		}
+		if(type == null) {
+			type = new VarType(null);
+		}
+		typeList.add(type);
+		return type;
+	}
+	
 	@Override
 	public MetaType getRealType() {
 		if(this.realType != null) {
-			return this.realType.getRealType();
+			this.realType = this.realType.getRealType();
+			return this.realType;
+		}
+		if(this.genericName != null && this.typeList != null) {
+			for(int i = 0; i < this.typeList.size(); i++) {
+				MetaType p = this.typeList.ArrayValues[i];
+				if(p.hasVarType()) {
+					return this;
+				}
+				this.typeList.ArrayValues[i] = p.getRealType();
+			}
+			this.realType = MetaType.newGenericType(genericName, this.typeList);
+			return this.realType;
 		}
 		return this;
 	}
@@ -447,25 +471,25 @@ class VarType extends MetaType {
 
 	public boolean is(MetaType valueType, MetaType[] greekContext) {
 		if(this.realType == null) {
+			valueType = valueType.getRealType();
+			if(this.genericName == null && this.typeList == null) {
+				this.realType = valueType;
+			}
+//			if(valueType instanceof GenericType) {
+//				GenericType genType = (GenericType)valueType;
+//				if(!this.matchBaseName(valueType.getBaseName())) {
+//					return false;
+//				}
+//			}
 			this.realType = valueType;
 			return true;
 		}
 		return this.realType.is(valueType, greekContext);
 	}
 
-	public final PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext) {
-		if(this.realType == null) {
-			MetaType nodeType = node.getType(MetaType.UntypedType);
-			this.realType = nodeType;
-			return node;
-		}
-		return this.realType.match(node, allowSubType, greekContext);
-	}
-
 }
 
 class ValueType extends MetaType {
-	
 	protected String name;
 	public ValueType(String name, Object typeInfo) {
 		super(typeInfo);
@@ -504,17 +528,50 @@ class ValueType extends MetaType {
 		return false;
 	}
 	
-	public PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext) {
-		MetaType nodeType = node.getType(MetaType.UntypedType);
-		if(nodeType == this) {
-			return node;
-		}
-		if(allowSubType && MetaType.isSubType(nodeType, this)) {
-			return node;  // FIXME
-		}
-		return null;
+}
+
+class TransType extends MetaType {
+	public MetaType sourceType;
+	public MetaType targetType;
+	public Functor  functor;
+	public TransType(MetaType sourceType, MetaType targetType, Functor functor) {
+		super(functor);
+		this.sourceType = sourceType;
+		this.targetType = targetType;
+	}
+	@Override
+	public boolean hasVarType() {
+		return targetType.hasVarType();
+	}
+	@Override
+	public MetaType getRealType() {
+		return targetType.getRealType();
+	}
+	@Override
+	public boolean hasGreekType() {
+		return this.targetType.hasGreekType();
+	}
+	@Override
+	public MetaType getRealType(MetaType[] greekContext) {
+		return this.targetType.getRealType(greekContext);
+	}
+	@Override
+	public void stringfy(UniStringBuilder sb) {
+		this.targetType.stringfy(sb);
+		sb.append("(<-");
+		this.sourceType.stringfy(sb);
+		sb.append(")");
+	}
+	@Override
+	public boolean is(MetaType valueType, MetaType[] greekContext) {
+		return this.targetType.is(valueType, greekContext);
 	}
 
+	public void build(PegObject node, PegDriver driver) {
+		PegObject o = new PegObject(this.functor.name);
+		o.append(node);
+		this.functor.build(o, driver);
+	}
 }
 
 class GreekType extends MetaType {
@@ -571,15 +628,6 @@ class GreekType extends MetaType {
 			return true;
 		}
 		return greekContext[this.GreekId].is(valueType, greekContext);
-	}
-
-	public final PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext) {
-		MetaType nodeType = node.getType(MetaType.UntypedType);
-		if(greekContext[this.GreekId] == null) {
-			greekContext[this.GreekId] = nodeType;
-			return node;
-		}
-		return greekContext[this.GreekId].match(node, allowSubType, greekContext);
 	}
 }
 
@@ -665,14 +713,6 @@ abstract class GenericType extends MetaType {
 			}
 		}
 		return false;
-	}
-
-	public final PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext) {
-		MetaType nodeType = node.getType(MetaType.UntypedType);
-		if(this.is(nodeType, greekContext)) {
-			return node;
-		}
-		return null;
 	}
 }
 
@@ -768,9 +808,6 @@ class UntypedType extends ValueType {
 		return true;
 	}
 	
-	public PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext) {
-		return node;
-	}
 }
 
 class VoidType extends ValueType {
@@ -779,10 +816,6 @@ class VoidType extends ValueType {
 	}
 	public boolean is(MetaType valueType, MetaType[] greekContext) {
 		return true;
-	}
-	
-	public PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext) {
-		return node;
 	}
 }
 
@@ -794,9 +827,6 @@ class AnyType extends ValueType {
 		return true;
 	}
 	
-	public PegObject match(PegObject node, boolean allowSubType, MetaType[] greekContext) {
-		return node;
-	}
 }
 
 

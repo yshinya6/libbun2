@@ -26,6 +26,7 @@ public class PythonDriver extends PegDriver {
 		gamma.addFloatFunctor("#float", "float");
 		gamma.addCharacterFunctor("#character", "unicode", true);
 		gamma.addStringFunctor("#string", "unicode", true);
+		gamma.addFunctor(new PyBlockFunctor("#block"));
 		gamma.load("lib/driver/python/common.bun", this);
 	}
 
@@ -92,6 +93,11 @@ public class PythonDriver extends PegDriver {
 	}
 
 	@Override
+	public void pushUndefinedName(PegObject node, String name) {
+		this.builder.append(name);
+	}
+
+	@Override
 	public void pushNewLine() {
 		this.builder.appendNewLine();
 	}
@@ -109,7 +115,44 @@ public class PythonDriver extends PegDriver {
 	@Override
 	public void pushCommand(String name, PegObject node) {
 		// TODO Auto-generated method stub
+		System.out.println("debug");
 		
 	}
+	
+	@Override
+	public void openIndent() {
+		builder.openIndent();
+	}
+
+	@Override
+	public void closeIndent() {
+		builder.closeIndent();
+	}
+
+	
+	class PyBlockFunctor extends Functor {
+		public PyBlockFunctor(String name) {
+			super(name, null);
+		}
+
+		@Override
+		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
+			node.matched = this;
+		}
+
+		@Override
+		public void build(PegObject node, PegDriver driver) {
+			driver.openIndent();// 
+			for(int i = 0; i < node.size(); i++) {
+				driver.pushNewLine();
+				driver.pushNode(node.get(i));
+				node.get(i);
+			}
+			driver.closeIndent();
+		}
+	}
+
+
+
 
 }

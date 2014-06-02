@@ -24,7 +24,7 @@ public abstract class Functor {
 		return this.key();
 	}
 
-	protected abstract void matchSubNode(PegObject node, boolean hasNextChoice, PegDriver driver);
+	protected abstract void matchSubNode(PegObject node, boolean hasNextChoice);
 
 	public abstract void build(PegObject node, PegDriver driver);
 
@@ -43,7 +43,7 @@ class ErrorFunctor extends Functor {
 	}
 
 	@Override
-	protected void matchSubNode(PegObject node, boolean hasNextChoice, PegDriver driver) {
+	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		node.matched = this;
 	}
 
@@ -66,9 +66,9 @@ class BunFunctor extends Functor {
 	}
 
 	@Override 
-	protected void matchSubNode(PegObject node, boolean hasNextChoice, PegDriver driver) {
+	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		SymbolTable gamma = node.getSymbolTable();
-		TemplateFunctor f = this.newFunctor(gamma, node, driver);
+		TemplateFunctor f = this.newFunctor(gamma, node);
 		if(f != null) {
 			gamma.addFunctor(f);
 		}
@@ -80,41 +80,41 @@ class BunFunctor extends Functor {
 		// TODO Auto-generated method stub
 	}
 
-	private TemplateFunctor newFunctor(SymbolTable gamma, PegObject defineNode, PegDriver driver) {
-		PegObject sig = defineNode.get(0);
+	private TemplateFunctor newFunctor(SymbolTable gamma, PegObject bunNode) {
+		PegObject sig = bunNode.get(0);
 		String name = sig.getTextAt(0, null);
 		UniMap<Integer> nameMap = new UniMap<Integer>();
-		FuncType funcType = this.newFuncType(gamma, sig.get(1), sig.get(2,null), nameMap, driver);
+		FuncType funcType = this.newFuncType(gamma, sig.get(1), sig.get(2,null), nameMap);
 		TemplateFunctor functor = new TemplateFunctor(name, funcType);
-		for(int i = 1; i < defineNode.size(); i++) {
-			Section section = this.newSection(defineNode.get(i), nameMap, driver);
+		for(int i = 1; i < bunNode.size(); i++) {
+			TemplateSection section = this.newSection(bunNode.get(i), nameMap);
 			functor.add(section);
 		}
 		return functor;
 	}
 
-	private MetaType newType(SymbolTable gamma, PegObject typeNode, PegDriver driver) {
+	private MetaType newType(SymbolTable gamma, PegObject typeNode) {
 		if(typeNode != null) {
-			gamma.check(typeNode, driver);
+			gamma.tryMatch(typeNode);
 			return typeNode.getType(MetaType.UntypedType);
 		}
 		return MetaType.UntypedType;
 	}
 
-	private FuncType newFuncType(SymbolTable gamma, PegObject paramNode, PegObject returnTypeNode, UniMap<Integer> nameMap, PegDriver driver) {
+	private FuncType newFuncType(SymbolTable gamma, PegObject paramNode, PegObject returnTypeNode, UniMap<Integer> nameMap) {
 		UniArray<MetaType> typeList = new UniArray<MetaType>(new MetaType[paramNode.size()+1]);
 		for(int i = 0; i < paramNode.size(); i++) {
 			PegObject p = paramNode.get(i);
 			String name = p.getTextAt(0, null);
-			typeList.add(this.newType(gamma, p.get(1, null), driver));
+			typeList.add(this.newType(gamma, p.get(1, null)));
 			nameMap.put(name, i);
 		}
-		typeList.add(this.newType(gamma, returnTypeNode, driver));
+		typeList.add(this.newType(gamma, returnTypeNode));
 		return MetaType.newFuncType(typeList);
 	}
 
-	private Section newSection(PegObject sectionNode, UniMap<Integer> nameMap, PegDriver driver) {
-		Section section = new Section();
+	private TemplateSection newSection(PegObject sectionNode, UniMap<Integer> nameMap) {
+		TemplateSection section = new TemplateSection();
 		int line = 0;
 		for(int i = 0; i < sectionNode.size(); i++) {
 			PegObject subNode = sectionNode.get(i);
@@ -126,7 +126,7 @@ class BunFunctor extends Functor {
 				if(line > 0) {
 					section.addNewLine();
 				}
-				section.addLineNode(subNode, nameMap, driver);
+				section.addLineNode(subNode, nameMap);
 				line = line + 1;
 			}
 		}
@@ -135,7 +135,7 @@ class BunFunctor extends Functor {
 }
 
 class TemplateFunctor extends Functor {
-	Section section;
+	TemplateSection section;
 
 	public TemplateFunctor(String name, FuncType funcType) {
 		super(name, funcType);
@@ -143,22 +143,22 @@ class TemplateFunctor extends Functor {
 	}
 
 	@Override
-	protected void matchSubNode(PegObject node, boolean hasNextChoice, PegDriver driver) {
-		MetaType[] greekContext = getGreekContext();
+	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		SymbolTable gamma = node.getSymbolTable();
+		MetaType[] greekContext = getGreekContext();
 		for(int i = 0; i < node.size(); i++) {
 			MetaType type = this.getParamTypeAt(i);
-			PegObject subNode = node.get(i);
-			PegObject checkedNode = gamma.checkType(subNode, type, greekContext, hasNextChoice, driver);
-			if(checkedNode == null) {
-				//System.out.println("** untyped node: " + node);
+			if(!gamma.checkTypeAt(node, i, type, greekContext, hasNextChoice)) {
+				node.matched = null;
 				return;
 			}
 		}
-		node.matched = this;
 		node.typed = this.getReturnType(MetaType.UntypedType).getRealType(greekContext);
 		if(node.typed == null) {  // unresolved greek type
 			node.matched = null;
+		}
+		else {
+			node.matched = this;
 		}
 		//System.out.println("**typed " + node);
 	}
@@ -179,15 +179,15 @@ class TemplateFunctor extends Functor {
 
 	@Override
 	public void build(PegObject node, PegDriver driver) {
-		Section cur = this.section;
+		TemplateSection cur = this.section;
 		while(cur != null) {
 			cur.build(node, driver);
 			cur = cur.nextChoice;
 		}
 	}
 
-	public void add(Section section) {
-		Section sec = this.section;
+	public void add(TemplateSection section) {
+		TemplateSection sec = this.section;
 		if(sec == null) {
 			this.section = section;
 		}
@@ -200,31 +200,49 @@ class TemplateFunctor extends Functor {
 	}
 }
 
-class Section {
+class TemplateSection {
 	String label;
 	UniArray<String> requirements;
-	ChunkCommand chunks = null;
-	Section nextChoice = null;
+	TempalteChunk chunks = null;
+	TemplateSection nextChoice = null;
 
-	public Section() {
+	public TemplateSection() {
 
 	}
 
-	void add(ChunkCommand chunk) {
+	void add(TempalteChunk chunk) {
 		if(this.chunks == null) {
 			this.chunks = chunk;
 		}
 		else {
-			ChunkCommand cur = this.chunks;
+			TempalteChunk cur = this.chunks;
 			while(cur.next != null) {
 				cur = cur.next;
 			}
 			cur.next = chunk;
 		}
 	}
+	
+	
+	void addNewLine() {
+		this.add(new NewLineChunk());
+	}
+	void addChunk(String text) {
+		this.add(new Chunk(text));
+	}
+	void addNode(int index) {
+		this.add(new NodeCommand(null, index));
+	}
+	void addCommand(String cmd, int index) {
+		if(cmd.equals("typeof")) {
+			this.add(new TypeOfNodeCommand(cmd, index));
+			return;
+		}
+		this.add(new Command(cmd, index));
+	}
 
 	public void build(PegObject node, PegDriver driver) {
-		ChunkCommand cur = this.chunks;
+		TempalteChunk cur = this.chunks;
 		//System.out.println("debug command: " + cur);
 		while(cur != null) {
 			cur.push(node, driver);
@@ -233,7 +251,7 @@ class Section {
 		}
 	}
 
-	boolean addLineNode(PegObject lineNode, UniMap<Integer> nameMap, PegDriver driver) {
+	boolean addLineNode(PegObject lineNode, UniMap<Integer> nameMap) {
 		for(int j = 0; j < lineNode.size(); j++) {
 			PegObject chunkNode = lineNode.get(j);
 			//System.out.println("debug: chunk: " + chunkNode);
@@ -252,7 +270,8 @@ class Section {
 						this.addNode(index);
 					}
 					else {
-						driver.report(chunkNode, "warning", "undefined name: " + name);
+						SymbolTable gamma = lineNode.getSymbolTable();
+						gamma.report(chunkNode, "warning", "undefined name: " + name);
 					}
 				}
 				else {
@@ -263,38 +282,23 @@ class Section {
 						this.addCommand(cmd, index);
 					}
 					else {
-						driver.report(chunkNode, "warning", "undefined name: " + name);
+						SymbolTable gamma = lineNode.getSymbolTable();
+						gamma.report(chunkNode, "warning", "undefined name: " + name);
 					}
 				}
 			}
 		}
 		return true;
 	}
-	void addNewLine() {
-		this.add(new NewLineChunk());
-	}
-	void addChunk(String text) {
-		this.add(new Chunk(text));
-	}
-	void addNode(int index) {
-		this.add(new NodeCommand(null, index));
-	}
-	void addCommand(String cmd, int index) {
-		if(cmd.equals("typeof")) {
-			this.add(new TypeOfNodeCommand(cmd, index));
-			return;
-		}
-		this.add(new Command(cmd, index));
-	}
 }
 
 
-abstract class ChunkCommand {
-	ChunkCommand next = null;
+abstract class TempalteChunk {
+	TempalteChunk next = null;
 	public abstract void push(PegObject node, PegDriver d);
 }
 
-class Chunk extends ChunkCommand {
+class Chunk extends TempalteChunk {
 	String text;
 	Chunk(String text) {
 		this.text = text;
@@ -305,14 +309,14 @@ class Chunk extends ChunkCommand {
 	}
 }
 
-class NewLineChunk extends ChunkCommand {
+class NewLineChunk extends TempalteChunk {
 	@Override
 	public void push(PegObject node, PegDriver d) {
 		d.pushNewLine();
 	}
 }
 
-class Command extends ChunkCommand {
+class Command extends TempalteChunk {
 	String name;
 	int index;
 	Command(String name, int index) {

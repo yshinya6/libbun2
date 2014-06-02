@@ -102,6 +102,24 @@ public class DubugDriver extends PegDriver {
 		
 	}
 
+	@Override
+	public void openIndent() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void closeIndent() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void pushUndefinedName(PegObject node, String name) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
 
 
