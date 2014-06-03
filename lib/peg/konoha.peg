@@ -140,7 +140,7 @@ Product
   ;
 
 Unary
-  = << ('!' #not / '-' #minus / '+' #plus / '~' #compl) Unary >>
+  = << ('!' #not / '-' #minus / '+' #plus / '~' #compl) Unary@ >>
   / Primary <<@ Selector>>*
   ;
 

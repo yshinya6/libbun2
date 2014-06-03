@@ -18,53 +18,6 @@ public class DubugDriver extends PegDriver {
 		
 	}
 
-	@Override
-	public void pushNull(PegObject node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pushTrue(PegObject node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pushFalse(PegObject node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pushInteger(PegObject node, long num) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pushFloat(PegObject node, double num) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pushCharacter(PegObject node, char ch) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pushString(PegObject node, String text) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void pushRawLiteral(PegObject node, String text, MetaType type) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	@Override
 	public void pushGlobalName(PegObject node, String name) {

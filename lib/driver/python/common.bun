@@ -1,9 +1,68 @@
 
-bun #coercion(x: unicode): str {
+bun boolean: type {
+	bool
+}
+
+bun int: type {
+	int
+}
+
+bun float: type {
+	float
+}
+
+bun String: type {
+	unicode
+}
+
+bun #null(): alpha {
+	None
+}
+
+bun #true(): boolean {
+	True
+}
+
+bun #false(): boolean {
+	False
+}
+
+bun #integer(): int {
+	${textof this}
+}
+
+bun #float(): float {
+	${textof this}
+}
+
+bun #string(): String {
+	"${textof this}"
+}
+
+bun number: type {
+}
+
+bun #coercion(x: float): number {
+	${x}
+}
+
+bun #coercion(x: int): number {
+	${x}
+}
+
+bun #conv(x: float): int {
+	int(${x})
+}
+
+bun str: type {
+	str
+}
+
+bun #coercion(x: String): str {
 	str(${x})
 }
 
-bun #coercion(x: str): unicode {
+bun #coercion(x: str): String {
 	ustr(${x})
 }
 
@@ -11,27 +70,36 @@ bun #group(expr :alpha) :alpha {
 	(${expr})
 }
 
-bun #plus(x: alpha) :alpha {
-	+${x}
-}
-
-bun #minus(x: alpha) :alpha {
-	-${x}
-}
-
-bun #not(x: bool) :bool {
+bun #not(x: boolean) :boolean {
 	!${x}
 }
 
-bun #compl(x: alpha) :alpha {
+bun #plus(x: int) :int {
+	+${x}
+}
+
+
+bun #plus(x: float) :float {
+	+${x}
+}
+
+bun #minus(x: int) :int {
+	-${x}
+}
+
+bun #minus(x: float) :float {
+	-${x}
+}
+
+bun #compl(x: int) :int {
 	~${x}
 }
 
-bun #and(x: bool, y: bool): bool {
+bun #and(x: boolean, y: boolean): boolean {
 	${x} and ${y}
 }
 
-bun #or(x: bool, y: bool): bool {
+bun #or(x: boolean, y: boolean): boolean {
 	${x} or ${y}
 }
 
@@ -39,61 +107,61 @@ bun #assign(x: alpha, y: alpha): void {
 	${x} = ${y}
 }
 
-bun #add(a :alpha, b :alpha) :alpha {
-	(${a} + ${b})
+bun #add(x: alpha, y: alpha) :alpha {
+	(${x} + ${y})
 }
 
-bun #add(a :str, b :any) :str {
-	(${a} + str(${b}))
+bun #add(x :str, y :any) :str {
+	(${x} + str(${y}))
 }
 
-bun #add(a :unicode, b:any): unicode {
-	(${a} + ustr(${b}))
+bun #add(x: String, y: any): String {
+	(${x} + ustr(${y}))
 }
 
-bun #sub(a:alpha, b:alpha): alpha {
-	(${a} - ${b})
+bun #sub(x: alpha, y: alpha): alpha {
+	(${x} - ${y})
 }
 
-bun #mul(a: alpha, b: alpha): alpha {
-	(${a} * ${b})
+bun #mul(x: alpha, y: alpha): alpha {
+	(${x} * ${y})
 }
 
-bun #div(a: alpha, b: alpha): alpha {
-	(${a} / ${b})
+bun #div(x: alpha, y: alpha): alpha {
+	(${x} / ${y})
 }
 
-bun #mod(a: alpha, b: alpha): alpha {
-	(${a} % ${b})
+bun #mod(x: alpha, y: alpha): alpha {
+	(${x} % ${y})
 }
 
-bun #eq(a: alpha, b: alpha): bool {
-	(${a} == ${b})
+bun #eq(x: alpha, y: alpha): boolean {
+	(${x} == ${y})
 }
 
-bun #noteq(a: alpha, b: alpha): bool {
-	(${a} != ${b})
+bun #noteq(x: alpha, y: alpha): boolean {
+	(${x} != ${y})
 }
 
-bun #lt(a: alpha, b: alpha): bool {
-	(${a} < ${b})
+bun #lt(x: alpha, y: alpha): boolean {
+	(${x} < ${y})
 }
 
-bun #lte(a: alpha, b: alpha): bool {
-	(${a} <= ${b})
+bun #lte(x: alpha, y: alpha): boolean {
+	(${x} <= ${y})
 }
 
-bun #gt(a: alpha, b: alpha): bool {
-	(${a} > ${b})
+bun #gt(x: alpha, y: alpha): boolean {
+	(${x} > ${y})
 }
 
-bun #gte(a: alpha, b: alpha): bool {
-	(${a} >= ${b})
+bun #gte(x: alpha, y: alpha): boolean {
+	(${x} >= ${y})
 }
 
 bun #let(name, type, value): void {
 ${typedecl}
-	${name} = ${value}
+	${typeof value} ${name} = ${value}
 }
 
 bun #var(name, type, value): void {
@@ -103,18 +171,18 @@ ${typedecl}
 
 bun #function(name, params, rtype, block: void): void {
 ${funcdecl}
-	def ${name}${params}: ${begin}
-		${statement block}
-	${end}
+${tricode block}
+	def ${push name}(${list params}): ${begin}
+	${statement block} ${end}
 }
 
-bun #if(x: bool, then: void): void {
-	if ${x}: 
-		${statement then}
+bun #if(x: boolean, then: void): void {
+	if ${x}: ${begin}
+	${statement then} ${end}
 	
 }
 
-bun #if(x: bool, then: void, else: void): void {
+bun #if(x: boolean, then: void, else: void): void {
 	if ${x}: ${then}
 	else ${else}
 }

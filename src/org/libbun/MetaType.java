@@ -392,6 +392,20 @@ public abstract class MetaType  {
 		return new GreekType(name, greekId, typeInfo);
 	}
 
+	public final static String keyTypeRel(String head, MetaType fromType, MetaType toType) {
+		return head + "+" + fromType.typeId + "+" + toType.typeId;
+	}
+	
+	public final static MetaType newTransType(String key, MetaType sourceType, MetaType targetType, Functor f) {
+		MetaType t = _TypeNameMap.get(key, null);
+		if(t == null) {
+			t = new TransType(sourceType, targetType, f);
+			_TypeNameMap.put(key, t);
+		}
+		return t;
+	}
+
+
 
 }
 
@@ -777,6 +791,7 @@ class FuncType extends GenericType {
 	public final MetaType getReturnType() {
 		return this.typeParams[this.typeParams.length - 1];
 	}
+
 
 //
 //	public final boolean AcceptAsFieldFunc(FuncType FuncType) {

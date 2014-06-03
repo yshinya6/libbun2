@@ -8,14 +8,14 @@ public abstract class PegDriver {
 	public abstract void endTransaction();
 	
 	// Functor
-	public abstract void pushNull(PegObject node);
-	public abstract void pushTrue(PegObject node);
-	public abstract void pushFalse(PegObject node);
-	public abstract void pushInteger(PegObject node, long num);
-	public abstract void pushFloat(PegObject node, double num);
-	public abstract void pushCharacter(PegObject node, char ch);
-	public abstract void pushString(PegObject node, String text);
-	public abstract void pushRawLiteral(PegObject node, String text, MetaType type);
+//	public abstract void pushNull(PegObject node);
+//	public abstract void pushTrue(PegObject node);
+//	public abstract void pushFalse(PegObject node);
+//	public abstract void pushInteger(PegObject node, long num);
+//	public abstract void pushFloat(PegObject node, double num);
+//	public abstract void pushCharacter(PegObject node, char ch);
+//	public abstract void pushString(PegObject node, String text);
+//	public abstract void pushRawLiteral(PegObject node, String text, MetaType type);
 	public abstract void pushGlobalName(PegObject node, String name);
 	public abstract void pushLocalName(PegObject node, String name);
 	public abstract void pushUndefinedName(PegObject node, String name);
@@ -60,13 +60,16 @@ abstract class SourceDriver extends PegDriver {
 	private UniStringBuilder builder;
 	
 	protected SourceDriver() {
+		this.addCommand("push",      new PushCommand());
 		this.addCommand("begin",     new OpenIndentCommand());
 		this.addCommand("end",       new CloseIndentCommand());
+		this.addCommand("textof",    new TextofCommand());
+		this.addCommand("quote",     new QuoteCommand());
 		this.addCommand("typeof",    new TypeofCommand());
 		this.addCommand("statement", new StatementCommand());
 		this.addCommand("list",      new ListCommand());
-		this.addCommand("typedecl", new TypeDeclCommand());
-		this.addCommand("funcdecl", new FuncDeclCommand());
+		this.addCommand("typedecl",  new TypeDeclCommand());
+		this.addCommand("funcdecl",  new FuncDeclCommand());
 	}
 
 	@Override
@@ -90,7 +93,21 @@ abstract class SourceDriver extends PegDriver {
 	public void pushCode(String text) {
 		this.builder.append(text);
 	}
+	
+	class PushCommand extends DriverCommand {
+		@Override
+		public void invoke(PegDriver driver, PegObject node, String[] param) {
+			driver.pushNode(node);
+		}
+	}
 
+	class NewLineCommand extends DriverCommand {
+		@Override
+		public void invoke(PegDriver driver, PegObject node, String[] param) {
+			builder.appendNewLine();
+		}
+	}
+	
 	class OpenIndentCommand extends DriverCommand {
 		@Override
 		public void invoke(PegDriver driver, PegObject node, String[] param) {
@@ -105,15 +122,32 @@ abstract class SourceDriver extends PegDriver {
 		}
 	}
 
-	protected void pushStatementEnd(PegObject node) {
-		this.pushCode(";");
-	}
 	
+	class TextofCommand extends DriverCommand {
+		@Override
+		public void invoke(PegDriver driver, PegObject node, String[] param) {
+			driver.pushCode(node.getText());
+		}
+	}
+
+	class QuoteCommand extends DriverCommand {
+		@Override
+		public void invoke(PegDriver driver, PegObject node, String[] param) {
+			String s = UniCharset._UnquoteString(node.getText());
+			s = UniCharset._QuoteString("\"", s, "\"");
+			driver.pushCode(s);
+		}
+	}
+
 	class TypeofCommand extends DriverCommand {
 		@Override
 		public void invoke(PegDriver driver, PegObject node, String[] param) {
 			driver.pushType(node.getType(MetaType.UntypedType));
 		}
+	}
+
+	protected void pushStatementEnd(PegObject node) {
+		this.pushCode(";");
 	}
 
 	class StatementCommand extends DriverCommand {

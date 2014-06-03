@@ -20,7 +20,7 @@ Comment
   ;
 
 Template
-  = ('bun' / 'template') Spacing 
+  = NL ('bun' / 'template') Spacing 
     << TemplateName@ _ Params@ _ BunAnno@ _ '{' _ '\n' Section@ '}' #bun >>
   ;
 TemplateName

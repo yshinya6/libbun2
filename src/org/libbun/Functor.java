@@ -2,12 +2,14 @@ package org.libbun;
 
 public class Functor {
 	public String    name;
+	public boolean   isSymbol;
 	public FuncType  funcType;
 	TemplateEngine   template;
 	public Functor   nextChoice = null;
 
-	public Functor(String name, FuncType funcType) {
+	public Functor(String name, boolean isSymbol, FuncType funcType) {
 		this.name = name;
+		this.isSymbol = isSymbol;
 		this.funcType = funcType;
 	}
 
@@ -16,8 +18,20 @@ public class Functor {
 			return this.name + "*";
 		}
 		else {
+			if(this.name.equals("#coercion") || this.name.equals("#conv")) {
+				return this.keyTypeRel(this.name);
+			}
+			if(this.isSymbol) {
+				return this.name;
+			}
 			return this.name + ":" + this.funcType.getFuncParamSize();
 		}
+	}
+	
+	private String keyTypeRel(String head) {
+		MetaType fromType = this.funcType.getFuncParamType(0);
+		MetaType toType = this.funcType.getReturnType();
+		return MetaType.keyTypeRel(head, fromType, toType);
 	}
 
 	@Override 
@@ -82,7 +96,7 @@ public class Functor {
 
 class ErrorFunctor extends Functor {
 	public ErrorFunctor() {
-		super(BunSymbol.PerrorFunctor, null);
+		super(BunSymbol.PerrorFunctor, false, null);
 	}
 
 	@Override
@@ -105,7 +119,7 @@ class ErrorFunctor extends Functor {
 
 class BunFunctor extends Functor {
 	public BunFunctor(String name) {
-		super(name, null);
+		super(name, false, null);
 	}
 
 	@Override 
@@ -124,10 +138,19 @@ class BunFunctor extends Functor {
 	}
 
 	private Functor parseFunctor(SymbolTable gamma, PegObject bunNode) {
+		boolean isSymbol = false;
 		String name = bunNode.getTextAt(0, null);
 		UniMap<Integer> nameMap = new UniMap<Integer>();
-		FuncType funcType = this.parseFuncType(gamma, bunNode.get(1), bunNode.get(2,null), nameMap);
-		Functor functor = new Functor(name, funcType);
+		if(bunNode.get(1).isEmptyToken()) {
+			if(bunNode.getTextAt(2, "").equals("type")) {
+				Functor f = gamma.setType(new ValueType(name, null));
+				f.add(this.parseSection(bunNode.get(3), nameMap));
+				return null;
+			}
+			isSymbol = true;
+		}
+		FuncType funcType = this.parseFuncType(gamma, bunNode.get(1), bunNode.get(2), nameMap);
+		Functor functor = new Functor(name, isSymbol, funcType);
 		TemplateEngine section = this.parseSection(bunNode.get(3), nameMap);
 		functor.add(section);
 		return functor;
@@ -153,7 +176,6 @@ class BunFunctor extends Functor {
 		return MetaType.UntypedType;
 	}
 
-
 	private TemplateEngine parseSection(PegObject sectionNode, UniMap<Integer> nameMap) {
 		TemplateEngine section = new TemplateEngine();
 		int line = 0;
@@ -174,6 +196,14 @@ class BunFunctor extends Functor {
 		return section;
 	}
 
+	private final static Integer NoneOfName = -2;
+	private int indexOfName(String name, UniMap<Integer> nameMap) {
+		if(name.equals("this")) {
+			return -1;
+		}
+		return nameMap.get(name, NoneOfName);
+	}
+	
 	private void parseLine(TemplateEngine sec, boolean headerOption, PegObject lineNode, UniMap<Integer> nameMap) {
 		for(int j = 0; j < lineNode.size(); j++) {
 			PegObject chunkNode = lineNode.get(j);
@@ -185,8 +215,8 @@ class BunFunctor extends Functor {
 			}
 			else if(chunkNode.is("#bun.cmd1")) {
 				String name = chunkNode.getTextAt(0, null);
-				Integer index = nameMap.get(name, null);
-				if(index != null) {
+				int index = this.indexOfName(name, nameMap);
+				if(index != -2) {
 					if(!headerOption) {
 						sec.addNodeChunk(index);
 					}
@@ -210,8 +240,8 @@ class BunFunctor extends Functor {
 					return;
 				}
 				String name = chunkNode.getTextAt(1, null);
-				Integer index = nameMap.get(name, null);
-				if(index != null) {
+				int index = this.indexOfName(name, nameMap);
+				if(index != -2) {
 					sec.addCommand(headerOption, cmd, index);
 				}
 				else {

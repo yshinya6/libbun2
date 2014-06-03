@@ -131,19 +131,25 @@ public class SymbolTable {
 		}
 		return false;
 	}
-	
+		
 	private MetaType getTypeCoersion(MetaType sourceType, MetaType targetType, boolean hasNextChoice) {
+		String key = MetaType.keyTypeRel("#coercion", sourceType, targetType);
+		Functor f = this.getSymbol(key);
+		if(f != null) {
+			if(Main.EnableVerbose) {
+				Main._PrintLine("found type coercion from " + sourceType + " to " + targetType);
+			}
+			return MetaType.newTransType(key, sourceType, targetType, f);
+		}
 		if(hasNextChoice) {
 			return null;
 		}
 		return null;
 	}
 
-
-
 	class DefinedTypeFunctor extends Functor {
 		public DefinedTypeFunctor(String name, MetaType type) {
-			super(name, MetaType.newFuncType(type));
+			super(name, false, MetaType.newFuncType(type));
 		}
 
 		@Override
@@ -230,9 +236,12 @@ public class SymbolTable {
 
 	public MetaType getType(String name, MetaType defaultType) {
 		Functor f = this.getSymbol(name);
-		if(f instanceof DefinedTypeFunctor) {
+		if(f != null) {
 			return f.getReturnType(defaultType);
 		}
+//		if(f instanceof DefinedTypeFunctor) {
+//			return f.getReturnType(defaultType);
+//		}
 		if(Main.EnableVerbose) {
 			Main._PrintLine("FIXME: undefined type: " + name);
 		}
@@ -266,7 +275,7 @@ public class SymbolTable {
 
 	class TypeFunctor extends Functor {
 		public TypeFunctor(String name) {
-			super(name, null);
+			super(name, false, null);
 		}
 
 		@Override
@@ -290,7 +299,7 @@ public class SymbolTable {
 
 	class NameFunctor extends Functor {
 		public NameFunctor(String name) {
-			super(name, null);
+			super(name, false, null);
 		}
 
 		@Override
@@ -322,146 +331,5 @@ public class SymbolTable {
 //		this.setMatchFunction("#var:3", new VarMatchFunction());
 //		this.setMatchFunction("#let:3", new VarMatchFunction());
 	}
-
-	class LiteralFunctor extends Functor {
-		public LiteralFunctor(String name, SymbolTable gamma, String typeName) {
-			super(name, gamma.getFuncType(typeName));
-		}
-
-		@Override
-		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
-			node.matched = this;
-			node.typed = this.getReturnType(MetaType.UntypedType);
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			driver.pushRawLiteral(node, node.getText(), node.getType(MetaType.UntypedType));
-		}
-	}
-
-	public void addRawLiteralFunctor(String name, String typeName) {
-		this.addFunctor(new LiteralFunctor(name, this, typeName));
-	}
-
-	class NullFunctor extends LiteralFunctor {
-		public NullFunctor(String name, SymbolTable gamma, String typeName) {
-			super(name, gamma, typeName);
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			driver.pushNull(node);
-		}
-	}
-
-	public void addNullFunctor(String name, String typeName) {
-		this.addFunctor(new NullFunctor(name, this, typeName));
-	}
-	
-	class TrueFunctor extends LiteralFunctor {
-		public TrueFunctor(String name, SymbolTable gamma, String typeName) {
-			super(name, gamma, typeName);
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			driver.pushTrue(node);
-		}
-	}
-
-	public void addTrueFunctor(String name, String typeName) {
-		this.addFunctor(new TrueFunctor(name, this, typeName));
-	}
-
-	class FalseFunctor extends LiteralFunctor {
-		public FalseFunctor(String name, SymbolTable gamma, String typeName) {
-			super(name, gamma, typeName);
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			driver.pushFalse(node);
-		}
-	}
-
-	public void addFalseFunctor(String name, String typeName) {
-		this.addFunctor(new FalseFunctor(name, this, typeName));
-	}
-
-	class IntegerFunctor extends LiteralFunctor {
-		public IntegerFunctor(String name, SymbolTable gamma, String typeName) {
-			super(name, gamma, typeName);
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			long n = UniCharset._ParseInt(node.getText());
-			driver.pushInteger(node, n);
-		}
-	}
-
-	public void addIntegerFunctor(String name, String typeName) {
-		this.addFunctor(new IntegerFunctor(name, this, typeName));
-	}
-
-	class FloatFunctor extends LiteralFunctor {
-		public FloatFunctor(String name, SymbolTable gamma, String typeName) {
-			super(name, gamma, typeName);
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			double n = UniCharset._ParseFloat(node.getText());
-			driver.pushFloat(node, n);
-		}
-	}
-
-	public void addFloatFunctor(String name, String typeName) {
-		this.addFunctor(new FloatFunctor(name, this, typeName));
-	}
-
-	class CharacterFunctor extends LiteralFunctor {
-		boolean needsUnquote;
-		public CharacterFunctor(String name, SymbolTable gamma, String typeName, boolean needsUnquote) {
-			super(name, gamma, typeName);
-			this.needsUnquote = needsUnquote;
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			String s = node.getText();
-			if(this.needsUnquote) {
-				s = UniCharset._UnquoteString(s);
-			}
-			driver.pushCharacter(node, s.charAt(0));
-		}
-	}
-
-	public void addCharacterFunctor(String name, String typeName, boolean needsUnquote) {
-		this.addFunctor(new CharacterFunctor(name, this, typeName, needsUnquote));
-	}
-
-	class StringFunctor extends LiteralFunctor {
-		boolean needsUnquote;
-		public StringFunctor(String name, SymbolTable gamma, String typeName, boolean needsUnquote) {
-			super(name, gamma, typeName);
-			this.needsUnquote = needsUnquote;
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			String s = node.getText();
-			if(this.needsUnquote) {
-				s = UniCharset._UnquoteString(s);
-			}
-			driver.pushString(node, s);
-		}
-	}
-
-	public void addStringFunctor(String name, String typeName, boolean needsUnquote) {
-		this.addFunctor(new StringFunctor(name, this, typeName, needsUnquote));
-	}
-
 }
 
