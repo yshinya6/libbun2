@@ -3,7 +3,6 @@ package org.libbun;
 public class Functor {
 	public String    name;
 	public FuncType  funcType;
-	public MatchFunction matchFunc;
 	TemplateEngine   template;
 	public Functor   nextChoice = null;
 
@@ -48,10 +47,6 @@ public class Functor {
 	}
 
 	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
-		if(this.matchFunc != null) {
-			this.matchFunc.invoke(this, node, hasNextChoice);
-			return;
-		}
 		SymbolTable gamma = node.getSymbolTable();
 		MetaType[] greekContext = getGreekContext();
 		for(int i = 0; i < node.size(); i++) {
@@ -199,7 +194,7 @@ class BunFunctor extends Functor {
 				else {
 					SymbolTable gamma = lineNode.getSymbolTable();
 					if(!this.checkCommand(gamma, name)) {
-						gamma.report(chunkNode, "warning", "undefined name: " + name);
+						gamma.report(chunkNode, "warning", "undefined command: " + name);
 						return;
 					}
 					else {
@@ -210,8 +205,8 @@ class BunFunctor extends Functor {
 			else if(chunkNode.is("#bun.cmd2")){
 				SymbolTable gamma = lineNode.getSymbolTable();
 				String cmd = chunkNode.getTextAt(0, null);
-				if(!this.checkCommand(gamma, name)) {
-					gamma.report(chunkNode, "warning", "undefined name: " + cmd);
+				if(!this.checkCommand(gamma, cmd)) {
+					gamma.report(chunkNode, "warning", "undefined command: " + cmd);
 					return;
 				}
 				String name = chunkNode.getTextAt(1, null);

@@ -65,6 +65,8 @@ abstract class SourceDriver extends PegDriver {
 		this.addCommand("typeof",    new TypeofCommand());
 		this.addCommand("statement", new StatementCommand());
 		this.addCommand("list",      new ListCommand());
+		this.addCommand("typedecl", new TypeDeclCommand());
+		this.addCommand("funcdecl", new FuncDeclCommand());
 	}
 
 	@Override
@@ -144,6 +146,51 @@ abstract class SourceDriver extends PegDriver {
 					((SourceDriver)driver).pushListSeparator();
 				}
 				driver.pushNode(node.get(i));
+			}
+		}
+	}
+	
+	class TypeDeclCommand extends DriverCommand {
+		@Override
+		public void invoke(PegDriver driver, PegObject node, String[] param) {
+			System.out.println("TypeDeclCommand node: " + node);
+			SymbolTable gamma = node.getSymbolTable();
+			MetaType type = node.getTypeAt(gamma, 1, MetaType.UntypedType);
+			gamma.checkTypeAt(node, 2, type, null, true);
+			type = node.getTypeAt(gamma, 2, null);
+			if(node.findParentNode("#function") == null) {
+				gamma.setGlobalName(node.get(0), type, node.get(2));
+			}
+			else {
+				PegObject block = node.findParentNode("#block");
+				block.setName(node.get(0), type, node.get(2));
+			}
+		}
+	}
+
+	class FuncDeclCommand extends DriverCommand {
+		@Override
+		public void invoke(PegDriver driver, PegObject node, String[] param) {
+			System.out.println("FuncDeclCommand node: " + node);
+			SymbolTable gamma = node.getSymbolTable();
+			if(node.typed != null) {
+				VarType	inf = new VarType("Func");
+				PegObject params = node.get(1, null);
+				PegObject block = node.get(3, null);
+				for(int i = 0; i < params.size(); i++) {
+					PegObject p = params.get(i);
+					MetaType ptype = p.getTypeAt(gamma, 1, null);
+					ptype = inf.newVarType(p.getTypeAt(gamma, 1, null));
+					if(block != null) {
+						block.setName(p.get(0), ptype, null);
+					}
+				}
+				MetaType returnType = inf.newVarType(node.getTypeAt(gamma, 2, null));
+				node.typed = inf.getRealType();
+				if(block != null) {
+					block.setName(node.get(0), node.typed, node);
+					block.setName("return", returnType, null);
+				}
 			}
 		}
 	}

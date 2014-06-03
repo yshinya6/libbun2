@@ -92,24 +92,26 @@ bun #gte(a: alpha, b: alpha): bool {
 }
 
 bun #let(name, type, value): void {
-${typedecl name}
+${typedecl}
 	${name} = ${value}
 }
 
 bun #var(name, type, value): void {
-${typedecl name}
+${typedecl}
 	${name} = ${value}
 }
 
 bun #function(name, params, rtype, block: void): void {
-${funcdecl name}
+${funcdecl}
 	def ${name}${params}: ${begin}
 		${statement block}
 	${end}
 }
 
 bun #if(x: bool, then: void): void {
-	if ${x}: ${then}
+	if ${x}: 
+		${statement then}
+	
 }
 
 bun #if(x: bool, then: void, else: void): void {

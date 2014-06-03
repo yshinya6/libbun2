@@ -77,15 +77,6 @@ public class SymbolTable {
 		}
 	}
 	
-	public void setMatchFunction(String key, MatchFunction matchFunc) {
-		Functor f = this.getSymbol(key);
-		if(f == null) {
-			Main._Print("FIXME: undefined functor " + key + " of match function " + matchFunc.getClass().getSimpleName());
-			return;
-		}
-		f.matchFunc = matchFunc;
-	}
-
 	
 	public Functor getFunctor(PegObject node) {
 		String key = node.name + ":" + node.size();
@@ -315,57 +306,6 @@ public class SymbolTable {
 		@Override
 		public void build(PegObject node, PegDriver driver) {
 			driver.pushUndefinedName(node, node.getText());
-		}
-	}
-	
-	class VarMatchFunction extends MatchFunction {
-		@Override
-		public void invoke(Functor functor, PegObject node, boolean hasNextChoice) {
-			System.out.println("node: " + node);
-			SymbolTable gamma = node.getSymbolTable();
-			MetaType type = node.getTypeAt(gamma, 1, MetaType.UntypedType);
-			gamma.checkTypeAt(node, 2, type, null, hasNextChoice);
-			type = node.getTypeAt(gamma, 2, null);
-			if(node.findParentNode("#function") == null) {
-				gamma.setGlobalName(node.get(0), type, node.get(2));
-			}
-			else {
-				PegObject block = node.findParentNode("#block");
-				block.setName(node.get(0), type, node.get(2));
-			}
-			node.matched = functor;
-		}
-	}
-	
-
-	class FunctionMatchFunction extends MatchFunction {
-		@Override
-		public void invoke(Functor functor, PegObject node, boolean hasNextChoice) {
-			System.out.println("node: " + node);
-			this.setFuncType(node);
-			node.matched = functor;
-		}
-		private void setFuncType(PegObject node) {
-			SymbolTable gamma = node.getSymbolTable();
-			if(node.typed != null) {
-				VarType	inf = new VarType("Func");
-				PegObject params = node.get(1, null);
-				PegObject block = node.get(3, null);
-				for(int i = 0; i < params.size(); i++) {
-					PegObject p = params.get(i);
-					MetaType ptype = p.getTypeAt(gamma, 1, null);
-					ptype = inf.newVarType(p.getTypeAt(gamma, 1, null));
-					if(block != null) {
-						block.setName(p.get(0), ptype, null);
-					}
-				}
-				MetaType returnType = inf.newVarType(node.getTypeAt(gamma, 2, null));
-				node.typed = inf.getRealType();
-				if(block != null) {
-					block.setName(node.get(0), node.typed, node);
-					block.setName("return", returnType, null);
-				}
-			}
 		}
 	}
 

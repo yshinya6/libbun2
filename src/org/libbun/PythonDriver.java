@@ -85,7 +85,4 @@ public class PythonDriver extends SourceDriver {
 	public void pushType(MetaType type) {
 		this.pushCode(type.getName());
 	}
-
-	
-
 }
