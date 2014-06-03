@@ -7,7 +7,7 @@ AsToken
   = ![A-Za-z0-9_:]
   ;
 String
-  = << '"' ('\\"' / !'"' .)* '"' #string >>
+  = '"' << ('\\"' / !'"' .)*  #string >> '"'
   ;
 
 Number

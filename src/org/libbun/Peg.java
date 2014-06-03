@@ -70,7 +70,7 @@ public abstract class Peg {
 		if(this.debug) {
 			PegObject node2 = this.lazyMatch(inNode, source, false);
 			String msg = "matched";
-			if(node2.isErrorNode()) {
+			if(node2.isFailure()) {
 				msg = "failed";
 			}
 			String line = source.formatErrorMessage(msg, this.toString());
@@ -264,7 +264,7 @@ class PegLabel extends PegAtom {
 
 	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
 		PegObject left = source.parsePegNode(parentNode, this.symbol, hasNextChoice);
-		if(left.isErrorNode()) {
+		if(left.isFailure()) {
 			return left;
 		}
 		return source.parseRightPegNode(left, this.symbol);
@@ -380,7 +380,7 @@ class PegOptional extends PegSuffixed {
 		PegObject node = parentNode;
 		int stackPosition = source.getStackPosition(this);
 		node = this.innerExpr.debugMatch(node, source, true);
-		if(node.isErrorNode()) {
+		if(node.isFailure()) {
 			source.popBack(stackPosition, Peg._BackTrack);
 			node = parentNode;
 		}
@@ -418,7 +418,7 @@ class PegOneMore extends PegSuffixed {
 			}
 			int startPosition = source.getPosition();
 			PegObject node = this.innerExpr.debugMatch(prevNode, source, aChoice);
-			if(node.isErrorNode()) {
+			if(node.isFailure()) {
 				break;
 			}
 			if(node != prevNode) {
@@ -470,7 +470,7 @@ class PegZeroMore extends PegSuffixed {
 		while(source.hasChar()) {
 			int startPosition = source.getPosition();
 			PegObject node = this.innerExpr.debugMatch(prevNode, source, true);
-			if(node.isErrorNode()) {
+			if(node.isFailure()) {
 				break;
 			}
 			if(node != prevNode) {
@@ -559,7 +559,7 @@ class PegNotPredicate extends PegPredicate {
 		int stackPosition = source.getStackPosition(this);
 		node = this.innerExpr.debugMatch(node, source, hasNextChoice);
 		source.popBack(stackPosition, Peg._BackTrack);
-		if(node.isErrorNode()) {
+		if(node.isFailure()) {
 			return parentNode;
 		}
 		return source.newUnexpectedErrorNode(this, this.innerExpr, hasNextChoice);
@@ -667,7 +667,7 @@ class PegSequence extends PegList {
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
 			inNode = e.debugMatch(inNode, source, hasNextChoice);
-			if(inNode.isErrorNode()) {
+			if(inNode.isFailure()) {
 				return inNode;
 			}
 		}
@@ -764,7 +764,7 @@ class PegChoice extends PegList {
 //				nextChoice = hasNextChoice;
 //			}
 			node = e.debugMatch(inNode, source, true);
-			if(!node.isErrorNode()) {
+			if(!node.isFailure()) {
 				break;
 			}
 			source.popBack(stackPosition, Peg._BackTrack);
@@ -843,7 +843,7 @@ class PegSetter extends PegSuffixed {
 	@Override
 	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
 		PegObject node = this.innerExpr.debugMatch(parentNode, source, hasNextChoice);
-		if(node.isErrorNode()) {
+		if(node.isFailure()) {
 			return node;
 		}
 		if(parentNode == node) {
@@ -970,7 +970,7 @@ class PegNewObject extends PegList {
 		for(; i < this.size(); i++) {
 			Peg e = this.get(i);
 			PegObject node = e.debugMatch(newnode, source, hasNextChoice);
-			if(node.isErrorNode()) {
+			if(node.isFailure()) {
 				return node;
 			}
 			if(node != newnode) {

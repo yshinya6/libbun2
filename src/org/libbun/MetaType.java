@@ -227,11 +227,11 @@ public abstract class MetaType  {
 	final static UniMap<MetaType>     _TypeNameMap;
 
 	public static MetaType UntypedType;
-	public static MetaType VoidType        = null;
-	public static MetaType VarType         = null;
-	public static MetaType BooleanType     = null;
+//	public static MetaType VoidType        = null;
+//	public static MetaType VarType         = null;
+//	public static MetaType BooleanType     = null;
 //	public static IntType IntType          = null;
-	public static MetaType FloatType       = null;
+//	public static MetaType FloatType       = null;
 //	public static StringType StringType    = null;
 //	public static MetaType TypeType        = null;
 		
@@ -241,12 +241,6 @@ public abstract class MetaType  {
 		UntypedType = new UntypedType();
 		setGenerics("Func:*", new FuncType("Func<", ",", ">"));
 	}
-//
-//	public final static MetaType _AlphaType  = new GreekType(0);
-//
-//	public final static GenericType _ArrayType = new GenericType("Array");
-//	public final static GenericType _MapType = new GenericType("Map");
-
 
 	public final static int _NewTypeId(MetaType T) {
 		int TypeId = _TypeList.size();
@@ -461,7 +455,7 @@ class VarType extends MetaType {
 	@Override
 	public boolean hasGreekType() {
 		MetaType realType = this.getRealType();
-		return this.hasGreekType();
+		return realType.hasGreekType();
 	}
 
 	@Override

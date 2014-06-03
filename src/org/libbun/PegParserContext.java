@@ -105,12 +105,12 @@ public class PegParserContext extends SourceContext {
 		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
 		if(e != null) {
 			node = e.debugMatch(parentNode, this, hasNextChoice);
-			if(node.isErrorNode() && hasNextChoice) {
+			if(node.isFailure() && hasNextChoice) {
 				this.memoMiss = this.memoMiss + 1;
 				this.memoMap.put(key, node);
 				return node;
 			}
-			if(node != parentNode && node.isErrorNode()) {
+			if(node != parentNode && node.isFailure()) {
 				this.memoMiss = this.memoMiss + 1;
 				this.memoMap.put(key, node);
 				return node;
@@ -135,7 +135,7 @@ public class PegParserContext extends SourceContext {
 		Peg e = this.parser.getPattern(key, this.getFirstChar());
 		if(e != null) {
 			PegObject right = e.debugMatch(left, this, true);
-			if(!right.isErrorNode()) {
+			if(!right.isFailure()) {
 				left = right;
 			}
 		}
@@ -191,7 +191,7 @@ public class PegParserContext extends SourceContext {
 		return node;
 	}
 
-	private final PegObject defaultFailureNode = new PegObject(BunSymbol.PerrorFunctor, this.source);
+	private final PegObject defaultFailureNode = new PegObject(null, this.source);
 	
 	public final SourceToken stackFailureLocation(SourceToken stacked) {
 		if(stacked == null) {

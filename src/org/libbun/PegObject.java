@@ -24,8 +24,8 @@ public class PegObject {
 		return this.name.startsWith(functor);
 	}
 
-	final boolean isErrorNode() {
-		return this.name.equals(BunSymbol.PerrorFunctor);
+	public final boolean isFailure() {
+		return (this.name == null);
 	}
 
 	final void setSource(Peg createdPeg, BunSource source, int startIndex, int endIndex) {
@@ -36,7 +36,14 @@ public class PegObject {
 		this.source = source.newToken(createdPeg, startIndex, startIndex, message);
 	}
 
-	final String getText() {
+	public final boolean isEmptyToken() {
+		if(this.source != null) {
+			return this.source.startIndex == this.source.endIndex;
+		}
+		return true;
+	}
+	
+	public final String getText() {
 		if(this.source != null) {
 			return this.source.getText();
 		}
@@ -222,6 +229,7 @@ public class PegObject {
 			driver.pushUnknownNode(this);
 		}
 	}
+
 
 
 

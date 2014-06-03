@@ -1,10 +1,7 @@
 package org.libbun;
 
-public class PythonDriver extends PegDriver {
+public class PythonDriver extends SourceDriver {
 
-	private String fileName;
-	private UniStringBuilder builder;
-	
 	@Override
 	public void initTable(Namespace gamma) {
 		gamma.setType(MetaType.newVoidType("void", null));
@@ -18,7 +15,6 @@ public class PythonDriver extends PegDriver {
 		gamma.setType(MetaType.newGreekType("alpha", 0, null));
 		gamma.setType(MetaType.newGreekType("beta", 0, null));
 		
-		gamma.loadBunModel();
 		gamma.addNullFunctor("#null",   "alpha");
 		gamma.addTrueFunctor("#true",   "bool");
 		gamma.addFalseFunctor("#false", "bool");
@@ -26,133 +22,70 @@ public class PythonDriver extends PegDriver {
 		gamma.addFloatFunctor("#float", "float");
 		gamma.addCharacterFunctor("#character", "unicode", true);
 		gamma.addStringFunctor("#string", "unicode", true);
-		gamma.addFunctor(new PyBlockFunctor("#block"));
-		gamma.load("lib/driver/python/common.bun", this);
-	}
-
-	@Override
-	public void startTransaction(String fileName) {
-		this.fileName = fileName;
-		this.builder = new UniStringBuilder();
-	}
-
-	@Override
-	public void endTransaction() {
-		this.builder.show();
-		this.builder = null;
+		
+		gamma.loadBunModel("lib/driver/python/common.bun", this);
 	}
 
 	@Override
 	public void pushNull(PegObject node) {
-		this.builder.append("Null");
+		this.pushCode("None");
 	}
 
 	@Override
 	public void pushTrue(PegObject node) {
-		this.builder.append("True");
+		this.pushCode("True");
 	}
 
 	@Override
 	public void pushFalse(PegObject node) {
-		this.builder.append("False");
+		this.pushCode("False");
 	}
 
 	@Override
 	public void pushInteger(PegObject node, long num) {
-		this.builder.append("" + num);
+		this.pushCode("" + num);
 	}
 
 	@Override
 	public void pushFloat(PegObject node, double num) {
-		this.builder.append("" + num);
+		this.pushCode("" + num);
 	}
 
 	@Override
 	public void pushCharacter(PegObject node, char ch) {
-		this.builder.append(UniCharset._QuoteString("u'", ""+ch, "'"));
+		this.pushCode(UniCharset._QuoteString("u'", ""+ch, "'"));
 	}
 
 	@Override
 	public void pushString(PegObject node, String text) {
-		this.builder.append(UniCharset._QuoteString("u'", text, "'"));
+		this.pushCode(UniCharset._QuoteString("u'", text, "'"));
 	}
 
 	@Override
 	public void pushRawLiteral(PegObject node, String text, MetaType type) {
-		this.builder.append(text);
+		this.pushCode(text);
 	}
 
 	@Override
 	public void pushGlobalName(PegObject node, String name) {
-		this.builder.append(name);
+		this.pushCode(name);
 	}
 
 	@Override
 	public void pushLocalName(PegObject node, String name) {
-		this.builder.append(name);
+		this.pushCode(name);
 	}
 
 	@Override
 	public void pushUndefinedName(PegObject node, String name) {
-		this.builder.append(name);
-	}
-
-	@Override
-	public void pushNewLine() {
-		this.builder.appendNewLine();
-	}
-
-	@Override
-	public void pushCode(String text) {
-		this.builder.append(text);
+		this.pushCode(name);
 	}
 
 	@Override
 	public void pushType(MetaType type) {
-		this.builder.append(type.getName());
-	}
-
-	@Override
-	public void pushCommand(String name, PegObject node) {
-		// TODO Auto-generated method stub
-		System.out.println("debug");
-		
-	}
-	
-	@Override
-	public void openIndent() {
-		builder.openIndent();
-	}
-
-	@Override
-	public void closeIndent() {
-		builder.closeIndent();
+		this.pushCode(type.getName());
 	}
 
 	
-	class PyBlockFunctor extends Functor {
-		public PyBlockFunctor(String name) {
-			super(name, null);
-		}
-
-		@Override
-		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
-			node.matched = this;
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			driver.openIndent();// 
-			for(int i = 0; i < node.size(); i++) {
-				driver.pushNewLine();
-				driver.pushNode(node.get(i));
-				node.get(i);
-			}
-			driver.closeIndent();
-		}
-	}
-
-
-
 
 }

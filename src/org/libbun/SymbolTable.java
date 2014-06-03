@@ -77,6 +77,16 @@ public class SymbolTable {
 		}
 	}
 	
+	public void setMatchFunction(String key, MatchFunction matchFunc) {
+		Functor f = this.getSymbol(key);
+		if(f == null) {
+			Main._Print("FIXME: undefined functor " + key + " of match function " + matchFunc.getClass().getSimpleName());
+			return;
+		}
+		f.matchFunc = matchFunc;
+	}
+
+	
 	public Functor getFunctor(PegObject node) {
 		String key = node.name + ":" + node.size();
 		Functor f = this.getSymbol(key);
@@ -105,19 +115,22 @@ public class SymbolTable {
 				}
 				cur = cur.nextChoice;
 			}
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	public final boolean checkTypeAt(PegObject node, int index, MetaType type, MetaType[] greekContext, boolean hasNextChoice) {
 		PegObject subnode = node.get(index);
+		//System.out.println("index="+index + ", type="+type);
 		if(!this.tryMatch(subnode)) {
 			if(hasNextChoice) {
 				return false;
 			}
 			return false;
 		}
-		MetaType valueType = node.getType(MetaType.UntypedType);
+		MetaType valueType = subnode.getType(MetaType.UntypedType);
+		//System.out.println("index="+index + ", type="+type + ", valueType="+valueType + "node=" + node);
 		if(type.is(valueType, greekContext)) {
 			return true;
 		}
@@ -201,7 +214,7 @@ public class SymbolTable {
 		return this.setName(false, nameNode.getText(), nameNode, type, initValue);
 	}
 
-	public Functor setGlobalName(PegObject nameNode, MetaType type, PegObject initValue, PegDriver driver) {
+	public Functor setGlobalName(PegObject nameNode, MetaType type, PegObject initValue) {
 		return this.setName(true, nameNode.getText(), nameNode, type, initValue);
 	}
 	
@@ -267,11 +280,15 @@ public class SymbolTable {
 
 		@Override
 		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
-			SymbolTable gamma = node.getSymbolTable();
-			String typeName = node.getText();
-//			System.out.println("type name " + typeName);
+			if(node.isEmptyToken()) {
+				node.typed = MetaType.UntypedType;
+			}
+			else {
+				String typeName = node.getText();
+				SymbolTable gamma = node.getSymbolTable();
+				node.typed = gamma.getType(typeName, null);
+			}
 			node.matched = this;
-			node.typed = gamma.getType(typeName, null);
 		}
 
 		@Override
@@ -300,43 +317,34 @@ public class SymbolTable {
 			driver.pushUndefinedName(node, node.getText());
 		}
 	}
-
 	
-	class VarFunctor extends Functor {
-		public VarFunctor(String name) {
-			super(name, null);
-		}
-
+	class VarMatchFunction extends MatchFunction {
 		@Override
-		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
+		public void invoke(Functor functor, PegObject node, boolean hasNextChoice) {
 			System.out.println("node: " + node);
 			SymbolTable gamma = node.getSymbolTable();
-			String name = node.getTextAt(0, null);
 			MetaType type = node.getTypeAt(gamma, 1, MetaType.UntypedType);
 			gamma.checkTypeAt(node, 2, type, null, hasNextChoice);
 			type = node.getTypeAt(gamma, 2, null);
-			node.matched = this;
-		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			
+			if(node.findParentNode("#function") == null) {
+				gamma.setGlobalName(node.get(0), type, node.get(2));
+			}
+			else {
+				PegObject block = node.findParentNode("#block");
+				block.setName(node.get(0), type, node.get(2));
+			}
+			node.matched = functor;
 		}
 	}
 	
 
-	class FunctionFunctor extends Functor {
-		public FunctionFunctor(String name) {
-			super(name, null);
-		}
-
+	class FunctionMatchFunction extends MatchFunction {
 		@Override
-		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
+		public void invoke(Functor functor, PegObject node, boolean hasNextChoice) {
 			System.out.println("node: " + node);
 			this.setFuncType(node);
-			node.matched = this;
+			node.matched = functor;
 		}
-
 		private void setFuncType(PegObject node) {
 			SymbolTable gamma = node.getSymbolTable();
 			if(node.typed != null) {
@@ -359,23 +367,21 @@ public class SymbolTable {
 				}
 			}
 		}
-
-		@Override
-		public void build(PegObject node, PegDriver driver) {
-			//driver.pushLiteral(node, node.getText(), node.getType(MetaType.UntypedType));
-		}
 	}
 
-	public void loadBunModel() {
+	public void loadBunModel(String fileName, PegDriver driver) {
 		this.addFunctor(new TypeFunctor("#type"));
 		this.addFunctor(new NameFunctor("#name"));
 
-		this.addFunctor(new FunctionFunctor("#function"));
+//		this.addFunctor(new FunctionFunctor("#function"));
+//		this.addFunctor(new VarFunctor("#var"));
+//		this.addFunctor(new VarFunctor("#let"));
 		this.addFunctor(new BunFunctor("#bun"));  // #bun
 		this.addFunctor(new ErrorFunctor());
-
+		this.load(fileName, driver);
+//		this.setMatchFunction("#var:3", new VarMatchFunction());
+//		this.setMatchFunction("#let:3", new VarMatchFunction());
 	}
-	
 
 	class LiteralFunctor extends Functor {
 		public LiteralFunctor(String name, SymbolTable gamma, String typeName) {

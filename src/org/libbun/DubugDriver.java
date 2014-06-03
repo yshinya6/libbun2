@@ -97,28 +97,17 @@ public class DubugDriver extends PegDriver {
 	}
 
 	@Override
-	public void pushCommand(String name, PegObject node) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void openIndent() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void closeIndent() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public void pushUndefinedName(PegObject node, String name) {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public boolean hasCommand(String cmd) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 
 }
 

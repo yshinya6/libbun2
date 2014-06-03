@@ -19,12 +19,24 @@ bun #minus(x: alpha) :alpha {
 	-${x}
 }
 
-bun #not(x: boolean) :boolean {
+bun #not(x: bool) :bool {
 	!${x}
 }
 
 bun #compl(x: alpha) :alpha {
 	~${x}
+}
+
+bun #and(x: bool, y: bool): bool {
+	${x} and ${y}
+}
+
+bun #or(x: bool, y: bool): bool {
+	${x} or ${y}
+}
+
+bun #assign(x: alpha, y: alpha): void {
+	${x} = ${y}
 }
 
 bun #add(a :alpha, b :alpha) :alpha {
@@ -77,6 +89,23 @@ bun #gt(a: alpha, b: alpha): bool {
 
 bun #gte(a: alpha, b: alpha): bool {
 	(${a} >= ${b})
+}
+
+bun #let(name, type, value): void {
+${typedecl name}
+	${name} = ${value}
+}
+
+bun #var(name, type, value): void {
+${typedecl name}
+	${name} = ${value}
+}
+
+bun #function(name, params, rtype, block: void): void {
+${funcdecl name}
+	def ${name}${params}: ${begin}
+		${statement block}
+	${end}
 }
 
 bun #if(x: bool, then: void): void {
