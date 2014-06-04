@@ -45,28 +45,6 @@ public class PegParserContext extends SourceContext {
 		this.sourcePosition = this.endPosition;
 	}
 
-	//	@Override
-	//	public final int skipWhiteSpace(boolean IncludeNewLine) {
-	//		if(IncludeNewLine) {
-	//			while(this.hasChar()) {
-	//				char ch = this.charAt(this.sourcePosition);
-	//				if(ch != ' ' && ch != '\t' && ch != '\n') {
-	//					break;
-	//				}
-	//				this.consume(1);
-	//			}
-	//		}
-	//		else {
-	//			while(this.hasChar()) {
-	//				char ch = this.charAt(this.sourcePosition);
-	//				if(ch != ' ' && ch != '\t') {
-	//					break;
-	//				}
-	//				this.consume(1);
-	//			}
-	//		}
-	//		return this.sourcePosition;
-	//	}
 
 	public boolean hasNode() {
 		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
@@ -127,12 +105,12 @@ public class PegParserContext extends SourceContext {
 		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
 		if(e != null) {
 			node = e.debugMatch(parentNode, this, hasNextChoice);
-			if(node.isErrorNode() && hasNextChoice) {
+			if(node.isFailure() && hasNextChoice) {
 				this.memoMiss = this.memoMiss + 1;
 				this.memoMap.put(key, node);
 				return node;
 			}
-			if(node != parentNode && node.isErrorNode()) {
+			if(node != parentNode && node.isFailure()) {
 				this.memoMiss = this.memoMiss + 1;
 				this.memoMap.put(key, node);
 				return node;
@@ -157,7 +135,7 @@ public class PegParserContext extends SourceContext {
 		Peg e = this.parser.getPattern(key, this.getFirstChar());
 		if(e != null) {
 			PegObject right = e.debugMatch(left, this, true);
-			if(!right.isErrorNode()) {
+			if(!right.isFailure()) {
 				left = right;
 			}
 		}
@@ -213,10 +191,29 @@ public class PegParserContext extends SourceContext {
 		return node;
 	}
 
-	private final PegObject defaultFailureNode = new PegObject(BunSymbol.PerrorFunctor);
+	private final PegObject defaultFailureNode = new PegObject(null, this.source);
+	
+	public final SourceToken stackFailureLocation(SourceToken stacked) {
+		if(stacked == null) {
+			stacked = this.defaultFailureNode.source;
+			this.defaultFailureNode.source = source.newToken(null, this.sourcePosition, this.sourcePosition-1);
+			return stacked;
+		}
+		else {
+			SourceToken current = this.defaultFailureNode.source;
+			this.defaultFailureNode.source = stacked;
+			return current;
+		}
+	}
 
 	public PegObject newErrorNode(Peg created, String msg, boolean hasNextChoice) {
 		if(hasNextChoice) {
+			SourceToken token = this.defaultFailureNode.source;
+			if(this.sourcePosition > token.endIndex) {  // adding error location
+				System.out.println("failure found: " + this.sourcePosition + " > " + token.endIndex);
+				token.endIndex = this.sourcePosition;
+				token.createdPeg = created;
+			}
 			return this.defaultFailureNode;
 		}
 		else {

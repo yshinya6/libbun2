@@ -2,9 +2,9 @@ package org.libbun;
 
 public class UniStringBuilder {
 	public final UniArray<String> slist = new UniArray<String>(new String[128]);
-	protected int IndentLevel = 0;
-	protected String CurrentIndentString = "";
-	protected char LastChar   = '\n';
+	protected int indentLevel = 0;
+	protected String currentIndentString = "";
+	protected char lastChar   = '\n';
 	protected String LineFeed = "\n";
 	protected String Tabular  = "   ";
 
@@ -18,7 +18,7 @@ public class UniStringBuilder {
 	public final void append(String Source) {
 		if(!this.isEmpty(Source)) {
 			this.slist.add(Source);
-			this.LastChar = Main._GetChar(Source, Source.length()-1);
+			this.lastChar = Main._GetChar(Source, Source.length()-1);
 		}
 	}
 
@@ -42,48 +42,48 @@ public class UniStringBuilder {
 	}
 
 	public final void AppendLineFeed() {
-		if(this.LastChar != '\n') {
+		if(this.lastChar != '\n') {
 			this.slist.add(this.LineFeed);
 		}
 	}
 
-	public final void OpenIndent() {
-		this.IndentLevel = this.IndentLevel + 1;
-		this.CurrentIndentString = null;
+	public final void openIndent() {
+		this.indentLevel = this.indentLevel + 1;
+		this.currentIndentString = null;
 	}
 
-	public final void OpenIndent(String Text) {
+	public final void openIndent(String Text) {
 		if(Text != null && Text.length() > 0) {
 			this.append(Text);
 		}
-		this.OpenIndent();
+		this.openIndent();
 	}
 
-	public final void CloseIndent() {
-		this.IndentLevel = this.IndentLevel - 1;
-		this.CurrentIndentString = null;
-		assert(this.IndentLevel >= 0);
+	public final void closeIndent() {
+		this.indentLevel = this.indentLevel - 1;
+		this.currentIndentString = null;
+		assert(this.indentLevel >= 0);
 	}
 
-	public final void CloseIndent(String Text) {
-		this.CloseIndent();
+	public final void closeIndent(String Text) {
+		this.closeIndent();
 		if(Text != null && Text.length() > 0) {
-			this.AppendNewLine(Text);
+			this.appendNewLine(Text);
 		}
 	}
 
 	public final int SetIndentLevel(int IndentLevel) {
-		int Level = this.IndentLevel;
-		this.IndentLevel = IndentLevel;
-		this.CurrentIndentString = null;
+		int Level = this.indentLevel;
+		this.indentLevel = IndentLevel;
+		this.currentIndentString = null;
 		return Level;
 	}
 
 	private final void AppendIndentString() {
-		if (this.CurrentIndentString == null) {
-			this.CurrentIndentString = this.joinStrings(this.Tabular, this.IndentLevel);
+		if (this.currentIndentString == null) {
+			this.currentIndentString = this.joinStrings(this.Tabular, this.indentLevel);
 		}
-		this.slist.add(this.CurrentIndentString);
+		this.slist.add(this.currentIndentString);
 	}
 
 	public final String joinStrings(String Unit, int Times) {
@@ -96,57 +96,28 @@ public class UniStringBuilder {
 		return s;
 	}
 
-	public final void AppendNewLine() {
+	public final void appendNewLine() {
 		this.AppendLineFeed();
 		this.AppendIndentString();
 	}
 
-	public final void AppendNewLine(String Text) {
-		this.AppendNewLine();
+	public final void appendNewLine(String Text) {
+		this.appendNewLine();
 		this.append(Text);
 	}
 
-	public final void AppendNewLine(String Text, String Text2) {
-		this.AppendNewLine();
+	public final void appendNewLine(String Text, String Text2) {
+		this.appendNewLine();
 		this.append(Text);
 		this.append(Text2);
 	}
 
-	public final void AppendNewLine(String Text, String Text2, String Text3) {
-		this.AppendNewLine();
+	public final void appendNewLine(String Text, String Text2, String Text3) {
+		this.appendNewLine();
 		this.append(Text);
 		this.append(Text2);
 		this.append(Text3);
 	}
-
-//	public final boolean EndsWith(char s) {
-//		return this.LastChar == s;
-//	}
-//
-//	public final void AppendWhiteSpace() {
-//		if(this.LastChar == ' ' || this.LastChar == '\t' || this.LastChar == '\n') {
-//			return;
-//		}
-//		this.slist.add(" ");
-//	}
-//
-//	public final void AppendWhiteSpace(String Text) {
-//		this.AppendWhiteSpace();
-//		this.append(Text);
-//	}
-//
-//	public final void AppendWhiteSpace(String Text, String Text2) {
-//		this.AppendWhiteSpace();
-//		this.append(Text);
-//		this.append(Text2);
-//	}
-//
-//	public final void AppendWhiteSpace(String Text, String Text2, String Text3) {
-//		this.AppendWhiteSpace();
-//		this.append(Text);
-//		this.append(Text2);
-//		this.append(Text3);
-//	}
 
 	public final void clear() {
 		this.slist.clear(0);
@@ -155,10 +126,9 @@ public class UniStringBuilder {
 	@Override public final String toString() {
 		return Main._SourceBuilderToString(this);
 	}
-	////
-	////	@Deprecated public final void AppendLine(String Text) {
-	////		this.Append(Text);
-	////		this.AppendLineFeed();
-	//	}
-
+	
+	public final void show() {
+		String s = this.toString();
+		Main._PrintLine(s);
+	}
 }

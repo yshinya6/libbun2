@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-
 public class Main {
 	public final static String  ProgName  = "libbun";
 	public final static String  CodeName  = "yokohama";
@@ -160,11 +159,11 @@ public class Main {
 	//	}
 
 
-	private static BunDriver loadDriver(String driverName) {
+	private static PegDriver loadDriver(String driverName) {
 		if(PegDebuggerMode) {
-			return new DebugDriver();
+			return new DubugDriver();
 		}
-		BunDriver driver = new DebugDriver();
+		PegDriver driver = new PythonDriver();
 		return driver;
 	}
 
@@ -172,13 +171,13 @@ public class Main {
 		parseCommandArgument(args);
 		PegParser p = new PegParser(null);
 		p.loadPegFile(LanguagePeg);
-		Namespace gamma = new Namespace(p);
-		BunDriver driver = loadDriver(DriverName);
+		PegDriver driver = loadDriver(DriverName);
+		Namespace gamma = new Namespace(p, driver);
 		driver.initTable(gamma);
 		performShell(gamma, driver);
 	}
 
-	public final static void performShell(Namespace gamma, BunDriver driver) {
+	public final static void performShell(Namespace gamma, PegDriver driver) {
 		Main._PrintLine(ProgName + Version + " (" + CodeName + ") on " + Main._GetPlatform());
 		Main._PrintLine(Copyright);
 		int linenum = 1;
@@ -204,6 +203,9 @@ public class Main {
 					BunSource source = new BunSource("(stdin)", linenum, Line, null);
 					PegParserContext context =  gamma.namespace.newParserContext("main", source);
 					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint, false/*hasNextChoice*/);
+					if(node.isFailure()) {
+						node.name = BunSymbol.PerrorFunctor;
+					}
 					node.gamma = gamma;
 					if(PegDebuggerMode) {
 						System.out.println("parsed:\n" + node.toString());
@@ -215,14 +217,14 @@ public class Main {
 						System.out.println();
 					}
 					if(driver != null) {
-						if(gamma.check(node, driver)) {
+						driver.startTransaction(null);
+						if(gamma.tryMatch(node)) {
 							node.matched.build(node, driver);
 						}
 						else {
-							if(EnableVerbose) {
-								System.out.println("undefined: " + node.toString());
-							}
+							driver.pushUnknownNode(node);
 						}
+						driver.endTransaction();
 					}
 				}
 				catch (Exception e) {

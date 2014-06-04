@@ -1,0 +1,188 @@
+
+bun boolean: type {
+	bool
+}
+
+bun int: type {
+	int
+}
+
+bun float: type {
+	float
+}
+
+bun String: type {
+	unicode
+}
+
+bun #null(): alpha {
+	None
+}
+
+bun #true(): boolean {
+	True
+}
+
+bun #false(): boolean {
+	False
+}
+
+bun #integer(): int {
+	${textof this}
+}
+
+bun #float(): float {
+	${textof this}
+}
+
+bun #string(): String {
+	"${textof this}"
+}
+
+bun number: type {
+}
+
+bun #coercion(x: float): number {
+	${x}
+}
+
+bun #coercion(x: int): number {
+	${x}
+}
+
+bun #conv(x: float): int {
+	int(${x})
+}
+
+bun str: type {
+	str
+}
+
+bun #coercion(x: String): str {
+	str(${x})
+}
+
+bun #coercion(x: str): String {
+	ustr(${x})
+}
+
+bun #group(expr :alpha) :alpha {
+	(${expr})
+}
+
+bun #not(x: boolean) :boolean {
+	!${x}
+}
+
+bun #plus(x: int) :int {
+	+${x}
+}
+
+
+bun #plus(x: float) :float {
+	+${x}
+}
+
+bun #minus(x: int) :int {
+	-${x}
+}
+
+bun #minus(x: float) :float {
+	-${x}
+}
+
+bun #compl(x: int) :int {
+	~${x}
+}
+
+bun #and(x: boolean, y: boolean): boolean {
+	${x} and ${y}
+}
+
+bun #or(x: boolean, y: boolean): boolean {
+	${x} or ${y}
+}
+
+bun #assign(x: alpha, y: alpha): void {
+	${x} = ${y}
+}
+
+bun #add(x: alpha, y: alpha) :alpha {
+	(${x} + ${y})
+}
+
+bun #add(x :str, y :any) :str {
+	(${x} + str(${y}))
+}
+
+bun #add(x: String, y: any): String {
+	(${x} + ustr(${y}))
+}
+
+bun #sub(x: alpha, y: alpha): alpha {
+	(${x} - ${y})
+}
+
+bun #mul(x: alpha, y: alpha): alpha {
+	(${x} * ${y})
+}
+
+bun #div(x: alpha, y: alpha): alpha {
+	(${x} / ${y})
+}
+
+bun #mod(x: alpha, y: alpha): alpha {
+	(${x} % ${y})
+}
+
+bun #eq(x: alpha, y: alpha): boolean {
+	(${x} == ${y})
+}
+
+bun #noteq(x: alpha, y: alpha): boolean {
+	(${x} != ${y})
+}
+
+bun #lt(x: alpha, y: alpha): boolean {
+	(${x} < ${y})
+}
+
+bun #lte(x: alpha, y: alpha): boolean {
+	(${x} <= ${y})
+}
+
+bun #gt(x: alpha, y: alpha): boolean {
+	(${x} > ${y})
+}
+
+bun #gte(x: alpha, y: alpha): boolean {
+	(${x} >= ${y})
+}
+
+bun #let(name, type, value): void {
+${typedecl}
+	${typeof value} ${name} = ${value}
+}
+
+bun #var(name, type, value): void {
+${typedecl}
+	${name} = ${value}
+}
+
+bun #function(name, params, rtype, block: void): void {
+${funcdecl}
+${tricode block}
+	def ${push name}(${list params}): ${begin}
+	${statement block} ${end}
+}
+
+bun #if(x: boolean, then: void): void {
+	if ${x}: ${begin}
+	${statement then} ${end}
+	
+}
+
+bun #if(x: boolean, then: void, else: void): void {
+	if ${x}: ${then}
+	else ${else}
+}

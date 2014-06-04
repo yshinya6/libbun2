@@ -2,7 +2,7 @@
 // Bun's Peg example
 // / catch is an extended operator to catch error
 
-Stmt = 'return' / 'break' / catch .*;
+Stmt = 'return' 'a' / 'break' / catch .*;
 TopLevel = Stmt;
 
 

@@ -32,25 +32,29 @@ TopLevel
   = FuncDecl 
   / LetDecl
   / IfStmt
-  / Expr
+  / Expr EOL
+  ;
+
+EOL
+  = (_ / ';')* !.
   ;
 
 FuncDecl
-  = <<'function' Spacing Name@ _ Params@ _ TypeAnno@? NL Block@  #function>>
+  = <<'function' Spacing Name@ _ Params@ _ TypeAnno@ NL Block@  #function>>
   ;
 
 Params
   = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #params >>
   ;
 Param
-  = << Name@ TypeAnno@? #param >>
+  = << Name@ TypeAnno@ #param >>
   ;
 TypeAnno
-  = _ ':' _ Type     // imported
+  = (_ ':' _ Type / << '' #type>>)     // imported
   ;
 
 Block
-  = << '{' (NL ( ';' / Stmt / catch BlockSkip )@ )* NL '}' #block>>
+  = << '{' (NL ( ';' / Stmt )@ )* NL '}' #block>>
   ;
 
 BlockSkip
@@ -76,13 +80,13 @@ IfStmt
   ;
 
 LetDecl
-  = <<'let' Spacing Name@ TypeAnno@? _ '=' _ Expr@ 
-       (_ 'in' _ Block@ #letin / '' #let) >>
+  = <<'let' Spacing Name@ TypeAnno@ _ '=' _ Expr@ 
+       (_ 'in' _ Block@)? #let  >>
   ;
 
 VarDecl
-  = <<'var' Spacing Name@ TypeAnno@? _ '=' _ Expr@ 
-      (_ 'in' _ Block@ #varin / '' #var) >>
+  = <<'var' Spacing Name@ TypeAnno@ _ '=' _ Expr@ 
+      (_ 'in' _ Block@)? #var >>
   ;
   
 Expr
@@ -90,13 +94,13 @@ Expr
   ;
   
 Assignment
-  = Trinary <<@ _ AssignmentLabel Trinary>>*
+  = Trinary <<@ _ AssignmentLabel Trinary@>>*
   ;
 
 AssignmentLabel
   = '=' !'=' _  #assign
-  / '+='     _  #assign.add
-  / '-='     _  #assign.sub
+  / '+='     _  #addeq
+  / '-='     _  #subeq
   ;
 
 Trinary
@@ -136,7 +140,7 @@ Product
   ;
 
 Unary
-  = << ('!' #not / '-' #minus / '+' #plus / '~' #compl) Unary >>
+  = << ('!' #not / '-' #minus / '+' #plus / '~' #compl) Unary@ >>
   / Primary <<@ Selector>>*
   ;
 

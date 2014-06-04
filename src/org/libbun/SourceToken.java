@@ -1,7 +1,7 @@
 package org.libbun;
 
 public class SourceToken {
-	final Peg createdPeg;
+	Peg createdPeg;
 	final BunSource source;
 	int  startIndex;
 	int  endIndex;
@@ -51,8 +51,6 @@ public class SourceToken {
 		return this.source.getLineNumber(this.startIndex);
 	}
 
-
-
 	public final int indexOf(String s) {
 		int loc = this.source.sourceText.indexOf(s, this.startIndex);
 		if(loc != -1 && loc < this.endIndex) {
@@ -89,7 +87,5 @@ public class SourceToken {
 	public String formatErrorMessage(String errorType, String msg) {
 		return this.source.formatErrorMessage(errorType, this.startIndex, msg);
 	}
-
-
 
 }

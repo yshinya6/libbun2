@@ -3,7 +3,7 @@ package org.libbun;
 public final class SourceBuilder extends UniStringBuilder {
 	SourceBuilder parent;
 
-	public SourceBuilder(Object Template, SourceBuilder Parent) {
+	public SourceBuilder(SourceBuilder Parent) {
 		super();
 		this.parent = Parent;
 	}
@@ -13,8 +13,8 @@ public final class SourceBuilder extends UniStringBuilder {
 		return this.parent;
 	}
 
-	public final void AppendCode(String Source) {
-		this.LastChar = '\0';
+	public final void appendCode(String Source) {
+		this.lastChar = '\0';
 		int StartIndex = 0;
 		int i = 0;
 		while(i < Source.length()) {
@@ -23,7 +23,7 @@ public final class SourceBuilder extends UniStringBuilder {
 				if(StartIndex < i) {
 					this.slist.add(Source.substring(StartIndex, i));
 				}
-				this.AppendNewLine();
+				this.appendNewLine();
 				StartIndex = i + 1;
 			}
 			if(ch == '\t') {

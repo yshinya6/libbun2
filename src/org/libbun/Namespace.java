@@ -3,12 +3,14 @@ package org.libbun;
 public class Namespace extends SymbolTable {
 	public UniMap<PegParser> parserMap;
 	public UniArray<String> exportSymbolList;
+	public PegDriver  driver;
 
-	public Namespace(PegParser parser) {
+	public Namespace(PegParser parser, PegDriver driver) {
 		super(null);
 		this.namespace = this;
 		this.parserMap = new UniMap<PegParser>();
 		this.parserMap.put("main", parser);
+		this.driver = driver;
 	}
 
 	public void importFrom(Namespace ns) {
@@ -45,6 +47,7 @@ public class Namespace extends SymbolTable {
 		}
 		return p;
 	}
+
 
 
 }

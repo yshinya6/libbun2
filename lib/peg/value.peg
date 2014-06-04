@@ -1,0 +1,26 @@
+
+// Bun's Peg example
+// << >>, # are an extended constructor
+// see www.libbun.org/peg
+
+AsToken 
+  = ![A-Za-z0-9_:]
+  ;
+String
+  = '"' << ('\\"' / !'"' .)*  #string >> '"'
+  ;
+
+Number
+ = << [0-9]+ ('.' [0-9]+ #float / '' #integer) >>
+ ;
+
+Value
+  = << 'null'  AsToken #null >>
+  / << 'true'  AsToken #true >>
+  / << 'false' AsToken #false>>
+  / Number
+  / String
+  ;
+
+TopLevel = Value;
+
