@@ -9,7 +9,7 @@ public abstract class Peg {
 
 	BunSource source = null;
 	int       sourcePosition = 0;
-
+	
 	Peg(String leftLabel) {
 		this.name = leftLabel;
 	}
@@ -267,6 +267,12 @@ class PegLabel extends PegAtom {
 	}
 
 	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
+		if(this.name.equals(this.symbol)) {
+			source.setLrExistence(this.name, true);
+		}
+		else{
+			source.setLrExistence(this.name, false);
+		}
 		PegObject left = source.parsePegNode(parentNode, this.symbol);
 		if(left.isFailure()) {
 			return left;
@@ -974,6 +980,9 @@ class PegNewObject extends PegList {
 
 	@Override
 	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		if(source.getLrExistence(this.name) == null) {
+			source.setLrExistence(this.name, false);
+		}
 		PegObject leftNode = inNode;
 		int pos = source.getPosition();
 		int stack = source.getStackPosition(this);
@@ -1091,4 +1100,17 @@ class PegIndent extends PegAtom {
 	}
 
 }
+
+/*class LRExistenceMap {
+	UniMap<Boolean> lrExistenceMap = new UniMap<Boolean>();
+	
+	public Boolean getLrExistence(String key) {
+		return this.lrExistenceMap.get(key);
+	}
+	
+	public void setLrExistence(String key, Boolean value) {
+		lrExistenceMap.put(key, value);
+	}
+}*/
+
 

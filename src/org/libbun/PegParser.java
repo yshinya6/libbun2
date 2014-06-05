@@ -6,6 +6,7 @@ public final class PegParser {
 	UniMap<Peg>           pegCache = null;
 	UniMap<String>        objectLabelMap = null;
 	boolean enableMemo = false;
+	boolean lrExistence = false;
 
 	public PegParser(SourceLogger logger) {
 		this.logger = logger;
@@ -96,7 +97,9 @@ public final class PegParser {
 			if(!e.verify(this)) {
 				noerror = false;
 			}
-			this.removeLeftRecursion(key, e);
+			//this.removeLeftRecursion(key, e);
+			//this.checkLeftRecursion(key, e);
+			this.appendPegCache(key, e);
 //			if(Main.pegDebugger) {
 //				System.out.println(e.toPrintableString(key));
 //			}
@@ -147,10 +150,10 @@ public final class PegParser {
 		this.objectLabelMap.put(objectLabel, objectLabel);
 	}
 
-	private void removeLeftRecursion(String name, Peg e) {
+	private void checkLeftRecursion(String name, Peg e) {
 		if(e instanceof PegChoice) {
 			for(int i = 0; i < e.size(); i++) {
-				this.removeLeftRecursion(name, e.get(i));
+				this.checkLeftRecursion(name, e.get(i));
 			}
 			return;
 		}
@@ -161,8 +164,9 @@ public final class PegParser {
 				if(first instanceof PegLabel) {
 					String label = ((PegLabel) first).symbol;
 					if(label.equals(name)) {
-						String key = this.nameRightJoinName(name);  // left recursion
-						this.appendPegCache(key, seq.cdr());
+						this.lrExistence = true;
+						//String key = this.nameRightJoinName(name);  // left recursion
+						//this.appendPegCache(key, seq.cdr());
 						return;
 					}
 					else {
