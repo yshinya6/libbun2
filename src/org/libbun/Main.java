@@ -159,11 +159,11 @@ public class Main {
 	//	}
 
 
-	private static PegDriver loadDriver(String driverName) {
+	private static BunDriver loadDriver(String driverName) {
 		if(PegDebuggerMode) {
 			return new DubugDriver();
 		}
-		PegDriver driver = new PythonDriver();
+		BunDriver driver = new PythonDriver();
 		return driver;
 	}
 
@@ -171,13 +171,13 @@ public class Main {
 		parseCommandArgument(args);
 		PegParser p = new PegParser(null);
 		p.loadPegFile(LanguagePeg);
-		PegDriver driver = loadDriver(DriverName);
+		BunDriver driver = loadDriver(DriverName);
 		Namespace gamma = new Namespace(p, driver);
 		driver.initTable(gamma);
 		performShell(gamma, driver);
 	}
 
-	public final static void performShell(Namespace gamma, PegDriver driver) {
+	public final static void performShell(Namespace gamma, BunDriver driver) {
 		Main._PrintLine(ProgName + Version + " (" + CodeName + ") on " + Main._GetPlatform());
 		Main._PrintLine(Copyright);
 		int linenum = 1;

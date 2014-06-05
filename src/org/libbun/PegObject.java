@@ -119,7 +119,7 @@ public class PegObject {
 		return defaultValue;
 	}
 	
-	public MetaType getTypeAt(SymbolTable gamma, int index, MetaType defaultType) {
+	public MetaType typeAt(SymbolTable gamma, int index, MetaType defaultType) {
 		if(index < this.size()) {
 			PegObject node = this.AST[index];
 			if(node.typed != null) {
@@ -134,7 +134,6 @@ public class PegObject {
 		}
 		return defaultType;
 	}
-
 
 	@Override
 	public String toString() {
@@ -207,6 +206,7 @@ public class PegObject {
 			this.gamma = new SymbolTable(parent.namespace);
 		}
 		this.gamma.setName(nameNode, type, initValue);
+		nameNode.typed = type;
 	}
 	
 	public final MetaType getType(MetaType defaultType) {
@@ -221,7 +221,11 @@ public class PegObject {
 		return this.typed;
 	}
 
-	public final void build(PegDriver driver) {
+	public final void build(BunDriver driver) {
+		if(this.matched == null) {
+			SymbolTable gamma = this.getSymbolTable();
+			gamma.tryMatch(this);
+		}
 		if(this.matched != null) {
 			this.matched.build(this, driver);
 		}

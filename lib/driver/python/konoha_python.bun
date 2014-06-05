@@ -1,0 +1,13 @@
+
+bun str: type {
+	str
+}
+
+bun #coercion(x: String): str {
+	str(${x})
+}
+
+bun #coercion(x: str): String {
+	ustr(${x})
+}
+

@@ -36,34 +36,15 @@ bun #float(): float {
 }
 
 bun #string(): String {
-	"${textof this}"
-}
-
-bun number: type {
-}
-
-bun #coercion(x: float): number {
-	${x}
-}
-
-bun #coercion(x: int): number {
-	${x}
+	u"${textof this}"
 }
 
 bun #conv(x: float): int {
 	int(${x})
 }
 
-bun str: type {
-	str
-}
-
-bun #coercion(x: String): str {
-	str(${x})
-}
-
-bun #coercion(x: str): String {
-	ustr(${x})
+bun #conv(x: int): float {
+	float(${x})
 }
 
 bun #group(expr :alpha) :alpha {
@@ -77,7 +58,6 @@ bun #not(x: boolean) :boolean {
 bun #plus(x: int) :int {
 	+${x}
 }
-
 
 bun #plus(x: float) :float {
 	+${x}
@@ -111,12 +91,12 @@ bun #add(x: alpha, y: alpha) :alpha {
 	(${x} + ${y})
 }
 
-bun #add(x :str, y :any) :str {
-	(${x} + str(${y}))
-}
-
 bun #add(x: String, y: any): String {
 	(${x} + ustr(${y}))
+}
+
+bun #add(x: String, y: String): String {
+	${x} + ${y}
 }
 
 bun #sub(x: alpha, y: alpha): alpha {
@@ -159,8 +139,12 @@ bun #gte(x: alpha, y: alpha): boolean {
 	(${x} >= ${y})
 }
 
+bun #apply(f, args) {
+	${f}(${list args ", "})
+}
+
 bun #let(name, type, value): void {
-${typedecl}
+${type name}
 	${typeof value} ${name} = ${value}
 }
 
@@ -170,19 +154,35 @@ ${typedecl}
 }
 
 bun #function(name, params, rtype, block: void): void {
-${funcdecl}
-${tricode block}
-	def ${push name}(${list params}): ${begin}
-	${statement block} ${end}
+${type name}
+	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
+}
+
+bun #param(name, type) {
+	${name}
+}
+
+bun #block(*): void {
+	${statement this}
 }
 
 bun #if(x: boolean, then: void): void {
-	if ${x}: ${begin}
-	${statement then} ${end}
-	
+	if ${x}: ${begin} ${statement then} ${end}
 }
 
 bun #if(x: boolean, then: void, else: void): void {
-	if ${x}: ${then}
-	else ${else}
+	if ${x}: ${begin} ${statement then} ${end}
+	else: ${begin} ${statement else} ${end}
 }
+
+bun #return():void {
+	return
+}
+
+bun return : any {
+}
+
+bun #return(expr: return): void {
+	return ${expr}
+}
+

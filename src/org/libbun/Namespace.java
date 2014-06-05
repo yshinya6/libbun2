@@ -3,9 +3,9 @@ package org.libbun;
 public class Namespace extends SymbolTable {
 	public UniMap<PegParser> parserMap;
 	public UniArray<String> exportSymbolList;
-	public PegDriver  driver;
+	public BunDriver  driver;
 
-	public Namespace(PegParser parser, PegDriver driver) {
+	public Namespace(PegParser parser, BunDriver driver) {
 		super(null);
 		this.namespace = this;
 		this.parserMap = new UniMap<PegParser>();

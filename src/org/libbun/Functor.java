@@ -1,13 +1,14 @@
 package org.libbun;
 
 public class Functor {
-	public String    name;
-	public boolean   isSymbol;
-	public FuncType  funcType;
-	TemplateEngine   template;
-	public Functor   nextChoice = null;
+	public SymbolTable storedTable = null;
+	public String      name;
+	public boolean     isSymbol;
+	public MetaType    funcType;
+	TemplateEngine     template;
+	public Functor     nextChoice = null;
 
-	public Functor(String name, boolean isSymbol, FuncType funcType) {
+	public Functor(String name, boolean isSymbol, MetaType funcType) {
 		this.name = name;
 		this.isSymbol = isSymbol;
 		this.funcType = funcType;
@@ -63,6 +64,7 @@ public class Functor {
 	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		SymbolTable gamma = node.getSymbolTable();
 		MetaType[] greekContext = getGreekContext();
+		//System.out.println(no)
 		for(int i = 0; i < node.size(); i++) {
 			MetaType type = this.getParamTypeAt(i);
 			if(!gamma.checkTypeAt(node, i, type, greekContext, hasNextChoice)) {
@@ -82,7 +84,7 @@ public class Functor {
 		}
 	}
 
-	public void build(PegObject node, PegDriver driver) {
+	public void build(PegObject node, BunDriver driver) {
 		if(this.template != null) {
 			this.template.build(node, driver);
 		}
@@ -105,7 +107,7 @@ class ErrorFunctor extends Functor {
 	}
 
 	@Override
-	public void build(PegObject node, PegDriver driver) {
+	public void build(PegObject node, BunDriver driver) {
 //		PegObject msgNode = node.get(0, null);
 //		if(msgNode != null) {
 //			String errorMessage = node.getTextAt(0, "*error*");
@@ -133,7 +135,7 @@ class BunFunctor extends Functor {
 	}
 
 	@Override
-	public void build(PegObject node, PegDriver driver) {
+	public void build(PegObject node, BunDriver driver) {
 		// TODO Auto-generated method stub
 	}
 
@@ -157,6 +159,9 @@ class BunFunctor extends Functor {
 	}
 
 	private FuncType parseFuncType(SymbolTable gamma, PegObject paramNode, PegObject returnTypeNode, UniMap<Integer> nameMap) {
+		if(paramNode.size() == 0 && paramNode.getText().equals("(*)")) {
+			return null; // 
+		}
 		UniArray<MetaType> typeList = new UniArray<MetaType>(new MetaType[paramNode.size()+1]);
 		for(int i = 0; i < paramNode.size(); i++) {
 			PegObject p = paramNode.get(i);
@@ -171,7 +176,12 @@ class BunFunctor extends Functor {
 	private MetaType parseType(SymbolTable gamma, PegObject typeNode) {
 		if(typeNode != null) {
 			gamma.tryMatch(typeNode);
-			return typeNode.getType(MetaType.UntypedType);
+			MetaType t = typeNode.getType(MetaType.UntypedType);
+			if(t instanceof VarType) {
+				t = MetaType.UntypedType;
+				typeNode.typed = MetaType.UntypedType;
+			}
+			return t;
 		}
 		return MetaType.UntypedType;
 	}
@@ -228,7 +238,7 @@ class BunFunctor extends Functor {
 						return;
 					}
 					else {
-						sec.addCommand(headerOption, name, -1);
+						sec.addCommand(headerOption, name, -1, chunkNode, 1);
 					}
 				}
 			}
@@ -242,10 +252,10 @@ class BunFunctor extends Functor {
 				String name = chunkNode.getTextAt(1, null);
 				int index = this.indexOfName(name, nameMap);
 				if(index != -2) {
-					sec.addCommand(headerOption, cmd, index);
+					sec.addCommand(headerOption, cmd, index, chunkNode, 2);
 				}
 				else {
-					sec.addCommand(headerOption, cmd, name);
+					sec.addCommand(headerOption, cmd, -1, chunkNode, 1);
 				}
 			}
 		}
@@ -288,15 +298,22 @@ class TemplateEngine {
 	void addNodeChunk(int index) {
 		this.add(new NodeChunk(null, index));
 	}
-	void addCommand(boolean headerOption, String cmd, int index) {
-		this.add(new NodeCommandChunk(headerOption, cmd, index));
+	void addCommand(boolean headerOption, String cmd, int index, PegObject aNode, int aStart) {		
+		String[] a = null;
+		if(aStart < aNode.size()) {
+			a = new String[aNode.size()-aStart];
+			for(int i = 0; i < a.length; i++) {
+				a[i] = aNode.getTextAt(aStart +i, "");
+			}
+		}
+		this.add(new NodeCommandChunk(headerOption, cmd, index, a));
 	}
 	
 	void addCommand(boolean headerOption, String cmd, String name) {
 		this.add(new CommandChunk(headerOption, cmd, name));
 	}
 
-	public void check(PegObject node, PegDriver driver) {
+	public void check(PegObject node, BunDriver driver) {
 		TempalteChunk cur = this.chunks;
 		while(cur != null) {
 			if(cur.headerOption) {
@@ -306,7 +323,7 @@ class TemplateEngine {
 		}
 	}
 
-	public void build(PegObject node, PegDriver driver) {
+	public void build(PegObject node, BunDriver driver) {
 		TempalteChunk cur = this.chunks;
 		while(cur != null) {
 			if(!cur.headerOption) {
@@ -319,7 +336,7 @@ class TemplateEngine {
 	abstract class TempalteChunk {
 		boolean headerOption = false;
 		TempalteChunk next = null;
-		public abstract void push(PegObject node, PegDriver d);
+		public abstract void push(PegObject node, BunDriver d);
 	}
 
 	class CodeChunk extends TempalteChunk {
@@ -328,14 +345,14 @@ class TemplateEngine {
 			this.text = text;
 		}
 		@Override
-		public void push(PegObject node, PegDriver d) {
+		public void push(PegObject node, BunDriver d) {
 			d.pushCode(this.text);
 		}
 	}
 
 	class NewLineChunk extends TempalteChunk {
 		@Override
-		public void push(PegObject node, PegDriver d) {
+		public void push(PegObject node, BunDriver d) {
 			d.pushNewLine();
 		}
 	}
@@ -346,7 +363,7 @@ class TemplateEngine {
 			this.index = index;
 		}
 		@Override
-		public void push(PegObject node, PegDriver d) {
+		public void push(PegObject node, BunDriver d) {
 			d.pushNode(node.get(this.index));
 		}
 	}
@@ -355,17 +372,22 @@ class TemplateEngine {
 	class NodeCommandChunk extends TempalteChunk {
 		String name;
 		int index;
-		NodeCommandChunk(boolean headerOption, String name, int index) {
+		String[] arguments;
+		NodeCommandChunk(boolean headerOption, String name, int index, String[] a) {
 			this.name = name;
 			this.index = index;
 			this.headerOption = headerOption;
+			this.arguments = a;
+			if(a == null) {
+				this.arguments = Null;
+			}
 		}
 		@Override
-		public void push(PegObject node, PegDriver d) {
+		public void push(PegObject node, BunDriver d) {
 			if(this.index != -1) {
 				node = node.get(this.index);
 			}
-			d.pushCommand(this.name, node, Null);
+			d.pushCommand(this.name, node, this.arguments);
 		}
 	}
 
@@ -378,7 +400,7 @@ class TemplateEngine {
 			this.headerOption = headerOption;
 		}
 		@Override
-		public void push(PegObject node, PegDriver d) {
+		public void push(PegObject node, BunDriver d) {
 			String[] a = new String[1];
 			a[0] = this.param1;
 			d.pushCommand(this.name, node, a);

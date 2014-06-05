@@ -3,6 +3,7 @@ import Type from type.peg;
 
 TopLevel
  = Template
+ / catch (!'\n}' .)* '\n}' 
  ;
 
 Spacing
@@ -27,7 +28,7 @@ TemplateName
   = << '#'? [A-Za-z0-9_.]+ #name >>
   ;
 Params
-  = << ('(' _ (Param@ (_ ',' _ Param@)*)? _ ')' / '') #params >>
+  = << ('(' _ ('*' / (Param@ (_ ',' _ Param@)*)?) _ ')' / '') #params >>
   ;
 Param
   = << BunName@ _ BunAnno@? #param >>
@@ -57,10 +58,14 @@ Chunk
   = << (![\n$] .)* #bun.chunk >>
   ; 
 Command
-  = '${' << BunName@ (_ BunName@ #bun.cmd2 / '' #bun.cmd1) >> '}' 
+  = '${' << BunName@ (_ BunName@ Option@* #bun.cmd2 / '' #bun.cmd1) >> '}' 
   / '$'  <<'$' #bun.chunk>>
   ;
 BunName
   = << [A-Za-z0-9._]+  #symbol >>
   ;
-
+Option
+  = '"' << (!'"' .)* #value>> '"'
+  / "'" << (!"'" .)* #value>> "'"
+  / Spacing << (![} \t\n] .)* #value >>
+  ;

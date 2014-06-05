@@ -1,6 +1,6 @@
 package org.libbun;
 
-public class DubugDriver extends PegDriver {
+public class DubugDriver extends BunDriver {
 
 	@Override
 	public void initTable(Namespace gamma) {
@@ -59,6 +59,12 @@ public class DubugDriver extends PegDriver {
 	public boolean hasCommand(String cmd) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public void pushApplyNode(PegObject node, String name) {
+		// TODO Auto-generated method stub
+		
 	}
 
 

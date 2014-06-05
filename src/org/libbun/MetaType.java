@@ -29,6 +29,18 @@ public abstract class MetaType  {
 		return sb.toString();
 	}
 
+	public int getFuncParamSize() {
+		return 0;
+	}
+
+	public MetaType getFuncParamType(int index) {
+		return this;
+	}
+
+	public MetaType getReturnType() {
+		return this;
+	}
+	
 	public abstract boolean hasVarType();
 	public abstract MetaType getRealType();
 	public abstract boolean hasGreekType();
@@ -37,203 +49,14 @@ public abstract class MetaType  {
 	public abstract void stringfy(UniStringBuilder sb);
 	public abstract boolean is(MetaType valueType, MetaType[] greekContext);
 	
-//	public int getGenericSize() {
-//		return 0;
-//	}
-//
-//	public MetaType getGenericTypeAt(int index) {
-//		return MetaType.VoidType;
-//	}
+	public void build(PegObject node, BunDriver driver) {
+		node.matched.build(node, driver);
+	}
 
-	//
-	//	public static BType _LookupMutableType(LibBunTypeChecker Gamma, BType Type, @Nullable BToken MutableToken) {
-	//		if(Gamma.IsSupportMutable) {
-	//			String MangleName = "M:"+Type.TypeId;
-	//			BType MutableType = BTypePool._ClassNameMap.GetOrNull(MangleName);
-	//			if(MutableType == null) {
-	//				MutableType = new BMutableType(Type);
-	//				BTypePool._ClassNameMap.put(MangleName, MutableType);
-	//			}
-	//			return MutableType;
-	//		}
-	//		return Type;
-	//	}
-	//
-	//	public static BType _LookupNullableType(LibBunTypeChecker Gamma, BType Type, @Nullable BToken MaybeToken) {
-	//		if(Gamma.IsSupportNullable) {
-	//			String MangleName = "N:"+Type.TypeId;
-	//			BType NullableType = BTypePool._ClassNameMap.GetOrNull(MangleName);
-	//			if(NullableType == null) {
-	//				NullableType = new BMutableType(Type);
-	//				BTypePool._ClassNameMap.put(MangleName, NullableType);
-	//			}
-	//			return NullableType;
-	//		}
-	//		return Type;
-	//	}
-
-//
-//	public final static MetaType _GetGenericType1(MetaType BaseType, MetaType ParamType) {
-//		String MangleName = _MangleType2(BaseType, ParamType);
-//		MetaType GenericType = _TypeNameMap.GetOrNull(MangleName);
-//		if(GenericType == null) {
-//			GenericType = new GenericType(MetaType.UniqueTypeFlag, BaseType, ParamType);
-//			_TypeNameMap.put(MangleName, GenericType);
-//		}
-//		return GenericType;
-//	}
-//
-//	final static MetaType[] _UniqueTypes(UniArray<MetaType> TypeList) {
-//		String MangleName = "[]" + _MangleTypes(TypeList);
-//		MetaType[] Types = _UniqueTypeSetMap.GetOrNull(MangleName);
-//		if(Types == null) {
-//			Types = TypeList.compactArray();
-//			_UniqueTypeSetMap.put(MangleName, Types);
-//		}
-//		return Types;
-//	}
-//
-//
-//	final static String _MangleType2(MetaType Type1, MetaType Type2) {
-//		return ":" + Type1.typeId + ":" + Type2.typeId;
-//	}
-
-
-
-	
-//	
-//
-//	public MetaType GetRealType() {
-//		return this;
-//	}
-//
-//	public MetaType GetSuperType() {
-//		return this.refType;
-//	}
-//
-//	public MetaType GetBaseType() {
-//		return this;
-//	}
-//
-//
-//
-//	public final boolean Equals(MetaType Type) {
-//		return (this.GetRealType() == Type.GetRealType());
-//	}
-//
-//	public final boolean Accept(MetaType Type) {
-//		MetaType ThisType = this.GetRealType();
-//		if(ThisType == Type.GetRealType()) {
-//			return true;
-//		}
-//		if(Type.getGenericSize() == 0) {
-//			MetaType SuperClass = Type.GetSuperType();
-//			while(SuperClass != null) {
-//				if(SuperClass == ThisType) {
-//					return true;
-//				}
-//				SuperClass = SuperClass.GetSuperType();
-//			}
-//		}
-//		return false;
-//	}
-//
-//	public boolean IsGreekType() {
-//		return false;
-//	}
-//
-//	public MetaType GetGreekRealType(MetaType[] Greek) {
-//		return this.GetRealType();
-//	}
-//
-//
-//	public final boolean IsVoidType() {
-//		return (this.GetRealType() == MetaType.VoidType);
-//	}
-//
-//	public boolean IsVarType() {
-//		return (this.GetRealType() == MetaType.VarType);
-//	}
-//
-//	public final boolean IsInferrableType() {
-//		return (!this.IsVarType() && !this.IsVoidType());
-//	}
-//
-//	public final boolean IsTypeType() {
-//		return (this.GetRealType() == MetaType.TypeType);
-//	}
-//
-//	public final boolean IsBooleanType() {
-//		return (this.GetRealType() == MetaType.BooleanType);
-//	}
-//
-//	public final boolean IsIntType() {
-//		return (this.GetRealType() == MetaType.IntType);
-//	}
-//
-//	public final boolean IsFloatType() {
-//		return (this.GetRealType() == MetaType.FloatType);
-//	}
-//
-//	public final boolean IsNumberType() {
-//		return (this.IsIntType() || this.IsFloatType());
-//	}
-//
-//	public final boolean IsStringType() {
-//		return (this.GetRealType() == MetaType.StringType);
-//	}
-//
-//	public final boolean IsArrayType() {
-//		return (this.GetBaseType() == GenericType._ArrayType);
-//	}
-//
-//	public final boolean IsMapType() {
-//		return (this.GetBaseType() == GenericType._MapType);
-//	}
-//
-//	public final boolean IsOpenType() {
-//		return Main._IsFlag(this.typeFlag, MetaType.OpenTypeFlag);
-//	}
-//
-//	public final String StringfyClassMember(String Name) {
-//		return Name + " of " + this.shortName;
-//	}
-//
-//	public final String GetUniqueName() {
-//		return this.getName()+":"+this.typeId;
-//		//return LibBunSystem._Stringfy(this.TypeId);
-//	}
-//
-//	//	public final boolean AcceptValue(Object Value) {
-//	//		return (Value != null) ? this.Accept(ZSystem.GuessType(Value)) : true;
-//	//	}
-//
-//	public boolean IsFuncType() {
-//		return (this.GetRealType() instanceof FuncType);
-//	}
-//
-//	public String StringfySignature(String FuncName) {
-//		return FuncName;
-//	}
-//
-//	public void Maybe(MetaType T, SourceToken SourceToken) {
-//	}
-//
-//	public void bunfy(UniStringBuilder builder) {
-//		builder.Append(this.getName());
-//	}
-	
 	final static UniArray<MetaType>   _TypeList;
 	final static UniMap<MetaType>     _TypeNameMap;
 
 	public static MetaType UntypedType;
-//	public static MetaType VoidType        = null;
-//	public static MetaType VarType         = null;
-//	public static MetaType BooleanType     = null;
-//	public static IntType IntType          = null;
-//	public static MetaType FloatType       = null;
-//	public static StringType StringType    = null;
-//	public static MetaType TypeType        = null;
 		
 	static {
 		_TypeList = new UniArray<MetaType>(new MetaType[128]);
@@ -368,21 +191,21 @@ public abstract class MetaType  {
 		return new VoidType(name, typeInfo);
 	}
 
-	public static MetaType newBooleanType(String name, Object typeInfo) {
-		return new BooleanType(name, typeInfo);
-	}
-
-	public static MetaType newIntType(String name, int size, Object typeInfo) {
-		return new IntType(name, size, typeInfo);
-	}
-
-	public static MetaType newFloatType(String name, int size, Object typeInfo) {
-		return new FloatType(name, size, typeInfo);
-	}
-
-	public static MetaType newStringType(String name, Object typeInfo) {
-		return new StringType(name, typeInfo);
-	}
+//	public static MetaType newBooleanType(String name, Object typeInfo) {
+//		return new BooleanType(name, typeInfo);
+//	}
+//
+//	public static MetaType newIntType(String name, int size, Object typeInfo) {
+//		return new IntType(name, size, typeInfo);
+//	}
+//
+//	public static MetaType newFloatType(String name, int size, Object typeInfo) {
+//		return new FloatType(name, size, typeInfo);
+//	}
+//
+//	public static MetaType newStringType(String name, Object typeInfo) {
+//		return new StringType(name, typeInfo);
+//	}
 
 	public static MetaType newAnyType(String name, Object typeInfo) {
 		return new AnyType(name, typeInfo);
@@ -405,40 +228,68 @@ public abstract class MetaType  {
 		return t;
 	}
 
+	public static MetaType newVarType(PegObject node, String baseName) {
+		return new VarType(node, baseName);
+	}
 
 
 }
 
 class VarType extends MetaType {
+	public PegObject node;
 	private MetaType realType;
-	private String genericName;
+	private String   baseName;
 	private UniArray<MetaType> typeList;
 
-	public VarType(String genericName) {
+	public VarType(PegObject node, String baseName) {
 		super(null);
-		this.genericName = genericName;
+		this.node     = node;
+		this.baseName = baseName;
 		this.realType = null;
 		this.typeList = null;
+		node.typed = this;
 	}
 
-	public MetaType newVarType(MetaType type) {
+	public MetaType newVarType(PegObject node) {
+		MetaType type = node.getType(null);
+		if(type == null || type == MetaType.UntypedType) {
+			type = new VarType(node, null);
+		}
 		if(this.typeList == null) {
 			this.typeList = new UniArray<MetaType>(new MetaType[2]);
-		}
-		if(type == null) {
-			type = new VarType(null);
 		}
 		typeList.add(type);
 		return type;
 	}
 	
+	public int getFuncParamSize() {
+		if(this.baseName == FuncType.FuncBaseName || this.baseName.equals(FuncType.FuncBaseName)) {
+			return this.typeList.size() - 1;
+		}
+		return 0;
+	}
+
+	public MetaType getFuncParamType(int index) {
+		if(this.baseName == FuncType.FuncBaseName || this.baseName.equals(FuncType.FuncBaseName)) {
+			return this.typeList.ArrayValues[index];
+		}
+		return this;
+	}
+
+	public MetaType getReturnType() {
+		if(this.baseName == FuncType.FuncBaseName  || this.baseName.equals(FuncType.FuncBaseName)) {
+			return this.typeList.ArrayValues[this.typeList.size() - 1];
+		}
+		return this;
+	}
+
 	@Override
 	public MetaType getRealType() {
 		if(this.realType != null) {
 			this.realType = this.realType.getRealType();
 			return this.realType;
 		}
-		if(this.genericName != null && this.typeList != null) {
+		if(this.baseName != null && this.typeList != null) {
 			for(int i = 0; i < this.typeList.size(); i++) {
 				MetaType p = this.typeList.ArrayValues[i];
 				if(p.hasVarType()) {
@@ -446,7 +297,7 @@ class VarType extends MetaType {
 				}
 				this.typeList.ArrayValues[i] = p.getRealType();
 			}
-			this.realType = MetaType.newGenericType(genericName, this.typeList);
+			this.realType = MetaType.newGenericType(baseName, this.typeList);
 			return this.realType;
 		}
 		return this;
@@ -474,13 +325,39 @@ class VarType extends MetaType {
 
 	@Override
 	public void stringfy(UniStringBuilder sb) {
-		sb.append("var");
+		if(this.realType != null) {
+			if(Main.EnableVerbose) {
+				sb.append("?");
+			}
+			this.realType.stringfy(sb);
+			return;
+		}
+		if(this.baseName != null) {
+			sb.append(this.baseName);
+		}
+		else {
+			if(this.typeList == null) {
+				sb.append("?");
+				return;
+			}
+			sb.append("Unknown");
+		}
+		if(this.typeList != null) {
+			sb.append("<");
+			for(int i = 0; i < this.typeList.size(); i++) {
+				if(i > 0) {
+					sb.append(",");
+				}
+				this.typeList.ArrayValues[i].stringfy(sb);
+			}
+			sb.append(">");
+		}
 	}
 
 	public boolean is(MetaType valueType, MetaType[] greekContext) {
 		if(this.realType == null) {
 			valueType = valueType.getRealType();
-			if(this.genericName == null && this.typeList == null) {
+			if(this.baseName == null && this.typeList == null) {
 				this.realType = valueType;
 			}
 //			if(valueType instanceof GenericType) {
@@ -546,10 +423,11 @@ class TransType extends MetaType {
 		super(functor);
 		this.sourceType = sourceType;
 		this.targetType = targetType;
+		this.functor = functor;
 	}
 	@Override
 	public boolean hasVarType() {
-		return targetType.hasVarType();
+		return false;
 	}
 	@Override
 	public MetaType getRealType() {
@@ -575,10 +453,15 @@ class TransType extends MetaType {
 		return this.targetType.is(valueType, greekContext);
 	}
 
-	public void build(PegObject node, PegDriver driver) {
+	public void build(PegObject node, BunDriver driver) {
 		PegObject o = new PegObject(this.functor.name);
 		o.append(node);
-		this.functor.build(o, driver);
+		o.matched = this.functor;
+		o.typed = this.targetType;
+		node.typed = this.sourceType;
+		driver.pushNode(o);
+		//this.functor.build(o, driver);
+		node.typed = this;
 	}
 }
 
@@ -740,6 +623,7 @@ class ArrayType extends GenericType {
 }
 
 class FuncType extends GenericType {
+	public final static String FuncBaseName    = "Func";
 
 	public FuncType(String prefix, String comma, String suffix) {
 		super("Func<", ",", ">");
@@ -838,44 +722,43 @@ class AnyType extends ValueType {
 	
 }
 
-
-class BooleanType extends ValueType {
-	public BooleanType(String name, Object typeInfo) {
-		super(name, typeInfo);
-	}
-}
-
-class NumberType extends ValueType {
-	public NumberType(String name, Object typeInfo) {
-		super(name, typeInfo);
-	}
-}
-
-class IntType extends NumberType {
-	int size;
-	public IntType(String name, int size, Object typeInfo) {
-		super(name, typeInfo);
-	}
-}
-
-class FloatType extends NumberType {
-	int size;
-	public FloatType(String name, int size, Object typeInfo) {
-		super(name, typeInfo);
-	}
-}
-
-class StringType extends ValueType {
-	public StringType(String name, Object typeInfo) {
-		super(name, typeInfo);
-	}
-}
-
-class ObjectType extends ValueType {
-	public ObjectType(String name, Object typeInfo) {
-		super(name, typeInfo);
-	}
-}
+//class BooleanType extends ValueType {
+//	public BooleanType(String name, Object typeInfo) {
+//		super(name, typeInfo);
+//	}
+//}
+//
+//class NumberType extends ValueType {
+//	public NumberType(String name, Object typeInfo) {
+//		super(name, typeInfo);
+//	}
+//}
+//
+//class IntType extends NumberType {
+//	int size;
+//	public IntType(String name, int size, Object typeInfo) {
+//		super(name, typeInfo);
+//	}
+//}
+//
+//class FloatType extends NumberType {
+//	int size;
+//	public FloatType(String name, int size, Object typeInfo) {
+//		super(name, typeInfo);
+//	}
+//}
+//
+//class StringType extends ValueType {
+//	public StringType(String name, Object typeInfo) {
+//		super(name, typeInfo);
+//	}
+//}
+//
+//class ObjectType extends ValueType {
+//	public ObjectType(String name, Object typeInfo) {
+//		super(name, typeInfo);
+//	}
+//}
 
 
 

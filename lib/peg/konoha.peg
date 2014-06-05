@@ -147,7 +147,7 @@ Unary
 Selector
   = '.' Name@ #field
   / '[' _ Expr@ ']' #index
-  / '(' _ ( Expr@ ( _ ',' _ Expr@ )* )? ')'  #call
+  / '(' << _ ( Expr@ ( _ ',' _ Expr@ )* )? #arguments >>@ ')'  #apply
   / '++' #postinc  / '--' #postdec
   ;
   
