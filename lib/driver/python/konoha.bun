@@ -140,6 +140,7 @@ bun #gte(x: alpha, y: alpha): boolean {
 }
 
 bun #apply(f, args) {
+${typecheck}
 	${f}(${list args ", "})
 }
 
@@ -149,16 +150,17 @@ ${type name}
 }
 
 bun #var(name, type, value): void {
-${typedecl}
+${type name}
 	${name} = ${value}
 }
 
-bun #function(name, params, rtype, block: void): void {
+bun #function(name, params, rtype, block): void {
 ${type name}
+${convert block ssa}
 	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
 }
 
-bun #param(name, type) {
+bun #param(name, type): void {
 	${name}
 }
 
@@ -175,14 +177,13 @@ bun #if(x: boolean, then: void, else: void): void {
 	else: ${begin} ${statement else} ${end}
 }
 
-bun #return():void {
+bun #return(): void {
+${typecheck}
 	return
 }
 
-bun return : any {
-}
-
-bun #return(expr: return): void {
+bun #return(expr): void {
+${typecheck}
 	return ${expr}
 }
 

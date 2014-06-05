@@ -7,11 +7,16 @@ public class Namespace extends SymbolTable {
 
 	public Namespace(PegParser parser, BunDriver driver) {
 		super(null);
-		this.namespace = this;
+		this.root = this;
 		this.parserMap = new UniMap<PegParser>();
 		this.parserMap.put("main", parser);
 		this.driver = driver;
 	}
+	
+	public final String toString() {
+		return "root";
+	}
+
 
 	public void importFrom(Namespace ns) {
 		for(int i = 0; i < ns.exportSymbolList.size(); i++) {

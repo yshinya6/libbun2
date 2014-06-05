@@ -2,25 +2,31 @@ package org.libbun;
 
 
 public class SymbolTable {
-	Namespace          namespace = null;
+	Namespace          root = null;
 	PegObject          scope     = null;
 	UniMap<Functor>    symbolTable = null;
 
 	public SymbolTable(Namespace namespace) {
-		this.namespace = namespace;
+		this.root = namespace;
 	}
 
-	@Override public String toString() {
-		return "NS[" + this.scope + "]";
+	SymbolTable(Namespace root, PegObject node) {
+		this.root = root;
+		this.set(node);
 	}
-
+	
+	public void set(PegObject node) {
+		node.gamma = this;
+		this.scope = node;
+	}
+	
 	public final Namespace getNamespace() {
-		return this.namespace;
+		return this.root;
 	}
 	
 	public final void report(PegObject node, String errorType, String msg) {
-		if(this.namespace.driver != null) {
-			this.namespace.driver.report(node, errorType, msg);
+		if(this.root.driver != null) {
+			this.root.driver.report(node, errorType, msg);
 		}
 	}
 
@@ -43,6 +49,7 @@ public class SymbolTable {
 		}
 		this.symbolTable.put(key, f);
 		f.storedTable = this;
+		//System.out.println("SET gamma " + this + ", name = " + key);
 	}
 
 	public final Functor getLocalSymbol(String name) {
@@ -53,15 +60,14 @@ public class SymbolTable {
 	}
 	
 	public final Functor getSymbol(String name) {
-		SymbolTable table = this;
-		while(table != null) {
-			if(table.symbolTable != null) {
-				Functor f = table.symbolTable.get(name, null);
-				if(f != null) {
-					return f;
-				}
+		SymbolTable gamma = this;
+		while(gamma != null) {
+			Functor f = this.getLocalSymbol(name);
+			//System.out.println("GET gamma " + gamma + ", name=" + name + " f=" + f);
+			if(f != null) {
+				return f;
 			}
-			table = table.getParentTable();
+			gamma = gamma.getParentTable();
 		}
 		//		System.out.println("unknown key: " + key);
 		return null;
@@ -113,26 +119,32 @@ public class SymbolTable {
 	}
 
 	public final boolean checkTypeAt(PegObject node, int index, MetaType type, MetaType[] greekContext, boolean hasNextChoice) {
-		PegObject subnode = node.get(index);
-		if(!this.tryMatch(subnode)) {
-			if(type == MetaType.UntypedType) {
+		if(type == MetaType.UntypedType) {  // UntypedType does not invoke tryMatch()
+			return true;
+		}
+		if(index < node.size()) {
+			PegObject subnode = node.get(index);
+			if(!this.tryMatch(subnode)) {
+				if(Main.EnableVerbose) {
+					Main._PrintLine("mismatched: " + subnode.name + ":" + node.size() + " as " + type.getName());
+				}
+				return false;
+			}
+			MetaType valueType = subnode.getType(MetaType.UntypedType);
+			//System.out.println("index="+index + ", type="+type + ", valueType="+valueType + "node=" + node);
+			if(type.is(valueType, greekContext)) {
 				return true;
 			}
-			if(Main.EnableVerbose) {
-				Main._PrintLine("mismatched: " + subnode.name + ":" + node.size() + " as " + type.getName());
+			subnode.typed = this.getTypeCoersion(valueType, type, hasNextChoice);
+			if(subnode.typed != null) {
+				return true;
 			}
 			return false;
 		}
-		MetaType valueType = subnode.getType(MetaType.UntypedType);
-		//System.out.println("index="+index + ", type="+type + ", valueType="+valueType + "node=" + node);
-		if(type.is(valueType, greekContext)) {
-			return true;
+		else {
+			MetaType valueType = this.getType("void", null);
+			return type.is(valueType, greekContext);
 		}
-		subnode.typed = this.getTypeCoersion(valueType, type, hasNextChoice);
-		if(subnode.typed != null) {
-			return true;
-		}
-		return false;
 	}
 		
 	private MetaType getTypeCoersion(MetaType sourceType, MetaType targetType, boolean hasNextChoice) {
@@ -205,7 +217,7 @@ public class SymbolTable {
 			this.report(nameNode, "notice", "duplicated name: " + name);
 		}
 		type = type.getRealType();
-		if(type.hasVarType()) {
+		if(type.hasVarType() && nameNode != null) {
 			this.report(nameNode, "notice", "ambigious variable: " + name + " :" + type.getName());
 		}
 		if(GlobalName) {
@@ -284,8 +296,8 @@ public class SymbolTable {
 	
 	public void load(String fileName, BunDriver driver) {
 		BunSource source = Main.loadSource(fileName);
-		this.namespace.newParserContext(null, source);
-		PegParserContext context =  this.namespace.newParserContext(null, source);
+		this.root.newParserContext(null, source);
+		PegParserContext context =  this.root.newParserContext(null, source);
 		while(context.hasNode()) {
 			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), "TopLevel", false/*hasNextChoice*/);
 			node.gamma = this;

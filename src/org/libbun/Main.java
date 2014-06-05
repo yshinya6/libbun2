@@ -192,7 +192,7 @@ public class Main {
 						Line = Line.substring(loc+1);
 					}
 					else {
-						PegParser p = gamma.namespace.getParser("main");
+						PegParser p = gamma.root.getParser("main");
 						p.show(Line.substring(1));
 						startPoint = null;
 					}
@@ -201,12 +201,12 @@ public class Main {
 			if(startPoint != null) {
 				try {
 					BunSource source = new BunSource("(stdin)", linenum, Line, null);
-					PegParserContext context =  gamma.namespace.newParserContext("main", source);
+					PegParserContext context =  gamma.root.newParserContext("main", source);
 					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint, false/*hasNextChoice*/);
 					if(node.isFailure()) {
 						node.name = BunSymbol.PerrorFunctor;
 					}
-					node.gamma = gamma;
+					gamma.set(node);
 					if(PegDebuggerMode) {
 						System.out.println("parsed:\n" + node.toString());
 						if(context.hasChar()) {

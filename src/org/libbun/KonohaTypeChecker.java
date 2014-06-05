@@ -1,5 +1,7 @@
 package org.libbun;
 
+import org.libbun.SymbolTable.DefinedNameFunctor;
+
 public class KonohaTypeChecker {
 	
 	public static void typeLet(PegObject node) {
@@ -37,17 +39,34 @@ public class KonohaTypeChecker {
 			if(block != null) {
 				block.setName(node.get(0), node.typed, node);
 				block.setName("return", returnType, null);
+				System.out.println("@@@@@@@ " + gamma.tryMatch(block));
 			}
 			gamma.setFunctionName(node.getTextAt(0, "f"), node.typed, node);
 		}
 	}
 
+	public static void typeCheckApply(PegObject node) {
+		System.out.println("typeCheckApply: " + node);
+		SymbolTable gamma = node.getSymbolTable();
+
+	}
+
+	public static void typeCheckReturn(PegObject node) {
+		//System.out.println("FuncDeclCommand node: " + node);
+		SymbolTable gamma = node.getSymbolTable();
+		DefinedNameFunctor f = gamma.getName("return");
+		MetaType returnType = f.getReturnType(MetaType.UntypedType);
+		System.out.println("returnType="+returnType);
+		gamma.checkTypeAt(node, 0, returnType, null, false);
+	}
+
+	
 	public static void initDriver(BunDriver driver) {
 		class TypeCommand extends DriverCommand {
 			@Override
 			public void invoke(BunDriver driver, PegObject node, String[] param) {
 				PegObject parent = node.parent;
-				if(parent.is("#let")) {
+				if(parent.is("#let") || parent.is("#var")) {
 					KonohaTypeChecker.typeLet(parent);
 					return;
 				}
@@ -72,7 +91,6 @@ public class KonohaTypeChecker {
 			}
 		}
 		driver.addCommand("typecheck", new TypeCheckCommand());
-		
 	}
 	
 	

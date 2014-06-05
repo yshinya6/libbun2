@@ -192,19 +192,22 @@ public class PegObject {
 		return null;
 	}
 
-	public void setName(String name, MetaType type, PegObject initValue) {
+	private void checkGamma() {
 		if(this.gamma == null) {
-			SymbolTable parent = this.getSymbolTable();
-			this.gamma = new SymbolTable(parent.namespace);
+			SymbolTable gamma = this.getSymbolTable();
+			gamma = new SymbolTable(gamma.getNamespace(), this);
+			// NOTE: this.gamma was set in SymbolTable constructor
+			assert(this.gamma != null);
 		}
+	}
+
+	public void setName(String name, MetaType type, PegObject initValue) {
+		this.checkGamma();
 		this.gamma.setName(name, type, initValue);
 	}
 
 	public void setName(PegObject nameNode, MetaType type, PegObject initValue) {
-		if(this.gamma == null) {
-			SymbolTable parent = this.getSymbolTable();
-			this.gamma = new SymbolTable(parent.namespace);
-		}
+		this.checkGamma();
 		this.gamma.setName(nameNode, type, initValue);
 		nameNode.typed = type;
 	}

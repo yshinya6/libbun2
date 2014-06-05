@@ -64,7 +64,6 @@ public class Functor {
 	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		SymbolTable gamma = node.getSymbolTable();
 		MetaType[] greekContext = getGreekContext();
-		//System.out.println(no)
 		for(int i = 0; i < node.size(); i++) {
 			MetaType type = this.getParamTypeAt(i);
 			if(!gamma.checkTypeAt(node, i, type, greekContext, hasNextChoice)) {
@@ -79,7 +78,7 @@ public class Functor {
 		else {
 			node.matched = this;
 			if(this.template != null) {
-				this.template.check(node, gamma.namespace.driver);
+				this.template.check(node, gamma.root.driver);
 			}
 		}
 	}
@@ -262,7 +261,7 @@ class BunFunctor extends Functor {
 	}
 
 	private boolean checkCommand(SymbolTable gamma, String name) {
-		return gamma.namespace.driver.hasCommand(name);
+		return gamma.root.driver.hasCommand(name);
 	}
 
 }
