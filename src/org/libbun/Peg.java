@@ -35,6 +35,10 @@ public abstract class Peg {
 	@Override public String toString() {
 		UniStringBuilder sb = new UniStringBuilder();
 		this.stringfy(sb, false);
+		if(this.name != null) {
+			sb.append(" defined in ");
+			sb.append(this.name);
+		}
 		return sb.toString();
 	}
 
@@ -379,9 +383,12 @@ class PegOptional extends PegSuffixed {
 	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
 		PegObject node = parentNode;
 		int stackPosition = source.getStackPosition(this);
+		Peg errorPeg = source.storeFailurePeg();
+		int errorPosition = source.storeFailurePosition();
 		node = this.innerExpr.debugMatch(node, source, true);
 		if(node.isFailure()) {
 			source.popBack(stackPosition, Peg._BackTrack);
+			source.restoreFailure(errorPeg, errorPosition);
 			node = parentNode;
 		}
 		return node;
@@ -410,14 +417,12 @@ class PegOneMore extends PegSuffixed {
 	@Override
 	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
 		PegObject prevNode = parentNode;
+		Peg errorPeg = source.storeFailurePeg();
+		int errorPosition = source.storeFailurePosition();
 		int count = 0;
 		while(source.hasChar()) {
-			boolean aChoice = true;
-			if(count < 1) {
-				aChoice = hasNextChoice;
-			}
 			int startPosition = source.getPosition();
-			PegObject node = this.innerExpr.debugMatch(prevNode, source, aChoice);
+			PegObject node = this.innerExpr.debugMatch(prevNode, source, hasNextChoice);
 			if(node.isFailure()) {
 				break;
 			}
@@ -431,10 +436,10 @@ class PegOneMore extends PegSuffixed {
 			}
 			count = count + 1;
 		}
+		source.restoreFailure(errorPeg, errorPosition);
 		if(count < 1) {
-			return source.newExpectedErrorNode(this, this.innerExpr, hasNextChoice);
+			return source.foundFailure(this);
 		}
-		//System.out.println("prevNode: " + prevNode + "s,e=" + prevNode.sourcePosition + ", " + prevNode.endIndex);
 		return prevNode;
 	}
 
@@ -466,6 +471,8 @@ class PegZeroMore extends PegSuffixed {
 	@Override
 	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
 		PegObject prevNode = parentNode;
+		Peg errorPeg = source.storeFailurePeg();
+		int errorPosition = source.storeFailurePosition();
 		int count = 0;
 		while(source.hasChar()) {
 			int startPosition = source.getPosition();
@@ -483,6 +490,7 @@ class PegZeroMore extends PegSuffixed {
 			}
 			count = count + 1;
 		}
+		source.restoreFailure(errorPeg, errorPosition);
 		return prevNode;
 	}
 
@@ -757,6 +765,9 @@ class PegChoice extends PegList {
 			if(e instanceof PegCatch) {
 				node = source.newPegObject("#error");
 				node.source = source.stackFailureLocation(stackedLocation);
+				if(Main.PegDebuggerMode) {
+					Main._PrintLine(node.source.formatErrorMessage("error: " + this.name, " by " + node.source.createdPeg));
+				}
 //				System.out.println("@" + this);
 //				System.out.println("node.source=" + node.source.startIndex + ", " + node.source.endIndex);
 //				System.out.println("node.source.peg=" + node.source.createdPeg);

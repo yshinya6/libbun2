@@ -55,7 +55,6 @@ public abstract class BunDriver {
 		System.err.println(node.source.formatErrorMessage(errorType, msg));
 	}
 
-
 }
 
 abstract class SourceDriver extends BunDriver {

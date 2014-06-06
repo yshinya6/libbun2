@@ -18,7 +18,7 @@ BasicType
 Type
  = << BasicType #type>>
  / 'struct' _ << [A-Za-z0-9_]+ #type >>
- / Type _ <<@ '*' #pointer >>
+ / Type <<@ '*' #pointer >>
  ;
 
 TopLevel

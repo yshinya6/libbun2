@@ -207,14 +207,27 @@ public class PegParserContext extends SourceContext {
 		}
 	}
 	
-	public PegObject foundFailure(Peg created) {
+	public final PegObject foundFailure(Peg created) {
 		SourceToken token = this.defaultFailureNode.source;
-		if(this.sourcePosition > token.endIndex) {  // adding error location
+		if(this.sourcePosition >= token.endIndex) {  // adding error location
 			//System.out.println("failure found?: " + this.sourcePosition + " > " + token.endIndex);
 			token.endIndex = this.sourcePosition;
 			token.createdPeg = created;
 		}
 		return this.defaultFailureNode;
+	}
+
+	public final Peg storeFailurePeg() {
+		return this.defaultFailureNode.source.createdPeg;
+	}
+
+	public final int storeFailurePosition() {
+		return this.defaultFailureNode.source.endIndex;
+	}
+
+	public final void restoreFailure(Peg created, int pos) {
+		this.defaultFailureNode.source.createdPeg = created;
+		this.defaultFailureNode.source.endIndex   = pos;
 	}
 
 	public PegObject newErrorNode(Peg created, String msg, boolean hasNextChoice) {
