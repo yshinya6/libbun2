@@ -1,0 +1,149 @@
+// minic - minimal c for bun trans-compiler
+//  by Kimio Kuramitu
+
+import Value from value.peg;
+import Type  from ctype.peg;
+
+// TopLevel = Expr / _ ;
+
+// Preparation for whitespace control
+
+Spacing    
+  = [ \t]+
+  ;
+_ 
+  = ([ \t\n]+ / Comment)*
+  ;
+NL 
+  = ([ \t\n]+ / Comment)*
+  ;
+Comment    
+  = '/*' (!'*/' .)* '*/' 
+  / '//' (![\r\n] .)* [\r\n] 
+  ;
+asToken
+  = ![A-Za-z0-9_]
+  ;
+Name
+  = <<[A-Za-z_] [A-Za-z0-9_]*   #name>>
+  ;
+
+TopLevel
+  = FuncDecl 
+  / LetDecl
+  / Expr EOL    // for test
+  ;
+
+EOL
+  = (_ / ';')* !.
+  ;
+
+FuncDecl
+  = <<Type@ Spacing Name@ _ Params@ _ Block@  #function>>
+  ;
+
+Params
+  = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #params >>
+  ;
+Param
+  = << Type@ Spacing Name@  >>
+  ;
+
+Block
+  = << '{' (_ ( ';' / Stmt )@ )* _ '}' #block>>
+  ;
+
+BlockSkip
+  = (![{}] .)* ('{' BlockSkip '}')?
+  ;
+
+Stmt
+  = Block
+  / IfStmt
+  / LetDecl EOS
+  / << 'return' (Spacing Expr@)? #return >> EOS
+  / << 'while' _ '(' _ Expr@ _ ')' _ $Block #while >>
+  / << 'break' #break >> EOS
+  / Expr EOS
+  ;
+
+EOS   // End of Statement
+ = _ ';'
+ ;
+
+IfStmt
+  = <<'if' _ '(' _ Expr@ _ ')' _ Stmt@ (_ 'else' _ Stmt@ )? #if>>
+  ;
+
+LetDecl
+  = <<Type@ Spacing Name@ '=' _ Expr@ #let>>
+  ;
+
+Expr
+  = Assignment
+  ;
+  
+Assignment
+  = Trinary <<@ _ AssignmentLabel Trinary@>>*
+  ;
+
+AssignmentLabel
+  = '=' !'=' _  #assign
+  / '+='     _  #addeq
+  / '-='     _  #subeq
+  ;
+
+Trinary
+  = ExprOrExpr <<@ _ '?' _ Expr@ _ ':' _ Trinary@ #trinary >>*
+  ;
+
+ExprOrExpr
+  = ExprAndExpr <<@ _ '||' _ ExprAndExpr@ #or >>*
+  ;
+
+ExprAndExpr
+  = BitwiseBinary <<@ _ '||' _ BitwiseBinary@ #and >>*
+  ;
+
+BitwiseBinary
+  = Equal <<@ _ ('|' !'|' #bitor / '&' !'&' #bitand / '^' #bitxor) _ Equal@ >>*
+  ;
+
+Equal
+  = Relation <<@ _ ('==' #eq / '!=' #noteq) _ Relation@>>*
+  ;
+
+Relation
+  = Shift <<@ _ ('<' !'<' #lt / '<=' #lte / '>' !'>' #gt / '>=' #gte) _ Shift@ >>*
+  ;
+
+Shift
+  = Sum <<@ _ ('<<' #lshift / '>>' #rshift) _ Sum@ >>*
+  ;
+  
+Sum 
+  = Product <<@ ('+' #add / '-' #sub) Product@ >>*
+  ;
+
+Product
+  = Unary <<@ _ ('*' #mul / '/' #div / '%' #mod) _ Unary@ >>*
+  ;
+
+Unary
+  = << ('!' #not / '-' #minus / '+' #plus / '~' #compl) _ Unary@ >>
+  / << '(' _ Type@ _ ')' Unary@ #cast >>
+  / Primary <<@ Selector>>*
+  ;
+
+Selector
+  = ('.' / '->') Name@ #field
+  / '[' _ Expr@ ']' #index
+  / '(' << _ ( Expr@ ( _ ',' _ Expr@ )* )? #arguments >>@ ')'  #apply
+  / '++' #postinc  / '--' #postdec
+  ;
+  
+Primary
+  = << '(' _ Expr@ _ ')' #group >> 
+  / << '[' _ ( Expr@ ( _ ',' _ Expr@ )* )? #array >>
+  / Value / Name
+  ;

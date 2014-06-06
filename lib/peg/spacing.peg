@@ -1,0 +1,20 @@
+// spacing.peg
+// spacing library for konoha.peg, minic.peg
+
+Spacing
+  = [ \t]+
+  ;
+_
+  = ([ \t]+ / Comment)*
+  ;
+NL
+  = ([ \t\n]+ / Comment)*
+  ;
+Comment
+  = '/*' (!'*/' .)* '*/'
+  / '//' (![\r\n] .)* [\r\n]
+  ;
+asToken  // using token separation
+  = ![A-Za-z0-9_]
+  ;
+

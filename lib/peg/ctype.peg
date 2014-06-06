@@ -1,0 +1,28 @@
+// ctype.peg
+// these types are defined mainly for minic.peg
+
+
+import _ from spacing.peg;
+
+BasicType
+ = 'void'
+ / 'boolean'
+ / 'int8'
+ / 'int16'
+ / 'int32'
+ / 'int64'
+ / 'float'
+ / 'double'
+ ;
+
+Type
+ = << BasicType #type>>
+ / 'struct' _ << [A-Za-z0-9_]+ #type >>
+ / Type _ <<@ '*' #pointer >>
+ ;
+
+TopLevel
+ = Type
+ ;
+
+
