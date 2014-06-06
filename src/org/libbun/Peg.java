@@ -17,7 +17,7 @@ public abstract class Peg {
 	protected abstract Peg clone(String ns);
 	protected abstract void stringfy(UniStringBuilder sb, boolean debugMode);
 	protected abstract void makeList(PegParser parser, UniArray<String> list, UniMap<String> set);
-	protected abstract PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice);
+	protected abstract PegObject lazyMatch(PegObject inNode, PegParserContext source);
 	protected abstract boolean verify(PegParser parser);
 	public abstract void accept(PegVisitor visitor);
 
@@ -70,9 +70,9 @@ public abstract class Peg {
 		}
 	}
 	
-	protected PegObject debugMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	protected PegObject debugMatch(PegObject inNode, PegParserContext source) {
 		if(this.debug) {
-			PegObject node2 = this.lazyMatch(inNode, source, false);
+			PegObject node2 = this.lazyMatch(inNode, source);
 			String msg = "matched";
 			if(node2.isFailure()) {
 				msg = "failed";
@@ -81,7 +81,7 @@ public abstract class Peg {
 			System.out.println(line + "\n\tnode #" + inNode + "# => #" + node2 + "#");
 			return node2;
 		}
-		return this.lazyMatch(inNode, source, hasNextChoice);
+		return this.lazyMatch(inNode, source);
 	}
 
 	public final String toPrintableString(String name, String Setter, String Choice, String SemiColon, boolean debugMode) {
@@ -184,11 +184,11 @@ class PegString extends PegAtom {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		if(source.match(this.symbol)) {
 			return inNode;
 		}
-		return source.newExpectedErrorNode(this, this, hasNextChoice);
+		return source.foundFailure(this);
 	}
 
 }
@@ -209,12 +209,12 @@ class PegAny extends PegAtom {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		if(source.hasChar()) {
 			source.consume(1);
 			return inNode;
 		}
-		return source.newExpectedErrorNode(this, this, hasNextChoice);
+		return source.foundFailure(this);
 	}
 
 }
@@ -242,10 +242,10 @@ class PegCharacter extends PegAtom {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		char ch = source.getChar();
 		if(!this.charset.match(ch)) {
-			return source.newExpectedErrorNode(this, this, hasNextChoice);
+			return source.foundFailure(this);
 		}
 		source.consume(1);
 		return inNode;
@@ -266,8 +266,8 @@ class PegLabel extends PegAtom {
 		return this;
 	}
 
-	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
-		PegObject left = source.parsePegNode(parentNode, this.symbol, hasNextChoice);
+	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
+		PegObject left = source.parsePegNode(parentNode, this.symbol);
 		if(left.isFailure()) {
 			return left;
 		}
@@ -380,12 +380,12 @@ class PegOptional extends PegSuffixed {
 		visitor.visitPegOptional(this);
 	}
 
-	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
+	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
 		PegObject node = parentNode;
 		int stackPosition = source.getStackPosition(this);
 		Peg errorPeg = source.storeFailurePeg();
 		int errorPosition = source.storeFailurePosition();
-		node = this.innerExpr.debugMatch(node, source, true);
+		node = this.innerExpr.debugMatch(node, source);
 		if(node.isFailure()) {
 			source.popBack(stackPosition, Peg._BackTrack);
 			source.restoreFailure(errorPeg, errorPosition);
@@ -415,14 +415,14 @@ class PegOneMore extends PegSuffixed {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
+	public PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
 		PegObject prevNode = parentNode;
 		Peg errorPeg = source.storeFailurePeg();
 		int errorPosition = source.storeFailurePosition();
 		int count = 0;
 		while(source.hasChar()) {
 			int startPosition = source.getPosition();
-			PegObject node = this.innerExpr.debugMatch(prevNode, source, hasNextChoice);
+			PegObject node = this.innerExpr.debugMatch(prevNode, source);
 			if(node.isFailure()) {
 				break;
 			}
@@ -469,14 +469,14 @@ class PegZeroMore extends PegSuffixed {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
+	public PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
 		PegObject prevNode = parentNode;
 		Peg errorPeg = source.storeFailurePeg();
 		int errorPosition = source.storeFailurePosition();
 		int count = 0;
 		while(source.hasChar()) {
 			int startPosition = source.getPosition();
-			PegObject node = this.innerExpr.debugMatch(prevNode, source, true);
+			PegObject node = this.innerExpr.debugMatch(prevNode, source);
 			if(node.isFailure()) {
 				break;
 			}
@@ -527,10 +527,10 @@ class PegAndPredicate extends PegPredicate {
 	}
 
 	@Override
-	protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
+	protected PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
 		PegObject node = parentNode;
 		int stackPosition = source.getStackPosition(this);
-		node = this.innerExpr.debugMatch(node, source, true);
+		node = this.innerExpr.debugMatch(node, source);
 		source.popBack(stackPosition, Peg._BackTrack);
 		return node;
 	}
@@ -562,15 +562,15 @@ class PegNotPredicate extends PegPredicate {
 	}
 
 	@Override
-	protected PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
+	protected PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
 		PegObject node = parentNode;
 		int stackPosition = source.getStackPosition(this);
-		node = this.innerExpr.debugMatch(node, source, hasNextChoice);
+		node = this.innerExpr.debugMatch(node, source);
 		source.popBack(stackPosition, Peg._BackTrack);
 		if(node.isFailure()) {
 			return parentNode;
 		}
-		return source.newUnexpectedErrorNode(this, this.innerExpr, hasNextChoice);
+		return source.foundFailure(this);
 	}
 
 	@Override
@@ -671,10 +671,10 @@ class PegSequence extends PegList {
 	}
 
 	@Override
-	protected PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
-			inNode = e.debugMatch(inNode, source, hasNextChoice);
+			inNode = e.debugMatch(inNode, source);
 			if(inNode.isFailure()) {
 				return inNode;
 			}
@@ -753,7 +753,7 @@ class PegChoice extends PegList {
 	}
 
 	@Override
-	protected PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		int stackPosition = source.getStackPosition(this);
 		PegObject node = inNode;
 		SourceToken stackedLocation = null;
@@ -772,9 +772,9 @@ class PegChoice extends PegList {
 //				System.out.println("node.source=" + node.source.startIndex + ", " + node.source.endIndex);
 //				System.out.println("node.source.peg=" + node.source.createdPeg);
 //				System.out.println("node.source: " + node.source.getText());
-				return e.debugMatch(node, source, hasNextChoice);
+				return e.debugMatch(node, source);
 			}
-			node = e.debugMatch(inNode, source, true);
+			node = e.debugMatch(inNode, source);
 			if(!node.isFailure()) {
 				break;
 			}
@@ -852,8 +852,8 @@ class PegSetter extends PegSuffixed {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject parentNode, PegParserContext source, boolean hasNextChoice) {
-		PegObject node = this.innerExpr.debugMatch(parentNode, source, hasNextChoice);
+	public PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
+		PegObject node = this.innerExpr.debugMatch(parentNode, source);
 		if(node.isFailure()) {
 			return node;
 		}
@@ -884,7 +884,7 @@ class PegObjectLabel extends PegAtom {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		inNode.name = this.symbol;
 		return inNode;
 	}
@@ -968,7 +968,7 @@ class PegNewObject extends PegList {
 	}
 
 	@Override
-	public PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		PegObject leftNode = inNode;
 		int pos = source.getPosition();
 		int stack = source.getStackPosition(this);
@@ -980,7 +980,7 @@ class PegNewObject extends PegList {
 		}
 		for(; i < this.size(); i++) {
 			Peg e = this.get(i);
-			PegObject node = e.debugMatch(newnode, source, hasNextChoice);
+			PegObject node = e.debugMatch(newnode, source);
 			if(node.isFailure()) {
 				return node;
 			}
@@ -1031,8 +1031,8 @@ class PegCatch extends PegUnary {
 	}
 
 	@Override
-	protected PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
-		this.innerExpr.debugMatch(inNode, source, hasNextChoice);
+	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		this.innerExpr.debugMatch(inNode, source);
 		return inNode;
 	}
 
@@ -1057,7 +1057,7 @@ class PegIndent extends PegAtom {
 	}
 
 	@Override
-	protected PegObject lazyMatch(PegObject inNode, PegParserContext source, boolean hasNextChoice) {
+	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		if(inNode.source != null) {
 			String indent = inNode.source.getIndentText();
 			System.out.println("###" + indent + "###");

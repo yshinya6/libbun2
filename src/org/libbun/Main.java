@@ -202,7 +202,7 @@ public class Main {
 				try {
 					BunSource source = new BunSource("(stdin)", linenum, Line, null);
 					PegParserContext context =  gamma.root.newParserContext("main", source);
-					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint, false/*hasNextChoice*/);
+					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
 					if(node.isFailure()) {
 						node.name = BunSymbol.PerrorFunctor;
 					}

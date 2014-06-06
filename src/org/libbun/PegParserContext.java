@@ -45,14 +45,13 @@ public class PegParserContext extends SourceContext {
 		this.sourcePosition = this.endPosition;
 	}
 
-
 	public boolean hasNode() {
 		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
 		return this.sourcePosition < this.endPosition;
 	}
 
 	public PegObject parseNode(String key) {
-		PegObject po = this.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), key, false);
+		PegObject po = this.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), key);
 		//return po.eval(this.source, parentNode);
 		return po;
 	}
@@ -66,7 +65,7 @@ public class PegParserContext extends SourceContext {
 		return e != null;
 	}
 
-	public final PegObject parsePegNode(PegObject parentNode, String pattern, boolean hasNextChoice) {
+	public final PegObject parsePegNode(PegObject parentNode, String pattern) {
 		int pos = this.getPosition();
 		String key = pattern + ":" + pos;
 		Memo m = this.memoMap2.get(key, null);
@@ -80,7 +79,7 @@ public class PegParserContext extends SourceContext {
 		}
 		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
 		if(e != null) {
-			PegObject node = e.debugMatch(parentNode, this, hasNextChoice);
+			PegObject node = e.debugMatch(parentNode, this);
 			m = new Memo();
 			m.nextPosition = this.getPosition();
 			if(node != parentNode) {
@@ -104,7 +103,7 @@ public class PegParserContext extends SourceContext {
 		}
 		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
 		if(e != null) {
-			node = e.debugMatch(parentNode, this, hasNextChoice);
+			node = e.debugMatch(parentNode, this);
 			if(node.isFailure() && hasNextChoice) {
 				this.memoMiss = this.memoMiss + 1;
 				this.memoMap.put(key, node);
@@ -124,7 +123,7 @@ public class PegParserContext extends SourceContext {
 	public final PegObject parsePegNodeNon(PegObject parentNode, String pattern, boolean hasNextChoice) {
 		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
 		if(e != null) {
-			return e.debugMatch(parentNode, this, hasNextChoice);
+			return e.debugMatch(parentNode, this);
 		}
 		Main._Exit(1, "undefined label " + pattern + " '" + this.getFirstChar() + "'");
 		return this.defaultFailureNode;
@@ -134,7 +133,7 @@ public class PegParserContext extends SourceContext {
 		String key = this.parser.nameRightJoinName(symbol);
 		Peg e = this.parser.getPattern(key, this.getFirstChar());
 		if(e != null) {
-			PegObject right = e.debugMatch(left, this, true);
+			PegObject right = e.debugMatch(left, this);
 			if(!right.isFailure()) {
 				left = right;
 			}
