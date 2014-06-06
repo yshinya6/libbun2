@@ -161,7 +161,7 @@ public class Main {
 
 	private static BunDriver loadDriver(String driverName) {
 		if(PegDebuggerMode) {
-			return new DubugDriver();
+			return new Debugger();
 		}
 		BunDriver driver = new PythonDriver();
 		return driver;

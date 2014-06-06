@@ -202,19 +202,24 @@ public class PegParserContext extends SourceContext {
 		else {
 			SourceToken current = this.defaultFailureNode.source;
 			this.defaultFailureNode.source = stacked;
+			current.startIndex = current.endIndex;
 			return current;
 		}
+	}
+	
+	public PegObject foundFailure(Peg created) {
+		SourceToken token = this.defaultFailureNode.source;
+		if(this.sourcePosition > token.endIndex) {  // adding error location
+			//System.out.println("failure found?: " + this.sourcePosition + " > " + token.endIndex);
+			token.endIndex = this.sourcePosition;
+			token.createdPeg = created;
+		}
+		return this.defaultFailureNode;
 	}
 
 	public PegObject newErrorNode(Peg created, String msg, boolean hasNextChoice) {
 		if(hasNextChoice) {
-			SourceToken token = this.defaultFailureNode.source;
-			if(this.sourcePosition > token.endIndex) {  // adding error location
-				System.out.println("failure found: " + this.sourcePosition + " > " + token.endIndex);
-				token.endIndex = this.sourcePosition;
-				token.createdPeg = created;
-			}
-			return this.defaultFailureNode;
+			return foundFailure(created);
 		}
 		else {
 			PegObject node = new PegObject(BunSymbol.PerrorFunctor);
@@ -229,14 +234,14 @@ public class PegParserContext extends SourceContext {
 
 	public PegObject newExpectedErrorNode(Peg created, Peg e, boolean hasNextChoice) {
 		if(hasNextChoice) {
-			return this.defaultFailureNode;
+			return foundFailure(created);
 		}
 		return this.newErrorNode(created, "expected " + e.toString(), false);
 	}
 
 	public PegObject newUnexpectedErrorNode(Peg created, Peg e, boolean hasNextChoice) {
 		if(hasNextChoice) {
-			return this.defaultFailureNode;
+			return foundFailure(created);
 		}
 		return this.newErrorNode(created, "unexpected " + e.toString(), false);
 	}

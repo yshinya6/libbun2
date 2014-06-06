@@ -757,12 +757,12 @@ class PegChoice extends PegList {
 			if(e instanceof PegCatch) {
 				node = source.newPegObject("#error");
 				node.source = source.stackFailureLocation(stackedLocation);
+//				System.out.println("@" + this);
+//				System.out.println("node.source=" + node.source.startIndex + ", " + node.source.endIndex);
+//				System.out.println("node.source.peg=" + node.source.createdPeg);
+//				System.out.println("node.source: " + node.source.getText());
 				return e.debugMatch(node, source, hasNextChoice);
 			}
-//			boolean nextChoice = true;
-//			if(i + 1 == this.size()) {
-//				nextChoice = hasNextChoice;
-//			}
 			node = e.debugMatch(inNode, source, true);
 			if(!node.isFailure()) {
 				break;
@@ -1001,11 +1001,9 @@ class PegNewObject extends PegList {
 // (e / catch e)
 
 class PegCatch extends PegUnary {
-	
 	PegCatch (String leftLabel, Peg first) {
 		super(leftLabel, first, true);
 	}
-
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
@@ -1032,7 +1030,6 @@ class PegCatch extends PegUnary {
 		// TODO Auto-generated method stub
 		
 	}
-
 	
 }
 
