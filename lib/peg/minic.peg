@@ -14,9 +14,6 @@ Spacing
 _ 
   = ([ \t\n]+ / Comment)*
   ;
-NL 
-  = ([ \t\n]+ / Comment)*
-  ;
 Comment    
   = '/*' (!'*/' .)* '*/' 
   / '//' (![\r\n] .)* [\r\n] 
@@ -30,8 +27,9 @@ Name
 
 TopLevel
   = FuncDecl 
-  / LetDecl
+  / LetDecl EOL
   / Expr EOL    // for test
+  / catch .*
   ;
 
 EOL
@@ -39,14 +37,14 @@ EOL
   ;
 
 FuncDecl
-  = <<Type@ Spacing Name@ _ Params@ _ Block@  #function>>
+  = <<Type@ Spacing Name@ _ Params@ _ Block@  #cfuncdecl>>
   ;
 
 Params
   = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #params >>
   ;
 Param
-  = << Type@ Spacing Name@  >>
+  = << Type@ Spacing Name@  #cparam>>
   ;
 
 Block
@@ -62,7 +60,7 @@ Stmt
   / IfStmt
   / LetDecl EOS
   / << 'return' (Spacing Expr@)? #return >> EOS
-  / << 'while' _ '(' _ Expr@ _ ')' _ $Block #while >>
+  / << 'while' _ '(' _ Expr@ _ ')' _ Block@ #while >>
   / << 'break' #break >> EOS
   / Expr EOS
   ;
@@ -76,7 +74,7 @@ IfStmt
   ;
 
 LetDecl
-  = <<Type@ Spacing Name@ '=' _ Expr@ #let>>
+  = <<Type@ Spacing Name@ _ '=' _ Expr@ #clet>>
   ;
 
 Expr

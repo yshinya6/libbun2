@@ -7,10 +7,10 @@ import _ from spacing.peg;
 BasicType
  = 'void'
  / 'boolean'
- / 'int8'
- / 'int16'
- / 'int32'
- / 'int64'
+ / 'char'    //int8
+ / 'short'   //int16
+ / 'int'     //int32
+ / 'long'    //int64
  / 'float'
  / 'double'
  ;
@@ -24,5 +24,4 @@ Type
 TopLevel
  = Type
  ;
-
 
