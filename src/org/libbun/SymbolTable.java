@@ -62,7 +62,7 @@ public class SymbolTable {
 	public final Functor getSymbol(String name) {
 		SymbolTable gamma = this;
 		while(gamma != null) {
-			Functor f = this.getLocalSymbol(name);
+			Functor f = gamma.getLocalSymbol(name);
 			//System.out.println("GET gamma " + gamma + ", name=" + name + " f=" + f);
 			if(f != null) {
 				return f;
@@ -79,7 +79,7 @@ public class SymbolTable {
 		f.nextChoice = parent;
 		this.setSymbol(key, f);
 		if(Main.EnableVerbose) {
-			System.err.println("defined functor: " + f.name + ": " + f.funcType + " as " + key);
+			System.err.println("defined functor: " + f.name + ": " + f.funcType + " as " + key + " in " + this);
 		}
 	}
 	
@@ -142,7 +142,7 @@ public class SymbolTable {
 			return false;
 		}
 		else {
-			MetaType valueType = this.getType("void", null);
+			MetaType valueType = this.getVoidType();
 			return type.is(valueType, greekContext);
 		}
 	}
@@ -289,10 +289,14 @@ public class SymbolTable {
 		return defaultType;
 	}
 
-	public FuncType getFuncType(String returnTypeName) {
-		MetaType r = this.getType(returnTypeName, MetaType.UntypedType);
-		return MetaType.newFuncType(r);
+	public MetaType getVoidType() {
+		return this.getType("void", null);  //FIXME
 	}
+
+	public MetaType getAnyType() {
+		return this.getType("any", null);   //FIXME
+	}
+	
 	
 	public void load(String fileName, BunDriver driver) {
 		BunSource source = Main.loadSource(fileName);
@@ -362,15 +366,10 @@ public class SymbolTable {
 	public void loadBunModel(String fileName, BunDriver driver) {
 		this.addFunctor(new TypeFunctor("#type"));
 		this.addFunctor(new NameFunctor("#name"));
-
-//		this.addFunctor(new FunctionFunctor("#function"));
-//		this.addFunctor(new VarFunctor("#var"));
-//		this.addFunctor(new VarFunctor("#let"));
 		this.addFunctor(new BunFunctor("#bun"));  // #bun
 		this.addFunctor(new ErrorFunctor());
 		this.load(fileName, driver);
-//		this.setMatchFunction("#var:3", new VarMatchFunction());
-//		this.setMatchFunction("#let:3", new VarMatchFunction());
 	}
+
 }
 

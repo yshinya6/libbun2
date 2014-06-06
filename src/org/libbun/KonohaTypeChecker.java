@@ -22,24 +22,24 @@ public class KonohaTypeChecker {
 		//System.out.println("FuncDeclCommand node: " + node);
 		SymbolTable gamma = node.getSymbolTable();
 		if(node.typed != null) {
-			VarType	inf = new VarType(node.get(0), FuncType.FuncBaseName);
 			PegObject params = node.get(1, null);
 			PegObject block = node.get(3, null);
+			UniArray<MetaType> typeList = new UniArray<MetaType>(new MetaType[params.size()+1]);
 			for(int i = 0; i < params.size(); i++) {
 				PegObject p = params.get(i);
-				p.typeAt(gamma, 1, null);
-				MetaType ptype = inf.newVarType(p.get(1));
+				MetaType ptype = p.typeAt(gamma, 1, null);
+				typeList.add(ptype);
 				if(block != null) {
 					block.setName(p.get(0), ptype, null);
 				}
 			}
-			node.typeAt(gamma, 2, null);
-			MetaType returnType = inf.newVarType(node.get(2));
-			node.typed = inf.getRealType();
+			MetaType returnType = node.typeAt(gamma, 2, null);
+			typeList.add(returnType);
+			node.typed = MetaType.newFuncType(typeList);
 			if(block != null) {
 				block.setName(node.get(0), node.typed, node);
 				block.setName("return", returnType, null);
-				System.out.println("@@@@@@@ " + gamma.tryMatch(block));
+				//block.gamma.tryMatch(block);
 			}
 			gamma.setFunctionName(node.getTextAt(0, "f"), node.typed, node);
 		}
@@ -49,6 +49,18 @@ public class KonohaTypeChecker {
 		System.out.println("typeCheckApply: " + node);
 		SymbolTable gamma = node.getSymbolTable();
 
+	}
+
+	public static void typeCheckBlock(PegObject node) {
+		//System.out.println("FuncDeclCommand node: " + node);
+		SymbolTable gamma = node.getSymbolTable();
+		for(int i = 0; i < node.size(); i++) {
+			gamma.checkTypeAt(node, i, gamma.getVoidType(), null, false);
+		}
+		DefinedNameFunctor f = gamma.getName("return");
+		MetaType returnType = f.getReturnType(MetaType.UntypedType);
+		System.out.println("returnType="+returnType);
+		gamma.checkTypeAt(node, 0, returnType, null, false);
 	}
 
 	public static void typeCheckReturn(PegObject node) {

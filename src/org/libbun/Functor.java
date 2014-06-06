@@ -144,7 +144,7 @@ class BunFunctor extends Functor {
 		UniMap<Integer> nameMap = new UniMap<Integer>();
 		if(bunNode.get(1).isEmptyToken()) {
 			if(bunNode.getTextAt(2, "").equals("type")) {
-				Functor f = gamma.setType(new ValueType(name, null));
+				Functor f = gamma.setType(MetaType.newValueType(name, null));
 				f.add(this.parseSection(bunNode.get(3), nameMap));
 				return null;
 			}

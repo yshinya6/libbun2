@@ -156,7 +156,6 @@ ${type name}
 
 bun #function(name, params, rtype, block): void {
 ${type name}
-${convert block ssa}
 	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
 }
 
@@ -165,6 +164,7 @@ bun #param(name, type): void {
 }
 
 bun #block(*): void {
+${typecheck}
 	${statement this}
 }
 

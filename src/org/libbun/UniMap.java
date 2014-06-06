@@ -97,16 +97,8 @@ public final class UniMap <T> {
 		}
 		return a;
 	}
-//
-//	public final static <T> T GetIndex(CommonMap<T> aMap, String Key) {
-//		T Value =  aMap.Map.get(Key);
-//		if(Value == null) {
-//			throw new SoftwareFault("Key not found: " + Key);
-//		}
-//		return Value;
-//	}
-//
-//	public final static <T> void SetIndex(UniMap<T> aMap, String Key, T Value) {
-//		aMap.m.put(Key, Value);
-//	}
+
+	public final int size() {
+		return this.m.size();
+	}
 }

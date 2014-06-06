@@ -6,15 +6,6 @@ public abstract class MetaType  {
 
 	MetaType(Object typeInfo) {
 		this.typeInfo = typeInfo;
-		if(!this.hasVarType()) {
-			this.typeId = MetaType._NewTypeId(this);
-		}
-	}
-
-	MetaType(boolean pooled) {
-		if(pooled) {
-			this.typeId = MetaType._NewTypeId(this);
-		}
 	}
 
 	public final String getName() {
@@ -29,6 +20,14 @@ public abstract class MetaType  {
 		return sb.toString();
 	}
 
+	public int size() {
+		return 0;
+	}
+
+	public MetaType getParamType(int index) {
+		return this;
+	}
+	
 	public int getFuncParamSize() {
 		return 0;
 	}
@@ -53,6 +52,8 @@ public abstract class MetaType  {
 		node.matched.build(node, driver);
 	}
 
+	// ----------------------------------------------------------------------
+	
 	final static UniArray<MetaType>   _TypeList;
 	final static UniMap<MetaType>     _TypeNameMap;
 
@@ -62,150 +63,137 @@ public abstract class MetaType  {
 		_TypeList = new UniArray<MetaType>(new MetaType[128]);
 		_TypeNameMap = new UniMap<MetaType>();
 		UntypedType = new UntypedType();
-		setGenerics("Func:*", new FuncType("Func<", ",", ">"));
+		issueType("", UntypedType);
+		setGenerics(new FuncType(0));
 	}
 
-	public final static int _NewTypeId(MetaType T) {
-		int TypeId = _TypeList.size();
-		_TypeList.add(T);
-		return TypeId;
-	}
-
-	public final static MetaType TypeOf(int TypeId) {
-		if(TypeId < _TypeList.size()) {
-			return _TypeList.ArrayValues[TypeId];
-		}
-		return MetaType.UntypedType;
-	}
-
-	public final static void setGenerics(String key, GenericType t) {
+	private static void issueType(String key, MetaType t) {
+		t.typeId = _TypeNameMap.size();
 		_TypeNameMap.put(key, t);
+	}
+	
+	public final static MetaType newValueType(String name, Object typeInfo) {
+		MetaType t = _TypeNameMap.get(name, null);
+		if(t == null) {
+			t = new ValueType(name, typeInfo);
+			issueType(name, t);
+		}
+		return t;
+	}
+	
+	public static MetaType newVarType(PegObject node, MetaType premise) {
+		return new VarType(node, premise);
+	}
+	
+	public final static void setGenerics(GenericType t) {
+		issueType(t.baseName+"<>", t);
+		t.genericId = t.typeId;
 	}
 
 	public final static MetaType newGenericType(String baseName, UniArray<MetaType> typeList) {
-		UniStringBuilder sb = new UniStringBuilder();
-		sb.append(baseName);
-		if(!mangleTypes(sb, typeList)) {
-			return cloneGenericType(baseName, typeList, false);
-		}
-		String key = sb.toString();
-		MetaType pType = _TypeNameMap.get(key, null);
-		if(pType == null) {
-			pType = cloneGenericType(baseName, typeList, true);
-			_TypeNameMap.put(key, pType);
-		}
-		//System.out.println("pType: " + pType);
-		return pType;
-	}
-
-	private final static boolean mangleTypes(UniStringBuilder sb, UniArray<MetaType> TypeList) {
-		for(int i = 0; i < TypeList.size(); i++) {
-			MetaType Type = TypeList.ArrayValues[i];
-			if(Type.hasVarType()) {
-				return false;
-			}
-			sb.append("+" + Type.typeId);
-		}
-		return true;
-	}
-
-	private static GenericType cloneGenericType(String name, UniArray<MetaType> TypeList, boolean uniquefy) {
-		String key = name + ":" + TypeList.size();
-		MetaType t = _TypeNameMap.get(key, null);
-		if(t == null) {
-			key = name + ":*";
-			t = _TypeNameMap.get(key, null);
-		}
+		GenericType gt = null;
+		MetaType t = _TypeNameMap.get(baseName+"<>", null);
 		if(t instanceof GenericType) {
-			GenericType skeltonType = (GenericType)t;
-			if(uniquefy) {
-				return skeltonType.newCloneType(uniqueTypes(TypeList));
-			}
-			else {
-				return skeltonType.newCloneType(TypeList.compactArray());
-			}
+			gt = (GenericType)t;
 		}
-		Main._PrintDebug("undefined generics: " + name + ":" + TypeList.size());
-		return null;
+		else {
+			gt = new GenericType(baseName, 0);
+			setGenerics(gt);
+		}
+		return newGenericType(gt, typeList.ArrayValues, typeList.size());
+	}
+
+	public final static MetaType newGenericType(GenericType baseType, MetaType[] params) {
+		return newGenericType(baseType, params, params.length);
 	}
 	
-	private final static MetaType[] uniqueTypes(UniArray<MetaType> TypeList) {
-		UniStringBuilder sb = new UniStringBuilder();
-		sb.append("Func");
-		mangleTypes(sb, TypeList);
-		String key = sb.toString();
-		MetaType type = _TypeNameMap.get(key, null);
-		if(type instanceof FuncType) {
-			return ((FuncType)type).typeParams;
+	public final static MetaType newGenericType(GenericType baseType, MetaType[] t, int size) {
+		if(checkVarType(t, size)) {
+			return baseType.newCloneType(compactArray(t, size));
 		}
-		GenericType funcType = cloneGenericType("Func", TypeList, false);
-		_TypeNameMap.put(key, funcType);
-		return funcType.typeParams;
+		else {
+			UniStringBuilder sb = new UniStringBuilder();
+			sb.append(baseType.baseName);
+			mangleTypes(sb, t, size);
+			String key = sb.toString();
+			MetaType gt = _TypeNameMap.get(key, null);
+			if(gt == null) {
+				gt = baseType.newCloneType(compactArray(t, size));
+				issueType(key, gt);
+			}
+			return gt;
+		}
+	}
+	
+	private static MetaType[] compactArray(MetaType[] t, int size) {
+		if(t.length == size) {
+			return t;
+		}
+		MetaType[] newt = new MetaType[size];
+		System.arraycopy(t, 0, newt, 0, size);
+		return newt;
 	}
 
-	public final static FuncType _LookupFuncType2(MetaType P1, MetaType P2, MetaType R) {
-		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[3]);
-		TypeList.add(P1);
-		TypeList.add(P2);
-		TypeList.add(R);
-		return newFuncType(TypeList);
+	public final static boolean checkVarType(MetaType[] t, int size) {
+		for(int i = 0; i < size; i++) {
+			if(t[i].hasVarType()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	public final static FuncType _LookupFuncType2(MetaType P1, MetaType R) {
-		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[2]);
-		TypeList.add(P1);
-		TypeList.add(R);
-		return newFuncType(TypeList);
+	private final static void mangleTypes(UniStringBuilder sb, MetaType[] t, int size) {
+		for(int i = 0; i < size; i++) {
+			sb.append("+");
+			sb.appendInt(t[i].typeId);
+		}
 	}
-
-	public final static FuncType newFuncType(MetaType R) {
-		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[2]);
-		TypeList.add(R);
-		return newFuncType(TypeList);
-	}
-
-	public final static FuncType newFuncType(UniArray<MetaType> TypeList) {
-		MetaType funcType = newGenericType("Func", TypeList);
+	
+	public final static FuncType newFuncType(UniArray<MetaType> typeList) {
+		MetaType funcType = newGenericType(FuncType.FuncBaseName, typeList);
 		if(funcType instanceof FuncType) {
 			return (FuncType)funcType;
 		}
 		return null;
 	}
 
-	public final static FuncType _LookupFuncType2(MetaType P1, MetaType P2, MetaType P3, MetaType R) {
-		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[3]);
-		TypeList.add(P1);
-		TypeList.add(P2);
-		TypeList.add(P3);
-		TypeList.add(R);
-		return newFuncType(TypeList);
-	}
-
-	public static boolean isSubType(MetaType nodeType, MetaType metaType) {
-		return false;
-	}
+//	public final static FuncType _LookupFuncType2(MetaType P1, MetaType P2, MetaType R) {
+//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[3]);
+//		TypeList.add(P1);
+//		TypeList.add(P2);
+//		TypeList.add(R);
+//		return newFuncType(TypeList);
+//	}
+//
+//	public final static FuncType _LookupFuncType2(MetaType P1, MetaType R) {
+//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[2]);
+//		TypeList.add(P1);
+//		TypeList.add(R);
+//		return newFuncType(TypeList);
+//	}
+//
+//	public final static FuncType newFuncType(MetaType R) {
+//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[2]);
+//		TypeList.add(R);
+//		return newFuncType(TypeList);
+//	}
+//
+//
+//	public final static FuncType _LookupFuncType2(MetaType P1, MetaType P2, MetaType P3, MetaType R) {
+//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[3]);
+//		TypeList.add(P1);
+//		TypeList.add(P2);
+//		TypeList.add(P3);
+//		TypeList.add(R);
+//		return newFuncType(TypeList);
+//	}
 
 	// =======================================================================
 	
 	public static MetaType newVoidType(String name, Object typeInfo) {
 		return new VoidType(name, typeInfo);
 	}
-
-//	public static MetaType newBooleanType(String name, Object typeInfo) {
-//		return new BooleanType(name, typeInfo);
-//	}
-//
-//	public static MetaType newIntType(String name, int size, Object typeInfo) {
-//		return new IntType(name, size, typeInfo);
-//	}
-//
-//	public static MetaType newFloatType(String name, int size, Object typeInfo) {
-//		return new FloatType(name, size, typeInfo);
-//	}
-//
-//	public static MetaType newStringType(String name, Object typeInfo) {
-//		return new StringType(name, typeInfo);
-//	}
 
 	public static MetaType newAnyType(String name, Object typeInfo) {
 		return new AnyType(name, typeInfo);
@@ -227,156 +215,11 @@ public abstract class MetaType  {
 		}
 		return t;
 	}
-
-	public static MetaType newVarType(PegObject node, String baseName) {
-		return new VarType(node, baseName);
-	}
-
-
-}
-
-class VarType extends MetaType {
-	public PegObject node;
-	private MetaType realType;
-	private String   baseName;
-	private UniArray<MetaType> typeList;
-
-	public VarType(PegObject node, String baseName) {
-		super(null);
-		this.node     = node;
-		this.baseName = baseName;
-		this.realType = null;
-		this.typeList = null;
-		node.typed = this;
-	}
-
-	public MetaType newVarType(PegObject node) {
-		MetaType type = node.getType(null);
-		if(type == null || type == MetaType.UntypedType) {
-			type = new VarType(node, null);
-		}
-		if(this.typeList == null) {
-			this.typeList = new UniArray<MetaType>(new MetaType[2]);
-		}
-		typeList.add(type);
-		return type;
-	}
-	
-	public int getFuncParamSize() {
-		if(this.baseName == FuncType.FuncBaseName || this.baseName.equals(FuncType.FuncBaseName)) {
-			return this.typeList.size() - 1;
-		}
-		return 0;
-	}
-
-	public MetaType getFuncParamType(int index) {
-		if(this.baseName == FuncType.FuncBaseName || this.baseName.equals(FuncType.FuncBaseName)) {
-			return this.typeList.ArrayValues[index];
-		}
-		return this;
-	}
-
-	public MetaType getReturnType() {
-		if(this.baseName == FuncType.FuncBaseName  || this.baseName.equals(FuncType.FuncBaseName)) {
-			return this.typeList.ArrayValues[this.typeList.size() - 1];
-		}
-		return this;
-	}
-
-	@Override
-	public MetaType getRealType() {
-		if(this.realType != null) {
-			this.realType = this.realType.getRealType();
-			return this.realType;
-		}
-		if(this.baseName != null && this.typeList != null) {
-			for(int i = 0; i < this.typeList.size(); i++) {
-				MetaType p = this.typeList.ArrayValues[i];
-				if(p.hasVarType()) {
-					return this;
-				}
-				this.typeList.ArrayValues[i] = p.getRealType();
-			}
-			this.realType = MetaType.newGenericType(baseName, this.typeList);
-			return this.realType;
-		}
-		return this;
-	}
-
-	@Override
-	public MetaType getRealType(MetaType[] greekContext) {
-		if(this.realType != null) {
-			this.realType = this.realType.getRealType(greekContext);
-			return this.realType;
-		}
-		return this;
-	}
-	
-	@Override
-	public boolean hasVarType() {
-		return true;
-	}
-	
-	@Override
-	public boolean hasGreekType() {
-		MetaType realType = this.getRealType();
-		return realType.hasGreekType();
-	}
-
-	@Override
-	public void stringfy(UniStringBuilder sb) {
-		if(this.realType != null) {
-			if(Main.EnableVerbose) {
-				sb.append("?");
-			}
-			this.realType.stringfy(sb);
-			return;
-		}
-		if(this.baseName != null) {
-			sb.append(this.baseName);
-		}
-		else {
-			if(this.typeList == null) {
-				sb.append("?");
-				return;
-			}
-			sb.append("Unknown");
-		}
-		if(this.typeList != null) {
-			sb.append("<");
-			for(int i = 0; i < this.typeList.size(); i++) {
-				if(i > 0) {
-					sb.append(",");
-				}
-				this.typeList.ArrayValues[i].stringfy(sb);
-			}
-			sb.append(">");
-		}
-	}
-
-	public boolean is(MetaType valueType, MetaType[] greekContext) {
-		if(this.realType == null) {
-			valueType = valueType.getRealType();
-			if(this.baseName == null && this.typeList == null) {
-				this.realType = valueType;
-			}
-//			if(valueType instanceof GenericType) {
-//				GenericType genType = (GenericType)valueType;
-//				if(!this.matchBaseName(valueType.getBaseName())) {
-//					return false;
-//				}
-//			}
-			this.realType = valueType;
-			return true;
-		}
-		return this.realType.is(valueType, greekContext);
-	}
-
 }
 
 class ValueType extends MetaType {
 	protected String name;
-	public ValueType(String name, Object typeInfo) {
+	ValueType(String name, Object typeInfo) {
 		super(typeInfo);
 		this.name = name;
 	}
@@ -412,7 +255,127 @@ class ValueType extends MetaType {
 		}
 		return false;
 	}
+}
+
+class UntypedType extends ValueType {
+	UntypedType() {
+		super("untyped", null);
+	}
+	public boolean is(MetaType valueType, MetaType[] greekContext) {
+		return true;
+	}
 	
+}
+
+class VoidType extends ValueType {
+	VoidType(String name, Object typeInfo) {
+		super(name, typeInfo);
+	}
+	public boolean is(MetaType valueType, MetaType[] greekContext) {
+		return true;
+	}
+}
+
+class AnyType extends ValueType {
+	AnyType(String name, Object typeInfo) {
+		super(name, typeInfo);
+	}
+	public boolean is(MetaType valueType, MetaType[] greekContext) {
+		return true;
+	}
+}
+
+
+class VarType extends MetaType {
+	public PegObject node;
+	private MetaType premiseType;
+	private MetaType realType;
+
+	public VarType(PegObject node, MetaType premise) {
+		super(null);
+		this.node     = node;
+		this.premiseType = premise;
+		this.realType = null;
+		node.typed = this;
+	}
+	
+	public int size() {
+		if(this.realType != null) {
+			return this.realType.size();
+		}
+		return 0;
+	}
+
+	public MetaType getParamType(int index) {
+		if(this.realType != null) {
+			return this.realType.getParamType(index);
+		}
+		return this;
+	}
+
+	public int getFuncParamSize() {
+		if(this.realType != null) {
+			return this.realType.getFuncParamSize();
+		}
+		return 0;
+	}
+
+	public MetaType getReturnType() {
+		if(this.realType != null) {
+			return this.realType.getReturnType();
+		}
+		return this;
+	}
+
+	@Override
+	public MetaType getRealType() {
+		if(this.realType != null) {
+			this.realType = this.realType.getRealType();
+			return this.realType;
+		}
+		return this;
+	}
+
+	@Override
+	public MetaType getRealType(MetaType[] greekContext) {
+		if(this.realType != null) {
+			this.realType = this.realType.getRealType(greekContext);
+			return this.realType;
+		}
+		return this;
+	}
+	
+	@Override
+	public boolean hasVarType() {
+		return true;
+	}
+	
+	@Override
+	public boolean hasGreekType() {
+		MetaType realType = this.getRealType();
+		return realType.hasGreekType();
+	}
+
+	@Override
+	public void stringfy(UniStringBuilder sb) {
+		if(this.realType != null) {
+			if(Main.EnableVerbose) {
+				sb.append("?");
+			}
+			this.realType.stringfy(sb);
+			return;
+		}
+		sb.append("?");
+	}
+
+	public boolean is(MetaType valueType, MetaType[] greekContext) {
+		if(this.realType == null) {
+			valueType = valueType.getRealType();
+			this.realType = valueType;
+			return true;
+		}
+		return this.realType.is(valueType, greekContext);
+	}
 }
 
 class TransType extends MetaType {
@@ -464,6 +427,8 @@ class TransType extends MetaType {
 		node.typed = this;
 	}
 }
+
+/* bun */
 
 class GreekType extends MetaType {
 	public final int GreekId;
@@ -522,24 +487,28 @@ class GreekType extends MetaType {
 	}
 }
 
-abstract class GenericType extends MetaType {
+// Mutable<T>, Assignable<T> = T
+// T|null
+
+
+class GenericType extends MetaType {
 	private final static MetaType[] nullParams = new MetaType[0];
 	protected int    genericId;
-	protected String prefix;
-	protected String suffix;
-	protected String comma;
+	protected String baseName;
 	protected MetaType[] typeParams;
 
-	public GenericType(String prefix, String comma, String suffix) {
+	public GenericType(String baseName, int genericId) {
 		super(true);
-		this.genericId = this.typeId;
-		this.prefix = prefix;
-		this.comma = comma;
-		this.suffix = suffix;
+		this.baseName = baseName;
+		this.genericId = genericId;
 		typeParams = nullParams;
 	}
 	
-	public abstract GenericType newCloneType(MetaType[] typeParams);
+	public GenericType newCloneType(MetaType[] typeParams) {
+		GenericType gt = new GenericType(this.baseName, this.genericId);
+		gt.typeParams = typeParams;
+		return gt;
+	}
 
 	@Override
 	public boolean hasVarType() {
@@ -553,6 +522,18 @@ abstract class GenericType extends MetaType {
 
 	@Override
 	public MetaType getRealType() {
+		if(this.typeId == -1) {
+			boolean noVarType = true;
+			for(int i = 0; i < typeParams.length; i++) {
+				typeParams[i] = typeParams[i].getRealType();
+				if(typeParams[i].hasVarType()) {
+					noVarType = false;
+				}
+			}
+			if(noVarType) {
+				return MetaType.newGenericType(this, this.typeParams);
+			}
+		}
 		return this;
 	}
 
@@ -577,14 +558,15 @@ abstract class GenericType extends MetaType {
 
 	@Override
 	public void stringfy(UniStringBuilder sb) {
-		sb.append(this.prefix);
+		sb.append(this.baseName);
+		sb.append("<");
 		for(int i = 0; i < typeParams.length; i++) {
 			if(i > 0) {
-				sb.append(this.comma);
+				sb.append(",");
 			}
 			typeParams[i].stringfy(sb);
 		}
-		sb.append(this.suffix);
+		sb.append(">");
 	}
 
 	@Override
@@ -607,49 +589,20 @@ abstract class GenericType extends MetaType {
 	}
 }
 
-class ArrayType extends GenericType {
-	public ArrayType(String prefix, String suffix) {
-		super(prefix, ",", suffix);
-	}
-
-	@Override
-	public GenericType newCloneType(MetaType[] typeParams) {
-		ArrayType t = new ArrayType(this.prefix, this.suffix);
-		t.typeParams = typeParams;
-		t.genericId = this.genericId;
-		return t;
-	}
-
-}
-
 class FuncType extends GenericType {
 	public final static String FuncBaseName    = "Func";
 
-	public FuncType(String prefix, String comma, String suffix) {
-		super("Func<", ",", ">");
+	public FuncType(int genericId) {
+		super(FuncBaseName, genericId);
 	}
 
 	@Override
 	public GenericType newCloneType(MetaType[] typeParams) {
-		FuncType t = new FuncType(this.prefix, this.comma, this.suffix);
+		FuncType t = new FuncType(this.genericId);
 		t.typeParams = typeParams;
-		t.genericId = this.genericId;
 		return t;
 	}
 
-//	@Override public final MetaType GetBaseType() {
-//		return FuncType._FuncType;
-//	}
-//
-//	@Override public final int getGenericSize() {
-//		return this.typeParams.length;
-//	}
-//
-//	@Override public final MetaType getGenericTypeAt(int Index) {
-//		return this.typeParams[Index];
-//	}
-//
-//
 //	public final MetaType GetRecvType() {
 //		if(this.typeParams.length == 1) {
 //			return MetaType.VoidType;
@@ -663,7 +616,7 @@ class FuncType extends GenericType {
 //		}
 //		return this.typeParams[1];
 //	}
-//
+
 	public final int getFuncParamSize() {
 		return this.typeParams.length - 1;
 	}
@@ -691,76 +644,6 @@ class FuncType extends GenericType {
 //		return true;
 //	}
 }
-
-
-class UntypedType extends ValueType {
-	public UntypedType() {
-		super("untyped", null);
-	}
-	public boolean is(MetaType valueType, MetaType[] greekContext) {
-		return true;
-	}
-	
-}
-
-class VoidType extends ValueType {
-	public VoidType(String name, Object typeInfo) {
-		super(name, typeInfo);
-	}
-	public boolean is(MetaType valueType, MetaType[] greekContext) {
-		return true;
-	}
-}
-
-class AnyType extends ValueType {
-	public AnyType(String name, Object typeInfo) {
-		super(name, typeInfo);
-	}
-	public boolean is(MetaType valueType, MetaType[] greekContext) {
-		return true;
-	}
-	
-}
-
-//class BooleanType extends ValueType {
-//	public BooleanType(String name, Object typeInfo) {
-//		super(name, typeInfo);
-//	}
-//}
-//
-//class NumberType extends ValueType {
-//	public NumberType(String name, Object typeInfo) {
-//		super(name, typeInfo);
-//	}
-//}
-//
-//class IntType extends NumberType {
-//	int size;
-//	public IntType(String name, int size, Object typeInfo) {
-//		super(name, typeInfo);
-//	}
-//}
-//
-//class FloatType extends NumberType {
-//	int size;
-//	public FloatType(String name, int size, Object typeInfo) {
-//		super(name, typeInfo);
-//	}
-//}
-//
-//class StringType extends ValueType {
-//	public StringType(String name, Object typeInfo) {
-//		super(name, typeInfo);
-//	}
-//}
-//
-//class ObjectType extends ValueType {
-//	public ObjectType(String name, Object typeInfo) {
-//		super(name, typeInfo);
-//	}
-//}
-
-
 
 
 
