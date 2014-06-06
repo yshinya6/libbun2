@@ -16,7 +16,6 @@ public class PegObject {
 
 	PegObject(String functor, BunSource source) {
 		this.name = functor;
-		  // created to store error position
 		this.source = source.newToken(null, 0, 0);
 	}
 
@@ -75,6 +74,16 @@ public class PegObject {
 			this.expandAstToSize(index+1);
 		}
 		this.AST[index] = node;
+		node.parent = this;
+	}
+
+	public final void checkNullEntry() {
+		for(int i = 0; i < this.size(); i++) {
+			if(this.AST[i] == null) {
+				this.AST[i] = new PegObject("#empty");
+				this.AST[i].parent = this;
+			}
+		}
 	}
 
 	//	public final void swap(int i, int j) {

@@ -103,7 +103,15 @@ public class PegParserParser extends SourceContext {
 	private Peg parsePostfix(String leftName, Peg left) {
 		if(left != null) {
 			if(this.match('@')) {
-				left = new PegSetter(leftName, left);
+				int digit = this.getChar();
+				if(digit >= '0' && digit <= '9') {
+					this.consume(+1);
+					digit = digit - '0';
+				}
+				else {
+					digit = -1;
+				}
+				left = new PegSetter(leftName, left, digit);
 			}
 			if(this.match('*')) {
 				return new PegZeroMore(leftName, left);
@@ -147,7 +155,7 @@ public class PegParserParser extends SourceContext {
 		if(this.match('$')) {
 			right = this.parseSingleExpr(leftLabel);
 			if(right != null) {
-				right = new PegSetter(leftLabel, right);
+				right = new PegSetter(leftLabel, right, -1);
 			}
 			return right;
 		}

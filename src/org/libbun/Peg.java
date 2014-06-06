@@ -827,22 +827,27 @@ class PegChoice extends PegList {
 }
 
 class PegSetter extends PegSuffixed {
-	public PegSetter(String leftLabel, Peg e) {
+	public int index;
+	public PegSetter(String leftLabel, Peg e, int index) {
 		super(leftLabel, e);
 		this.innerExpr = e;
+		this.index = index;
 	}
 
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegSetter(this.name, e);
+			return new PegSetter(this.name, e, this.index);
 		}
 		return this;
 	}
 
 	@Override
 	protected String getOperator() {
+		if(this.index != -1) {
+			return "@" + this.index;
+		}
 		return "@";
 	}
 	
@@ -860,7 +865,7 @@ class PegSetter extends PegSuffixed {
 		if(parentNode == node) {
 			return parentNode;
 		}
-		source.push(this, parentNode, -1, node);
+		source.push(this, parentNode, this.index, node);
 		return parentNode;
 	}
 }
@@ -992,13 +997,19 @@ class PegNewObject extends PegList {
 		for(i = stack; i < top; i++) {
 			Log log = source.logStack.ArrayValues[i];
 			if(log.type == 'p' && log.parentNode == newnode) {
-				newnode.append((PegObject)log.childNode);
+				if(log.index == -1) {
+					newnode.append(log.childNode);
+				}
+				else {
+					newnode.set(log.index, log.childNode);
+				}
 			}
 		}
 		if(newnode.name == null || newnode.name.length() == 0) {
 			newnode.name = source.source.substring(pos, source.getPosition());
 		}
 		newnode.setSource(this, source.source, pos, source.getPosition());
+		newnode.checkNullEntry();
 		return newnode;
 	}
 

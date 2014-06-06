@@ -37,14 +37,14 @@ EOL
   ;
 
 FuncDecl
-  = <<Type@ Spacing Name@ _ Params@ _ Block@  #cfuncdecl>>
+  = <<Type@2 Spacing Name@0 _ Params@1 _ Block@3  #function>>
   ;
 
 Params
   = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #params >>
   ;
 Param
-  = << Type@ Spacing Name@  #cparam>>
+  = << Type@1 Spacing Name@0  #param>>
   ;
 
 Block
@@ -74,7 +74,7 @@ IfStmt
   ;
 
 LetDecl
-  = <<Type@ Spacing Name@ _ '=' _ Expr@ #clet>>
+  = <<Type@1 Spacing Name@0 _ '=' _ Expr@ #let>>
   ;
 
 Expr

@@ -146,7 +146,7 @@ public class PegParserContext extends SourceContext {
 		return this.stackTop;
 	}
 
-	private void pushImpl(Peg trace, String msg, char type, Object parentNode, int index, Object childNode) {
+	private void pushImpl(Peg trace, String msg, char type, PegObject parentNode, int index, PegObject childNode) {
 		Log log = null;
 		if(this.stackTop < this.logStack.size()) {
 			if(this.logStack.ArrayValues[this.stackTop] == null) {
@@ -235,9 +235,9 @@ class Log {
 	Peg trace;
 	String msg;
 	char type;
-	Object parentNode;
+	PegObject parentNode;
 	int index;
-	Object childNode;
+	PegObject childNode;
 
 	@Override public String toString() {
 		return "" + this.sourcePosition + " " + this.msg;
