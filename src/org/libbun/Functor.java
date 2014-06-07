@@ -140,10 +140,10 @@ class BunFunctor extends Functor {
 
 	private Functor parseFunctor(SymbolTable gamma, PegObject bunNode) {
 		boolean isSymbol = false;
-		String name = bunNode.getTextAt(0, null);
+		String name = bunNode.textAt(0, null);
 		UniMap<Integer> nameMap = new UniMap<Integer>();
 		if(bunNode.get(1).isEmptyToken()) {
-			if(bunNode.getTextAt(2, "").equals("type")) {
+			if(bunNode.textAt(2, "").equals("type")) {
 				Functor f = gamma.setType(MetaType.newValueType(name, null));
 				f.add(this.parseSection(bunNode.get(3), nameMap));
 				return null;
@@ -164,7 +164,7 @@ class BunFunctor extends Functor {
 		UniArray<MetaType> typeList = new UniArray<MetaType>(new MetaType[paramNode.size()+1]);
 		for(int i = 0; i < paramNode.size(); i++) {
 			PegObject p = paramNode.get(i);
-			String name = p.getTextAt(0, null);
+			String name = p.textAt(0, null);
 			typeList.add(this.parseType(gamma, p.get(1, null)));
 			nameMap.put(name, i);
 		}
@@ -223,7 +223,7 @@ class BunFunctor extends Functor {
 				}
 			}
 			else if(chunkNode.is("#bun.cmd1")) {
-				String name = chunkNode.getTextAt(0, null);
+				String name = chunkNode.textAt(0, null);
 				int index = this.indexOfName(name, nameMap);
 				if(index != -2) {
 					if(!headerOption) {
@@ -243,12 +243,12 @@ class BunFunctor extends Functor {
 			}
 			else if(chunkNode.is("#bun.cmd2")){
 				SymbolTable gamma = lineNode.getSymbolTable();
-				String cmd = chunkNode.getTextAt(0, null);
+				String cmd = chunkNode.textAt(0, null);
 				if(!this.checkCommand(gamma, cmd)) {
 					gamma.report(chunkNode, "warning", "undefined command: " + cmd);
 					return;
 				}
-				String name = chunkNode.getTextAt(1, null);
+				String name = chunkNode.textAt(1, null);
 				int index = this.indexOfName(name, nameMap);
 				if(index != -2) {
 					sec.addCommand(headerOption, cmd, index, chunkNode, 2);
@@ -302,7 +302,7 @@ class TemplateEngine {
 		if(aStart < aNode.size()) {
 			a = new String[aNode.size()-aStart];
 			for(int i = 0; i < a.length; i++) {
-				a[i] = aNode.getTextAt(aStart +i, "");
+				a[i] = aNode.textAt(aStart +i, "");
 			}
 		}
 		this.add(new NodeCommandChunk(headerOption, cmd, index, a));

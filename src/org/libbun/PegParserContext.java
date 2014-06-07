@@ -15,7 +15,7 @@ public class PegParserContext extends SourceContext {
 	int errorCount = 0;
 
 
-	public PegParserContext(PegParser parser, BunSource source, int startIndex, int endIndex) {
+	public PegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 		this.parser = parser;
 	}
@@ -184,49 +184,36 @@ public class PegParserContext extends SourceContext {
 		this.pushImpl(trace, "", 'p', parentNode, index, node);
 	}
 
-	public PegObject newPegObject(String fanctor) {
-		PegObject node = new PegObject(fanctor);
+	public PegObject newPegObject(String name) {
+		PegObject node = new PegObject(name, this.source, null, this.sourcePosition);
 		this.objectCount = this.objectCount + 1;
 		return node;
 	}
 
-	private final PegObject foundFailureNode = new PegObject(null, this.source);
+	private final PegObject foundFailureNode = new PegObject(null, this.source, null, 0);
 	
 	public final PegObject foundFailure(Peg created) {
-		SourceToken token = this.foundFailureNode.source;
-		if(this.sourcePosition >= token.endIndex) {  // adding error location
+		if(this.sourcePosition >= this.foundFailureNode.endIndex) {  // adding error location
 			//System.out.println("failure found?: " + this.sourcePosition + " > " + token.endIndex);
-			token.endIndex = this.sourcePosition;
-			token.createdPeg = created;
+			this.foundFailureNode.startIndex = this.sourcePosition;
+			this.foundFailureNode.endIndex = this.sourcePosition;
+			this.foundFailureNode.createdPeg = created;
 		}
 		return this.foundFailureNode;
 	}
-
-	public final SourceToken stackFailureLocation(SourceToken stacked) {
-		if(stacked == null) {
-			stacked = this.foundFailureNode.source;
-			this.foundFailureNode.source = source.newToken(null, this.sourcePosition, this.sourcePosition-1);
-			return stacked;
-		}
-		else {
-			SourceToken current = this.foundFailureNode.source;
-			this.foundFailureNode.source = stacked;
-			current.startIndex = current.endIndex;
-			return current;
-		}
-	}
 	
 	public final Peg storeFailurePeg() {
-		return this.foundFailureNode.source.createdPeg;
+		return this.foundFailureNode.createdPeg;
 	}
 
 	public final int storeFailurePosition() {
-		return this.foundFailureNode.source.endIndex;
+		return this.foundFailureNode.endIndex;
 	}
 
 	public final void restoreFailure(Peg created, int pos) {
-		this.foundFailureNode.source.createdPeg = created;
-		this.foundFailureNode.source.endIndex   = pos;
+		this.foundFailureNode.createdPeg = created;
+		this.foundFailureNode.startIndex   = pos;
+		this.foundFailureNode.endIndex   = pos;
 	}
 }
 

@@ -2,14 +2,14 @@ package org.libbun;
 
 
 public class SourceContext {
-	public final         BunSource source;
+	public final         PegSource source;
 	protected int        sourcePosition = 0;
 	public final int     endPosition;
 
 	int backtrackCount = 0;
 	int backtrackSize = 0;
 
-	public SourceContext(BunSource source, int startIndex, int endIndex) {
+	public SourceContext(PegSource source, int startIndex, int endIndex) {
 		this.source = source;
 		this.sourcePosition = startIndex;
 		this.endPosition = endIndex;
@@ -207,58 +207,58 @@ public class SourceContext {
 	//		return false;
 	//	}
 
-	public final boolean sliceMatchedText(SourceToken token, String text) {
-		if(this.endPosition - this.sourcePosition >= text.length()) {
-			for(int i = 0; i < text.length(); i++) {
-				//System.out.println("i="+i+", '"+text.charAt(i) + "', '"+this.charAt(this.currentPosition + i));
-				if(text.charAt(i) != this.charAt(this.sourcePosition + i)) {
-					return false;
-				}
-			}
-			this.consume(text.length());
-			token.endIndex = this.sourcePosition;
-			return true;
-		}
-		return false;
-	}
-
-	public final boolean sliceQuotedTextUntil(SourceToken token, char endChar, String stopChars) {
-		for(; this.hasChar(); this.consume(1)) {
-			char ch = this.charAt(this.sourcePosition);
-			if(ch == endChar) {
-				token.endIndex = this.sourcePosition;
-				return true;
-			}
-			if(stopChars.indexOf(ch) != -1) {
-				break;
-			}
-			if(ch == '\\') {
-				this.consume(1);  // skip next char;
-			}
-		}
-		token.endIndex = this.sourcePosition;
-		return false;
-	}
-
-	public final boolean sliceUntilWhiteSpace(SourceToken token, String stopChars) {
-		for(; this.hasChar(); this.consume(1)) {
-			char ch = this.charAt(this.sourcePosition);
-			if(ch == '\\') {
-				this.consume(1);  // skip next char;
-			}
-			else {
-				if(ch == ' ' || ch == '\t' || ch == '\n') {
-					token.endIndex = this.sourcePosition;
-					return true;
-				}
-				if(stopChars.indexOf(ch) != 0) {
-					break;
-				}
-			}
-		}
-		token.endIndex = this.sourcePosition;
-		return false;
-	}
+//	public final boolean sliceMatchedText(SourceToken token, String text) {
+//		if(this.endPosition - this.sourcePosition >= text.length()) {
+//			for(int i = 0; i < text.length(); i++) {
+//				//System.out.println("i="+i+", '"+text.charAt(i) + "', '"+this.charAt(this.currentPosition + i));
+//				if(text.charAt(i) != this.charAt(this.sourcePosition + i)) {
+//					return false;
+//				}
+//			}
+//			this.consume(text.length());
+//			token.endIndex = this.sourcePosition;
+//			return true;
+//		}
+//		return false;
+//	}
+//
+//	public final boolean sliceQuotedTextUntil(SourceToken token, char endChar, String stopChars) {
+//		for(; this.hasChar(); this.consume(1)) {
+//			char ch = this.charAt(this.sourcePosition);
+//			if(ch == endChar) {
+//				token.endIndex = this.sourcePosition;
+//				return true;
+//			}
+//			if(stopChars.indexOf(ch) != -1) {
+//				break;
+//			}
+//			if(ch == '\\') {
+//				this.consume(1);  // skip next char;
+//			}
+//		}
+//		token.endIndex = this.sourcePosition;
+//		return false;
+//	}
+//
+//	public final boolean sliceUntilWhiteSpace(SourceToken token, String stopChars) {
+//		for(; this.hasChar(); this.consume(1)) {
+//			char ch = this.charAt(this.sourcePosition);
+//			if(ch == '\\') {
+//				this.consume(1);  // skip next char;
+//			}
+//			else {
+//				if(ch == ' ' || ch == '\t' || ch == '\n') {
+//					token.endIndex = this.sourcePosition;
+//					return true;
+//				}
+//				if(stopChars.indexOf(ch) != 0) {
+//					break;
+//				}
+//			}
+//		}
+//		token.endIndex = this.sourcePosition;
+//		return false;
+//	}
 
 	public final String formatErrorMessage(String msg1, String msg2) {
 		return this.source.formatErrorMessage(msg1, this.sourcePosition, msg2);

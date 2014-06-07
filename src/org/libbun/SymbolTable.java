@@ -299,7 +299,7 @@ public class SymbolTable {
 	
 	
 	public void load(String fileName, BunDriver driver) {
-		BunSource source = Main.loadSource(fileName);
+		PegSource source = Main.loadSource(fileName);
 		this.root.newParserContext(null, source);
 		PegParserContext context =  this.root.newParserContext(null, source);
 		while(context.hasNode()) {

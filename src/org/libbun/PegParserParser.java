@@ -2,12 +2,12 @@ package org.libbun;
 
 public class PegParserParser extends SourceContext {
 	PegParser parser;
-	public PegParserParser(PegParser parser, BunSource source, int startIndex, int endIndex) {
+	public PegParserParser(PegParser parser, PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 		this.parser = parser;
 	}
 
-	public PegParserParser(PegParser parser, BunSource source) {
+	public PegParserParser(PegParser parser, PegSource source) {
 		super(source, 0, source.sourceText.length());
 		this.parser = parser;
 	}

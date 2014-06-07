@@ -41,7 +41,7 @@ public class KonohaTypeChecker {
 				block.setName("return", returnType, null);
 				//block.gamma.tryMatch(block);
 			}
-			gamma.setFunctionName(node.getTextAt(0, "f"), node.typed, node);
+			gamma.setFunctionName(node.textAt(0, "f"), node.typed, node);
 		}
 	}
 

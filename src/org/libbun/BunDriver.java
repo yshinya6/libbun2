@@ -52,7 +52,7 @@ public abstract class BunDriver {
 	public abstract void pushCode(String text);
 	
 	public void report(PegObject node, String errorType, String msg) {
-		System.err.println(node.source.formatErrorMessage(errorType, msg));
+		System.err.println(node.formatSourceMessage(errorType, msg));
 	}
 
 }
