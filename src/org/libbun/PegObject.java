@@ -11,7 +11,7 @@ public class PegObject {
 	PegObject    AST[] = null;
 	SymbolTable  gamma = null;
 	Functor      matched = null;
-	MetaType     typed   = null;
+	BunType     typed   = null;
 
 	PegObject(String name) {
 		this.name = name;
@@ -131,7 +131,7 @@ public class PegObject {
 		return defaultValue;
 	}
 	
-	public MetaType typeAt(SymbolTable gamma, int index, MetaType defaultType) {
+	public BunType typeAt(SymbolTable gamma, int index, BunType defaultType) {
 		if(index < this.size()) {
 			PegObject node = this.AST[index];
 			if(node.typed != null) {
@@ -214,18 +214,18 @@ public class PegObject {
 		}
 	}
 
-	public void setName(String name, MetaType type, PegObject initValue) {
+	public void setName(String name, BunType type, PegObject initValue) {
 		this.checkGamma();
 		this.gamma.setName(name, type, initValue);
 	}
 
-	public void setName(PegObject nameNode, MetaType type, PegObject initValue) {
+	public void setName(PegObject nameNode, BunType type, PegObject initValue) {
 		this.checkGamma();
 		this.gamma.setName(nameNode, type, initValue);
 		nameNode.typed = type;
 	}
 	
-	public final MetaType getType(MetaType defaultType) {
+	public final BunType getType(BunType defaultType) {
 		if(this.typed == null) {
 			if(this.matched != null) {
 				this.typed = this.matched.getReturnType(defaultType);

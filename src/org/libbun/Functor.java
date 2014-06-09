@@ -4,11 +4,11 @@ public class Functor {
 	public SymbolTable storedTable = null;
 	public String      name;
 	public boolean     isSymbol;
-	public MetaType    funcType;
+	public BunType    funcType;
 	TemplateEngine     template;
 	public Functor     nextChoice = null;
 
-	public Functor(String name, boolean isSymbol, MetaType funcType) {
+	public Functor(String name, boolean isSymbol, BunType funcType) {
 		this.name = name;
 		this.isSymbol = isSymbol;
 		this.funcType = funcType;
@@ -30,9 +30,9 @@ public class Functor {
 	}
 	
 	private String keyTypeRel(String head) {
-		MetaType fromType = this.funcType.getFuncParamType(0);
-		MetaType toType = this.funcType.getReturnType();
-		return MetaType.keyTypeRel(head, fromType, toType);
+		BunType fromType = this.funcType.getFuncParamType(0);
+		BunType toType = this.funcType.getReturnType();
+		return BunType.keyTypeRel(head, fromType, toType);
 	}
 
 	@Override 
@@ -40,48 +40,53 @@ public class Functor {
 		return this.key();
 	}
 	
-	public MetaType getReturnType(MetaType defaultType) {
+	public BunType getReturnType(BunType defaultType) {
 		if(this.funcType != null) {
 			return this.funcType.getReturnType();
 		}
 		return defaultType;
 	}
-
-	private MetaType[] getGreekContext() {
-		if(this.funcType != null && this.funcType.hasGreekType()) {
-			return GreekType._NewGreekContext(null);
-		}
-		return null;
-	}
 	
-	private MetaType getParamTypeAt(int index) {
-		if(this.funcType != null && index < this.funcType.getFuncParamSize()) {
-			return this.funcType.getFuncParamType(index);
-		}
-		return MetaType.UntypedType;
-	}
-
 	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		SymbolTable gamma = node.getSymbolTable();
-		MetaType[] greekContext = getGreekContext();
+		BunType varFuncType = this.getVarFuncType();
+		System.out.println("varFuncType: " + varFuncType);
 		for(int i = 0; i < node.size(); i++) {
-			MetaType type = this.getParamTypeAt(i);
-			if(!gamma.checkTypeAt(node, i, type, greekContext, hasNextChoice)) {
+			BunType type = this.paramTypeAt(varFuncType, i);
+			if(!gamma.checkTypeAt(node, i, type, hasNextChoice)) {
 				node.matched = null;
 				return;
 			}
 		}
-		node.typed = this.getReturnType(MetaType.UntypedType).getRealType(greekContext);
-		if(node.typed == null) {  // unresolved greek type
-			node.matched = null;
-		}
-		else {
-			node.matched = this;
-			if(this.template != null) {
-				this.template.check(node, gamma.root.driver);
-			}
+		node.typed = this.returnType(varFuncType);
+		node.matched = this;
+		if(this.template != null) {
+			this.template.check(node, gamma.root.driver);
 		}
 	}
+	
+	private BunType getVarFuncType() {
+		if(this.funcType != null) {
+			return this.funcType.newVarGreekType(null, null);
+		}
+		return null;
+	}
+	
+	private BunType paramTypeAt(BunType varFuncType, int index) {
+		if(varFuncType != null && index < varFuncType.getFuncParamSize()) {
+			return varFuncType.getFuncParamType(index).getRealType();
+		}
+		return BunType.UntypedType;
+	}
+
+	private BunType returnType(BunType varFuncType) {
+		if(varFuncType != null) {
+			return varFuncType.getReturnType().getRealType();
+		}
+		return BunType.UntypedType;
+	}
+
+	
 
 	public void build(PegObject node, BunDriver driver) {
 		if(this.template != null) {
@@ -118,8 +123,26 @@ class ErrorFunctor extends Functor {
 	}
 }
 
-class BunFunctor extends Functor {
-	public BunFunctor(String name) {
+class BunTypeDefFunctor extends Functor {
+	public BunTypeDefFunctor(String name) {
+		super(name, false, null);
+	}
+
+	@Override 
+	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
+		SymbolTable gamma = node.getSymbolTable();
+		String name = node.getText();
+		gamma.setType(BunType.newValueType(name, null));
+		node.matched = this;
+	}
+
+	@Override
+	public void build(PegObject node, BunDriver driver) {
+	}
+}
+
+class BunTemplateFunctor extends Functor {
+	public BunTemplateFunctor(String name) {
 		super(name, false, null);
 	}
 
@@ -141,48 +164,77 @@ class BunFunctor extends Functor {
 	private Functor parseFunctor(SymbolTable gamma, PegObject bunNode) {
 		boolean isSymbol = false;
 		String name = bunNode.textAt(0, null);
+		GreekList greekList = this.parseGreekList(gamma, bunNode.get(5, null));
 		UniMap<Integer> nameMap = new UniMap<Integer>();
 		if(bunNode.get(1).isEmptyToken()) {
-			if(bunNode.textAt(2, "").equals("type")) {
-				Functor f = gamma.setType(MetaType.newValueType(name, null));
-				f.add(this.parseSection(bunNode.get(3), nameMap));
-				return null;
-			}
 			isSymbol = true;
 		}
-		FuncType funcType = this.parseFuncType(gamma, bunNode.get(1), bunNode.get(2), nameMap);
+		BunType funcType = this.parseFuncType(gamma, greekList, bunNode.get(1), bunNode.get(2), nameMap);
 		Functor functor = new Functor(name, isSymbol, funcType);
 		TemplateEngine section = this.parseSection(bunNode.get(3), nameMap);
 		functor.add(section);
 		return functor;
 	}
 
-	private FuncType parseFuncType(SymbolTable gamma, PegObject paramNode, PegObject returnTypeNode, UniMap<Integer> nameMap) {
+	private GreekList parseGreekList(SymbolTable gamma, PegObject paramNode) {
+		if(paramNode != null) {
+			GreekList listed = null;
+			for(int i = 0; i < paramNode.size(); i++) {
+				PegObject p = paramNode.get(i);
+				String name = p.textAt(0, null);
+				listed = this.appendGreekList(listed, name, this.parseType(gamma, null, p.get(1, null)));
+			}
+			return listed;
+		}
+		return null;
+	}
+		
+	private GreekList appendGreekList(GreekList listed, String name, BunType parsedType) {
+		GreekList entry = new GreekList(name, parsedType);
+		if(listed == null) {
+			return entry;
+		}
+		listed.append(entry);
+		return listed;
+	}
+
+	private BunType parseFuncType(SymbolTable gamma, GreekList greekList, PegObject paramNode, PegObject returnTypeNode, UniMap<Integer> nameMap) {
 		if(paramNode.size() == 0 && paramNode.getText().equals("(*)")) {
 			return null; // 
 		}
-		UniArray<MetaType> typeList = new UniArray<MetaType>(new MetaType[paramNode.size()+1]);
+		UniArray<BunType> typeList = new UniArray<BunType>(new BunType[paramNode.size()+1]);
 		for(int i = 0; i < paramNode.size(); i++) {
 			PegObject p = paramNode.get(i);
 			String name = p.textAt(0, null);
-			typeList.add(this.parseType(gamma, p.get(1, null)));
+			typeList.add(this.parseType(gamma, greekList, p.get(1, null)));
 			nameMap.put(name, i);
 		}
-		typeList.add(this.parseType(gamma, returnTypeNode));
-		return MetaType.newFuncType(typeList);
+		typeList.add(this.parseType(gamma, greekList, returnTypeNode));
+		BunType t = BunType.newFuncType(typeList);
+		if(greekList != null) {
+			t = new GreekType(greekList, t);
+		}
+		return t;
 	}
 
-	private MetaType parseType(SymbolTable gamma, PegObject typeNode) {
+	private BunType parseType(SymbolTable gamma, GreekList greekList, PegObject typeNode) {
 		if(typeNode != null) {
+			if(greekList != null) {
+				String name = typeNode.getText();
+				BunType t = greekList.getGreekType(name);
+				if(t != null) {
+					return t;
+				}
+			}
 			gamma.tryMatch(typeNode);
-			MetaType t = typeNode.getType(MetaType.UntypedType);
+			BunType t = typeNode.getType(BunType.UntypedType);
 			if(t instanceof VarType) {
-				t = MetaType.UntypedType;
-				typeNode.typed = MetaType.UntypedType;
+				t = BunType.UntypedType;
+				typeNode.typed = BunType.UntypedType;
 			}
 			return t;
 		}
-		return MetaType.UntypedType;
+		return BunType.UntypedType;
 	}
 
 	private TemplateEngine parseSection(PegObject sectionNode, UniMap<Integer> nameMap) {

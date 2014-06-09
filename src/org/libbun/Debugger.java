@@ -47,7 +47,7 @@ public class Debugger extends BunDriver {
 	}
 
 	@Override
-	public void pushType(MetaType type) {
+	public void pushType(BunType type) {
 	}
 
 	@Override

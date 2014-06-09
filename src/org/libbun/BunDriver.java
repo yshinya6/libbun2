@@ -12,7 +12,7 @@ public abstract class BunDriver {
 	public abstract void pushUndefinedName(PegObject node, String name);
 	public abstract void pushApplyNode(PegObject node, String name);
 
-	public abstract void pushType(MetaType type);
+	public abstract void pushType(BunType type);
 
 	// Template Engine
 	public void pushNode(PegObject node) {
@@ -21,7 +21,7 @@ public abstract class BunDriver {
 			gamma.tryMatch(node);
 		}
 		if(node.matched != null) {
-			MetaType t = node.getType(MetaType.UntypedType);
+			BunType t = node.getType(BunType.UntypedType);
 			t.build(node, this);
 		}
 		else {
@@ -143,7 +143,7 @@ abstract class SourceDriver extends BunDriver {
 	class TypeofCommand extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			driver.pushType(node.getType(MetaType.UntypedType));
+			driver.pushType(node.getType(BunType.UntypedType));
 		}
 	}
 

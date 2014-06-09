@@ -42,6 +42,9 @@ public class Main {
 
 	private static void parseCommandArgument(String[] args) {
 		int index = 0;
+//		Function<String,String> f = (String x) -> String {
+//			return x;
+//		}
 		while (index < args.length) {
 			String argument = args[index];
 			if (!argument.startsWith("-")) {
@@ -438,8 +441,8 @@ public class Main {
 		/*"Alpha"*/ "\u03B1", "\u03B2", "\u03B3"
 	};
 
-	public final static MetaType[] _NewTypeArray(int size) {
-		return new MetaType[size];
+	public final static BunType[] _NewTypeArray(int size) {
+		return new BunType[size];
 	}
 
 	public final static PegObject[] _NewPegObjectArray(int size) {

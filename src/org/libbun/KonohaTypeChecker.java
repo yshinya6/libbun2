@@ -7,8 +7,8 @@ public class KonohaTypeChecker {
 	public static void typeLet(PegObject node) {
 //		System.out.println("TypeDeclCommand node: " + node);
 		SymbolTable gamma = node.getSymbolTable();
-		MetaType type = node.typeAt(gamma, 1, MetaType.UntypedType);
-		gamma.checkTypeAt(node, 2, type, null, true);
+		BunType type = node.typeAt(gamma, 1, BunType.UntypedType);
+		gamma.checkTypeAt(node, 2, type, true);
 		if(node.findParentNode("#function") == null) {
 			gamma.setGlobalName(node.get(0), type, node.get(2));
 		}
@@ -24,18 +24,18 @@ public class KonohaTypeChecker {
 		if(node.typed != null) {
 			PegObject params = node.get(1, null);
 			PegObject block = node.get(3, null);
-			UniArray<MetaType> typeList = new UniArray<MetaType>(new MetaType[params.size()+1]);
+			UniArray<BunType> typeList = new UniArray<BunType>(new BunType[params.size()+1]);
 			for(int i = 0; i < params.size(); i++) {
 				PegObject p = params.get(i);
-				MetaType ptype = p.typeAt(gamma, 1, null);
+				BunType ptype = p.typeAt(gamma, 1, null);
 				typeList.add(ptype);
 				if(block != null) {
 					block.setName(p.get(0), ptype, null);
 				}
 			}
-			MetaType returnType = node.typeAt(gamma, 2, null);
+			BunType returnType = node.typeAt(gamma, 2, null);
 			typeList.add(returnType);
-			node.typed = MetaType.newFuncType(typeList);
+			node.typed = BunType.newFuncType(typeList);
 			if(block != null) {
 				block.setName(node.get(0), node.typed, node);
 				block.setName("return", returnType, null);
@@ -55,21 +55,21 @@ public class KonohaTypeChecker {
 		//System.out.println("FuncDeclCommand node: " + node);
 		SymbolTable gamma = node.getSymbolTable();
 		for(int i = 0; i < node.size(); i++) {
-			gamma.checkTypeAt(node, i, gamma.getVoidType(), null, false);
+			gamma.checkTypeAt(node, i, gamma.getVoidType(), false);
 		}
 		DefinedNameFunctor f = gamma.getName("return");
-		MetaType returnType = f.getReturnType(MetaType.UntypedType);
+		BunType returnType = f.getReturnType(BunType.UntypedType);
 		System.out.println("returnType="+returnType);
-		gamma.checkTypeAt(node, 0, returnType, null, false);
+		gamma.checkTypeAt(node, 0, returnType, false);
 	}
 
 	public static void typeCheckReturn(PegObject node) {
 		//System.out.println("FuncDeclCommand node: " + node);
 		SymbolTable gamma = node.getSymbolTable();
 		DefinedNameFunctor f = gamma.getName("return");
-		MetaType returnType = f.getReturnType(MetaType.UntypedType);
+		BunType returnType = f.getReturnType(BunType.UntypedType);
 		System.out.println("returnType="+returnType);
-		gamma.checkTypeAt(node, 0, returnType, null, false);
+		gamma.checkTypeAt(node, 0, returnType, false);
 	}
 
 	

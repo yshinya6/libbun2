@@ -4,10 +4,10 @@ public class PythonDriver extends SourceDriver {
 
 	@Override
 	public void initTable(Namespace gamma) {
-		gamma.setType(MetaType.newVoidType("void", null));
-		gamma.setType(MetaType.newAnyType("any", null));
-		gamma.setType(MetaType.newGreekType("alpha", 0, null));
-		gamma.setType(MetaType.newGreekType("beta", 0, null));
+		gamma.setType(BunType.newVoidType("void", null));
+		gamma.setType(BunType.newAnyType("any", null));
+		gamma.setType(BunType.newGreekType("alpha", 0, null));
+		gamma.setType(BunType.newGreekType("beta", 0, null));
 		KonohaTypeChecker.initDriver(this);
 		gamma.loadBunModel("lib/driver/python/konoha.bun", this);
 		gamma.loadBunModel("lib/driver/python/konoha_python.bun", this);
@@ -29,7 +29,7 @@ public class PythonDriver extends SourceDriver {
 	}
 
 	@Override
-	public void pushType(MetaType type) {
+	public void pushType(BunType type) {
 		this.pushCode(type.getName());
 	}
 

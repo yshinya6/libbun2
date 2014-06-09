@@ -2,9 +2,38 @@
 // type is used left-recursion
 // self-redefinition
 
-_           = ([ \t]+)* ;
-Type        = << [A-Za-z] [A-Za-z0-9_]*   #type >>;
-Type        = Type <<@ '[]'               #arraytype  >> / Type;
-Type        = Type <<@ '<' _ Type@ (_ ',' _ Type@)? _ '>' #generictype >> / Type;
-TopLevel    = Type;
+_ 
+  = ([ \t]+)*
+  ;
+
+BasicType
+  = <<'void'    #Tvoid>>
+  / <<'boolean' #Tboolean>>
+  / <<'int'     #Tint>>
+  / <<'float'   #Tdouble>>
+  / <<'String'  #TString>>
+  ;
+
+FuncType
+  = 'Func' _ << '<' _ Type@ _ (',' _ Type@ _ )* '>' #TFunc >>
+  ;
+
+ArrayType
+  = 'Array' _ << '<' _ Type@ _ '>' #TArray >>
+  ;
+
+ObjectType
+  = << [A-Za-z] [A-Za-z0-9_]*   #type >>
+  ;
+
+Type
+  = BasicType
+  / FuncType
+  / ArrayType
+  / ObjectType
+  ;
+
+TopLevel
+  = Type
+  ;
 
