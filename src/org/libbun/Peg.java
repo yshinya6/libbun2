@@ -267,11 +267,13 @@ class PegLabel extends PegAtom {
 	}
 
 	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
-		if(this.name.equals(this.symbol)) {
-			source.setLrExistence(this.name, true);
-		}
-		else{
-			source.setLrExistence(this.name, false);
+		if(source.getLrExistence(this.name) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.name, true);
+			}
+			else {
+				source.setLrExistence(this.name, false);
+			}
 		}
 		PegObject left = source.parsePegNode(parentNode, this.symbol);
 		if(left.isFailure()) {
