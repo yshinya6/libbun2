@@ -1,0 +1,23 @@
+bun #integer(): int {
+	${PUSH_INT this}
+}
+
+bun #float() : float {
+	${PUSH_FLOAT this}
+}
+
+bun #add(x : int, y : int) : int {
+	${x} ${y} ${OP add int int}
+}
+
+bun #add(x : float, y : int) : float {
+	#{x} ${y} ${OP add float int}
+}
+
+bun #add(x : int, y : float) : float {
+	#{x} ${y} ${OP add int float}
+}
+
+bun #add(x : float, y : float) : float {
+	#{x} ${y} ${OP add float float}
+}

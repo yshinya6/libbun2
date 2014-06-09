@@ -39,7 +39,11 @@ public abstract class MetaType  {
 	public MetaType getReturnType() {
 		return this;
 	}
-	
+
+	public Object getTypeInfo() {
+		return this.typeInfo;
+	}
+
 	public abstract boolean hasVarType();
 	public abstract MetaType getRealType();
 	public abstract boolean hasGreekType();
