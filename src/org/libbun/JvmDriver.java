@@ -15,14 +15,16 @@ import org.objectweb.asm.commons.Method;
 
 public class JvmDriver extends BunDriver {
 	private final JvmByteCodeLoader loader;
-	private final Stack<MetaType> typeStack;
+	private final Stack<BunType> typeStack;
+	private final UniMap<Class<?>> classMap;
 	private Namespace gamma;
 	private ClassBuilder classBuilder;
 	private GeneratorAdapter adapter;
 
 	public JvmDriver() {
 		this.loader = new JvmByteCodeLoader();
-		this.typeStack = new Stack<MetaType>();
+		this.typeStack = new Stack<BunType>();
+		this.classMap = new UniMap<Class<?>>();
 		this.addCommand("PUSH_INT", new PushInt());
 		this.addCommand("PUSH_FLOAT", new PushFloat());
 		this.addCommand("OP", new CallOperator());
@@ -31,13 +33,18 @@ public class JvmDriver extends BunDriver {
 	@Override
 	public void initTable(Namespace gamma) {
 		this.gamma = gamma;
-		gamma.setType(MetaType.newValueType("int", long.class));
-		gamma.setType(MetaType.newValueType("float", double.class));
-		gamma.setType(MetaType.newValueType("boolean", boolean.class));
-		gamma.setType(MetaType.newVoidType("void", Void.class));
-		gamma.setType(MetaType.newAnyType("any", Object.class));
-		gamma.setType(MetaType.newGreekType("alpha", 0, null));
-		gamma.setType(MetaType.newGreekType("beta", 0, null));
+		gamma.setType(BunType.newValueType("int", long.class));
+		this.classMap.put("int", long.class);
+		gamma.setType(BunType.newValueType("float", double.class));
+		this.classMap.put("float", double.class);
+		gamma.setType(BunType.newValueType("bool", boolean.class));
+		this.classMap.put("bool", boolean.class);
+		gamma.setType(BunType.newVoidType("void", Void.class));
+		this.classMap.put("void", Void.class);
+		gamma.setType(BunType.newAnyType("any", Object.class));
+		this.classMap.put("any", Object.class);
+		gamma.setType(BunType.newGreekType("alpha", 0, null));
+		gamma.setType(BunType.newGreekType("beta", 0, null));
 		KonohaTypeChecker.initDriver(this);
 		gamma.loadBunModel("lib/driver/jvm/konoha.bun", this);
 	}
@@ -68,8 +75,8 @@ public class JvmDriver extends BunDriver {
 		}
 	}
 
-	private void pushTypeToTypeStack(MetaType type) {
-		Class<?> javaClass = (Class<?>) type.getTypeInfo();
+	private void pushTypeToTypeStack(BunType type) {
+		Class<?> javaClass = this.classMap.get(type.getName());
 		if(javaClass == null) {
 			throw new RuntimeException("illegal type: " + type);
 		}
@@ -83,7 +90,7 @@ public class JvmDriver extends BunDriver {
 	 * @return
 	 * - return null, if typeStack is empty.
 	 */
-	private MetaType popTypeFromTypeStack() {
+	private BunType popTypeFromTypeStack() {
 		if(this.typeStack.isEmpty()) {
 			return null;
 		}
@@ -94,14 +101,14 @@ public class JvmDriver extends BunDriver {
 	 * interactive mode only.
 	 */
 	private void insertPrintIns() {
-		MetaType type = this.popTypeFromTypeStack();
+		BunType type = this.popTypeFromTypeStack();
 		if(type == null) {
 			return;
 		}
-		Class<?> javaClass = (Class<?>) type.getTypeInfo();
+		Class<?> javaClass = this.classMap.get(type.getName());
 		try {
 			java.lang.reflect.Method method = JvmOperator.class.getMethod("printValue", javaClass, String.class);
-			this.adapter.push(type.toString());
+			this.adapter.push(type.getName());
 			this.adapter.invokeStatic(Type.getType(JvmOperator.class), Method.getMethod(method));
 		}
 		catch(Throwable t) {
@@ -134,7 +141,7 @@ public class JvmDriver extends BunDriver {
 	}
 
 	@Override
-	public void pushType(MetaType type) {
+	public void pushType(BunType type) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -196,11 +203,11 @@ public class JvmDriver extends BunDriver {
 		Class<?>[] paramClasses = new Class<?>[size];
 		for(int i = 0; i < size; i++) {
 			String paramTypeName = params[i + 1];
-			MetaType type = this.gamma.getType(paramTypeName, null);
+			BunType type = this.gamma.getType(paramTypeName, null);
 			if(type == null) {
 				throw new RuntimeException("undefined type: " + paramTypeName);
 			}
-			Class<?> classInfo = (Class<?>) type.getTypeInfo();
+			Class<?> classInfo = this.classMap.get(type.getName());
 			if(classInfo == null) {
 				throw new RuntimeException("has no typeinfo: " + type.toString());
 			}

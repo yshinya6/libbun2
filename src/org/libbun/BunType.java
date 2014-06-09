@@ -40,10 +40,6 @@ public abstract class BunType  {
 		return this;
 	}
 
-	public Object getTypeInfo() {
-		return this.typeInfo;
-	}
-
 	public abstract boolean hasVarType();
 	public BunType getRealType() {
 		return this;
