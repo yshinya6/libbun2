@@ -45,6 +45,9 @@ public class Main {
 
 	private static void parseCommandArgument(String[] args) {
 		int index = 0;
+//		Function<String,String> f = (String x) -> String {
+//			return x;
+//		}
 		while (index < args.length) {
 			String argument = args[index];
 			if (!argument.startsWith("-")) {
@@ -185,7 +188,7 @@ public class Main {
 
 	public final static void main(String[] args) {
 		parseCommandArgument(args);
-		PegParser p = new PegParser(null);
+		PegParser p = new PegParser();
 		p.loadPegFile(LanguagePeg);
 		BunDriver driver = loadDriver(DriverName);
 		Namespace gamma = new Namespace(p, driver);
@@ -197,26 +200,26 @@ public class Main {
 		Main._PrintLine(ProgName + Version + " (" + CodeName + ") on " + Main._GetPlatform());
 		Main._PrintLine(Copyright);
 		int linenum = 1;
-		String Line = null;
-		while ((Line = readMultiLine(">>> ", "    ")) != null) {
+		String line = null;
+		while ((line = readMultiLine(">>> ", "    ")) != null) {
 			String startPoint = "TopLevel";
 			if(PegDebuggerMode) {
-				if(Line.startsWith("?")) {
-					int loc = Line.indexOf(" ");
+				if(line.startsWith("?")) {
+					int loc = line.indexOf(" ");
 					if(loc > 0) {
-						startPoint = Line.substring(1, loc);
-						Line = Line.substring(loc+1);
+						startPoint = line.substring(1, loc);
+						line = line.substring(loc+1);
 					}
 					else {
 						PegParser p = gamma.root.getParser("main");
-						p.show(Line.substring(1));
+						p.show(line.substring(1));
 						startPoint = null;
 					}
 				}
 			}
 			if(startPoint != null) {
 				try {
-					BunSource source = new BunSource("(stdin)", linenum, Line, null);
+					PegSource source = new PegSource("(stdin)", linenum, line);
 					PegParserContext context =  gamma.root.newParserContext("main", source);
 					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
 					if(node.isFailure()) {
@@ -324,7 +327,7 @@ public class Main {
 
 	// file
 
-	public final static BunSource loadSource(String fileName) {
+	public final static PegSource loadSource(String fileName) {
 		//ZLogger.VerboseLog(ZLogger.VerboseFile, "loading " + FileName);
 		InputStream Stream = Main.class.getResourceAsStream("/" + fileName);
 		if (Stream == null) {
@@ -344,7 +347,7 @@ public class Main {
 				builder.append("\n");
 				line = reader.readLine();
 			}
-			return new BunSource(fileName, 1, builder.toString(), null);
+			return new PegSource(fileName, 1, builder.toString());
 		}
 		catch(IOException e) {
 			e.printStackTrace();
@@ -454,8 +457,8 @@ public class Main {
 		/*"Alpha"*/ "\u03B1", "\u03B2", "\u03B3"
 	};
 
-	public final static MetaType[] _NewTypeArray(int size) {
-		return new MetaType[size];
+	public final static BunType[] _NewTypeArray(int size) {
+		return new BunType[size];
 	}
 
 	public final static PegObject[] _NewPegObjectArray(int size) {

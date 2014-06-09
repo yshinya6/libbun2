@@ -1,8 +1,7 @@
 
-import Type from type.peg;
-
 TopLevel
  = Template
+ / TypeDef
  / catch (!'\n}' .)* '\n}' 
  ;
 
@@ -20,12 +19,21 @@ Comment
   / '//' (![\r\n] .)* [\r\n]
   ;
 
+TypeDef
+  = NL 'typedef' _ << [A-Za-z0-9_]+ #bun.typedef >> _ ';'?
+  ;
+
 Template
-  = NL ('bun' / 'template') Spacing 
-    << TemplateName@ _ Params@ _ BunAnno@ _ '{' _ '\n' Section@ '}' #bun >>
+  = NL ('bun' / 'template') NL  
+    << GreekList@5? NL TemplateName@0 NL Params@1 _ BunAnno@2 _ Checker@4? _ 
+      '{' _ '\n' Section@3 '}' #bun 
+    >>
   ;
 TemplateName
   = << '#'? [A-Za-z0-9_.]+ #name >>
+  ;
+GreekList
+  = '<' _ << Param@ ((_ ',' _ Param@)*)? #params >> _ '>'
   ;
 Params
   = << ('(' _ ('*' / (Param@ (_ ',' _ Param@)*)?) _ ')' / '') #params >>
@@ -37,21 +45,30 @@ BunAnno
   = ':' _ BunType 
   / << '' #type >>
   ;
+Checker
+  = '&&' _ BunName '()'
+  ;
 BunType
   = NodeType / ValueType / Type
   ;
 NodeType
-  = << '#' [A-Za-z0-9_.]+  #bun.nodetype >>
+  = << '#' [A-Za-z0-9_.]+  #Tnode >>
+  ;
+NameType
+  = << '$' [A-Za-z0-9_.]+  #Tref >>
   ;
 ValueType
-  = << "'" (!"'" .)* "'"   #bun.valuetype >>
+  = << "'" (!"'" .)* "'"   #Tvalue >>
+  ;
+Type
+  = << [A-Za-z] [A-Za-z0-9_]* ('<' _ Type@ _ (',' _ Type@ _ )* '>')? #type >>
   ;
 
 Section
-  = << !'}' Line@* #bun.sec >>
+ = << (!'}' Line@* / '') #bun.sec >>
   ;
 Line    
-  = [|\t] << Chunk@? (Command@ Chunk@)* #bun.line >> '\n'
+  = [\t ]+ << Chunk@? (Command@ Chunk@)* #bun.line >> '\n'
   / &'$' << (Command@ (![\n$] .)*)* #bun.header >> '\n'
   ;
 Chunk 

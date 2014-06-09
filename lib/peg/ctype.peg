@@ -5,18 +5,18 @@
 import _ from spacing.peg;
 
 BasicType
- = 'void'
- / 'boolean'
- / 'char'    //int8
- / 'short'   //int16
- / 'int'     //int32
- / 'long'    //int64
- / 'float'
- / 'double'
+ = 'void'     #Tvoid
+ / 'boolean'  #Tboolean
+ / 'char'     #Tint8
+ / 'short'    #Tint16
+ / 'int'      #Tint
+ / 'long'     #Tint64
+ / 'float'    #Tfloat
+ / 'double'   #Tdouble
  ;
 
 Type
- = << BasicType #type>>
+ = << BasicType >>
  / 'struct' _ << [A-Za-z0-9_]+ #type >>
  / Type <<@ '*' #pointer >>
  ;

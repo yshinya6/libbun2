@@ -2,51 +2,60 @@ package org.libbun;
 
 
 public class PegObject {
-	SourceToken    source;
-	String      name;
-	PegObject   AST[] = null;
-	PegObject   parent;
-	SymbolTable gamma = null;
-	Functor     matched = null;
-	MetaType    typed   = null;
+	PegSource    source = null;
+	int          startIndex = 0;
+	int          endIndex = 0;
+	Peg          createdPeg = null;
+	String       name = null;
+	PegObject    parent = null;
+	PegObject    AST[] = null;
+	SymbolTable  gamma = null;
+	Functor      matched = null;
+	BunType     typed   = null;
 
-	PegObject(String functor) {
-		this.name = functor;
+	PegObject(String name) {
+		this.name = name;
 	}
 
-	PegObject(String functor, BunSource source) {
-		this.name = functor;
-		this.source = source.newToken(null, 0, 0);
-	}
-
-	public boolean is(String functor) {
-		return this.name.startsWith(functor);
+	PegObject(String name, PegSource source, Peg createdPeg, int startIndex) {
+		this.name       = name;
+		this.source     = source;
+		this.createdPeg = createdPeg;
+		this.startIndex = startIndex;
+		this.endIndex   = startIndex;
 	}
 
 	public final boolean isFailure() {
 		return (this.name == null);
 	}
 
-	final void setSource(Peg createdPeg, BunSource source, int startIndex, int endIndex) {
-		this.source = source.newToken(createdPeg, startIndex, endIndex);
+	public final boolean is(String functor) {
+		return this.name.startsWith(functor);
 	}
 
-	final void setMessage(Peg createdPeg, BunSource source, int startIndex, String message) {
-		this.source = source.newToken(createdPeg, startIndex, startIndex, message);
+	public final void setSource(Peg createdPeg, PegSource source, int startIndex, int endIndex) {
+		this.source     = source;
+		this.startIndex = startIndex;
+		this.endIndex   = endIndex;
 	}
+
+	public final String formatSourceMessage(String type, String msg) {
+		return this.source.formatErrorMessage(type, this.startIndex, msg);
+	}
+	
+//	final void setMessage(Peg createdPeg, BunSource source, int startIndex, String message) {
+//		this.source = source.newToken(createdPeg, startIndex, startIndex, message);
+//	}
 
 	public final boolean isEmptyToken() {
-		if(this.source != null) {
-			return this.source.startIndex == this.source.endIndex;
-		}
-		return true;
+		return this.startIndex == this.endIndex;
 	}
 	
 	public final String getText() {
 		if(this.source != null) {
-			return this.source.getText();
+			return this.source.substring(this.startIndex, this.endIndex);
 		}
-		return "NULL";
+		return "";
 	}
 
 	// AST[]
@@ -76,22 +85,7 @@ public class PegObject {
 		this.AST[index] = node;
 		node.parent = this;
 	}
-
-	public final void checkNullEntry() {
-		for(int i = 0; i < this.size(); i++) {
-			if(this.AST[i] == null) {
-				this.AST[i] = new PegObject("#empty");
-				this.AST[i].parent = this;
-			}
-		}
-	}
-
-	//	public final void swap(int i, int j) {
-	//		PegObject node = this.AST[i];
-	//		this.AST[i] = this.AST[j];
-	//		this.AST[j] = node;
-	//	}
-
+	
 	public final void resizeAst(int size) {
 		if(this.AST == null && size > 0) {
 			this.AST = Main._NewPegObjectArray(size);
@@ -114,21 +108,30 @@ public class PegObject {
 		}
 	}
 
-	void append(PegObject childNode) {
+	public final void append(PegObject childNode) {
 		int size = this.size();
 		this.expandAstToSize(size+1);
 		this.AST[size] = childNode;
 		childNode.parent = this;
 	}
 
-	public final String getTextAt(int index, String defaultValue) {
+	public final void checkNullEntry() {
+		for(int i = 0; i < this.size(); i++) {
+			if(this.AST[i] == null) {
+				this.AST[i] = new PegObject("#empty", this.source, null, this.startIndex);
+				this.AST[i].parent = this;
+			}
+		}
+	}
+
+	public final String textAt(int index, String defaultValue) {
 		if(index < this.size()) {
 			return this.AST[index].getText();
 		}
 		return defaultValue;
 	}
 	
-	public MetaType typeAt(SymbolTable gamma, int index, MetaType defaultType) {
+	public BunType typeAt(SymbolTable gamma, int index, BunType defaultType) {
 		if(index < this.size()) {
 			PegObject node = this.AST[index];
 			if(node.typed != null) {
@@ -173,21 +176,13 @@ public class PegObject {
 	private String info() {
 		if(this.matched == null) {
 			if(this.source != null) {
-				return "## by peg : " + this.source.createdPeg;
+				return "## by peg : " + this.createdPeg;
 			}
 			return "";
 		}
 		else {
 			return ":" + this.getType(null) + " by " + this.matched;
 		}
-	}
-		
-	public final SymbolTable getSymbolTable() {
-		PegObject node = this;
-		while(node.gamma == null) {
-			node = node.parent;
-		}
-		return node.gamma;
 	}
 
 	public final PegObject findParentNode(String name) {
@@ -201,6 +196,15 @@ public class PegObject {
 		return null;
 	}
 
+	public final SymbolTable getSymbolTable() {
+		PegObject node = this;
+		while(node.gamma == null) {
+			node = node.parent;
+		}
+		return node.gamma;
+	}
+
+
 	private void checkGamma() {
 		if(this.gamma == null) {
 			SymbolTable gamma = this.getSymbolTable();
@@ -210,18 +214,18 @@ public class PegObject {
 		}
 	}
 
-	public void setName(String name, MetaType type, PegObject initValue) {
+	public void setName(String name, BunType type, PegObject initValue) {
 		this.checkGamma();
 		this.gamma.setName(name, type, initValue);
 	}
 
-	public void setName(PegObject nameNode, MetaType type, PegObject initValue) {
+	public void setName(PegObject nameNode, BunType type, PegObject initValue) {
 		this.checkGamma();
 		this.gamma.setName(nameNode, type, initValue);
 		nameNode.typed = type;
 	}
 	
-	public final MetaType getType(MetaType defaultType) {
+	public final BunType getType(BunType defaultType) {
 		if(this.typed == null) {
 			if(this.matched != null) {
 				this.typed = this.matched.getReturnType(defaultType);
@@ -245,8 +249,5 @@ public class PegObject {
 			driver.pushUnknownNode(this);
 		}
 	}
-
-
-
 
 }
