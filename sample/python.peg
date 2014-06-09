@@ -3,7 +3,7 @@ TopLevel
     = << Stmt@+ #stmts>>;
 
 Stmt
-    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ _* #if>> NL?
+    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent "else" WS* ":" NL+ Block@)? _* #if>> NL?
     / Expr (";" / NL)
     ;
 
