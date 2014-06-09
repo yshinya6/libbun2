@@ -185,6 +185,14 @@ class PegString extends PegAtom {
 
 	@Override
 	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		if(source.getLrExistence(this.name) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.name, true);
+			}
+			else {
+				source.setLrExistence(this.name, false);
+			}
+		}
 		if(source.match(this.symbol)) {
 			return inNode;
 		}
@@ -243,6 +251,14 @@ class PegCharacter extends PegAtom {
 
 	@Override
 	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		if(source.getLrExistence(this.name) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.name, true);
+			}
+			else {
+				source.setLrExistence(this.name, false);
+			}
+		}
 		char ch = source.getChar();
 		if(!this.charset.match(ch)) {
 			return source.foundFailure(this);
