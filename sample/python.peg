@@ -3,21 +3,45 @@ TopLevel
     = << Stmt@+ #stmts>>;
 
 Stmt
-    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent "else" WS* ":" NL+ Block@)? _* #if>> NL?
+    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent _* "else" WS* ":" NL+ Block@)? _* #if>> NL?
+    / <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>> NL?
+    / <<"for" WS+ Expr@ WS* ":" NL+ Block@ #for>> NL?
+    / <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>> NL?
+    / <<"return" WS+ Expr@ #return>> NL?
+    / <<"class" WS* "(" Symbol@ WS* ")" WS* ":" NL+ ClassBlock@ #class>> NL?
     / Expr (";" / NL)
     ;
 
 Block
-    = << (indent WS* Stmt@ NL?)+ #block>>;
+    = << (indent _* Stmt@ NL?)+ #block>>;
+
+ClassBlock
+    = Block;
 
 Expr
     = Expr <<@ WS* Op@  WS* Expr@ >>
+    / Symbol <<@ _* '=' _* Expr@ #assign>>
     / Symbol
+    / StringLiteral
     / Integer
+    / ArrayLiteral
     ;
 
+ArrayLiteral
+    = << "[" _* Expr@? (_* "," _* Expr@)* _* "]" #array>>
+    / << "[" _* Expr@ _* "for" _* Symbol@ _* "in" _* Expr@ (_* "if" _* Expr@)? _* "]" #listComprehension >>
+    ;
+
+StringLiteral
+    = << '"' ('\\"' / !'"' .)* '"' #string >>
+    / << "'" ("\\'" / !"'" .)* "'" #string >>
+    ;
+
+Params
+    = << Symbol@? (_* "," _* Symbol@)* _* #params>>;
+
 Op
-    = '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<' #lt / '>' #gt;
+    = '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<=' #lte / '<' #lt / '>=' #gte / '>' #gt;
 
 Integer
     = << [0-9]+ #integer>>
