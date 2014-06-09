@@ -1069,6 +1069,7 @@ class PegIndent extends PegAtom {
 			if(source.match(indent)) {
 				return inNode;
 			}
+			return new PegObject(null); //not match
 		}
 		return inNode;
 		//return source.newErrorNode(this, "mismatched indent", hasNextChoice);

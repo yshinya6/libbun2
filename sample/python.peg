@@ -1,0 +1,38 @@
+
+TopLevel
+    = << Stmt@+ #stmts>>;
+
+Stmt
+    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ _* #if>> NL?
+    / Expr (";" / NL)
+    ;
+
+Block
+    = << (indent WS* Stmt@ NL?)+ #block>>;
+
+Expr
+    = Expr <<@ WS* Op@  WS* Expr@ >>
+    / Symbol
+    / Integer
+    ;
+
+Op
+    = '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<' #lt / '>' #gt;
+
+Integer
+    = << [0-9]+ #integer>>
+    ;
+
+Symbol
+    = << [a-zA-Z]+ #symbol>>
+    ;
+
+WS
+    = [ \t];
+
+NL
+    = [\n];
+
+_
+    = (WS/NL);
+
