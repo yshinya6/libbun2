@@ -3,23 +3,29 @@ TopLevel
     = << Stmt@+ #stmts>>;
 
 Stmt
-    = IfStmt
-    / WhileStmt
-    / ForStmt
-    / ReturnStmt
-    / ImportStmt
-    / BreakStmt
-    / ContinueStmt
-    / DefineFunction
-    / DefineClass
-    / Print
+    = IfStmt EOS?
+    / WhileStmt EOS?
+    / ForStmt EOS?
+    / ReturnStmt EOS?
+    / ImportStmt EOS?
+    / BreakStmt EOS?
+    / ContinueStmt EOS?
+    / DefineFunction EOS?
+    / DefineClass EOS?
+    / Print EOS?
+    / With EOS?
     / Expr EOS?
-    / NL+
+    / EOS+
     ;
 
 EOS
     = ";"
     / NL
+    / "#" (!'\n' .)* '\n'
+    ;
+
+With
+    = <<"with" WS+ Expr@ WS+ "as" WS+ Symbol@ WS* ":" NL+ Block@ #with>>
     ;
 
 Print
@@ -27,44 +33,44 @@ Print
     ;
 
 IfStmt
-    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent _* "else" WS* ":" NL+ Block@)? _* #if>> NL?
+    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent _* "else" WS* ":" NL+ Block@)? _* #if>>
     ;
 
 WhileStmt
-    = <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>> NL?
+    = <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>>
     ;
 
 ForStmt
-    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>> NL?
+    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>>
     ;
 
 ReturnStmt
-    = <<"return" WS+ Expr@ #return>> EOS?
+    = <<"return" WS+ Expr@ #return>>
     ;
 
 ImportStmt
-    = <<"import" WS* ImportSymbol@ (WS* "," WS* Symbol@)* #import>> NL?
-    / <<"from" WS* Symbol@ WS* "import" WS* ImportSymbol@ (WS* "," WS* ImportSymbol@)* #fromImport>> NL?
+    = <<"import" WS* ImportSymbol@ (WS* "," WS* Symbol@)* #import>>
+    / <<"from" WS* Symbol@ WS* "import" WS* ImportSymbol@ (WS* "," WS* ImportSymbol@)* #fromImport>>
     ;
 
 DefineFunction
-    = <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>> NL?
+    = <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>>
     ;
 
 DefineClass
-    = <<"class" WS+ Symbol@ (WS* "(" (Symbol@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>> NL?
+    = <<"class" WS+ Symbol@ (WS* "(" (Symbol@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>>
     ;
 
 BreakStmt
-    = <<"break" #break>> EOS?
+    = <<"break" #break>>
     ;
 
 ContinueStmt
-    = <<"continue" #continue>> EOS?
+    = <<"continue" #continue>>
     ;
 
 ReturnStmt
-    = <<"return" WS+ Expr@ #return>> EOS?
+    = <<"return" WS+ Expr@ #return>>
     ;
 
 Block
