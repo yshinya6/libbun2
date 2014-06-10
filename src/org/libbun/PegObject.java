@@ -246,7 +246,16 @@ public class PegObject {
 		}
 	}
 
-
+	public final PegObject pegClone(PegObject Node) {
+		PegObject pego = new PegObject(Node.name);
+		pego.source = Node.source;
+		pego.AST = Node.AST;
+		pego.parent = Node.parent;
+		pego.gamma = Node.gamma;
+		pego.matched = Node.matched;
+		pego.typed = Node.typed;
+		return pego;
+	}
 
 
 }

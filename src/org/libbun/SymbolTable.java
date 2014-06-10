@@ -303,6 +303,7 @@ public class SymbolTable {
 		this.root.newParserContext(null, source);
 		PegParserContext context =  this.root.newParserContext(null, source);
 		while(context.hasNode()) {
+			context.initMemo();
 			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), "TopLevel");
 			node.gamma = this;
 			if(this.tryMatch(node)) {
