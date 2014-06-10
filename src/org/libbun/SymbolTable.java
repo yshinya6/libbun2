@@ -156,8 +156,9 @@ public class SymbolTable {
 			if(type.is(valueType)) {
 				return true;
 			}
-			subnode.typed = this.getTypeCoersion(valueType, type, hasNextChoice);
-			if(subnode.typed != null) {
+			BunType transType = this.getTypeCoersion(valueType, type, hasNextChoice);
+			if(transType != null) {
+				node.typed = transType;
 				return true;
 			}
 			return false;

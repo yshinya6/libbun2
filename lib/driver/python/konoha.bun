@@ -1,6 +1,6 @@
 
-typedef NullType;
 //typedef void;
+typedef NullType;
 typedef bool;
 typedef int;
 typedef float;
@@ -159,7 +159,7 @@ bun #apply(f, args) && typecheck() {
 }
 
 bun #let(name, type, value): void && letvar() {
-	${typeof value} ${name} = ${value}
+	${value} ${name} = ${value}
 }
 
 bun #var(name, type, value): void && letvar() {

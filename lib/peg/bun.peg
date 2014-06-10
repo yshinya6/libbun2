@@ -82,7 +82,7 @@ BunName
   = << [A-Za-z0-9._]+  #symbol >>
   ;
 Option
-  = '"' << (!'"' .)* #value>> '"'
-  / "'" << (!"'" .)* #value>> "'"
-  / Spacing << (![} \t\n] .)* #value >>
+  = Spacing '"' << (!'"' .)* #value>> '"'
+  / Spacing "'" << (!"'" .)* #value>> "'"
+  / Spacing << (![} '"\t\n] .)* #value >>
   ;

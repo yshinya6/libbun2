@@ -348,31 +348,6 @@ class GreekType extends BunType {
 	}
 }
 
-class GreekContainerType extends QualifiedType {
-	GreekList greekList;
-	public GreekContainerType(GreekList greekList, BunType innerType) {
-		super();
-		this.greekList  = greekList;
-		this.innerType  = innerType;
-	}
-	@Override
-	public void stringfy(UniStringBuilder sb) {
-		this.innerType.stringfy(sb);
-	}
-	@Override
-	public boolean hasGreekType() {
-		return true;
-	}
-	@Override
-	public BunType newVarGreekType(GreekList list, BunType[] buffer) {
-		buffer = new BunType[this.greekList.size()];
-		return this.innerType.newVarGreekType(this.greekList, buffer);
-	}
-	@Override
-	public boolean is(BunType valueType) {
-		return false;
-	}
-}
 
 class UnionType extends BunType {
 	public BunType[] types;
