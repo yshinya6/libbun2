@@ -17,7 +17,6 @@ public class JvmDriver extends BunDriver {
 	private final JvmByteCodeLoader loader;
 	private final Stack<BunType> typeStack;
 	private final UniMap<Class<?>> classMap;
-	private Namespace gamma;
 	private ClassBuilder classBuilder;
 	private GeneratorAdapter adapter;
 
@@ -27,18 +26,21 @@ public class JvmDriver extends BunDriver {
 		this.classMap = new UniMap<Class<?>>();
 		this.addCommand("PUSH_INT", new PushInt());
 		this.addCommand("PUSH_FLOAT", new PushFloat());
+		this.addCommand("PUSH_BOOL", new PushBool());
+		this.addCommand("PUSH_STRING", new PushString());
 		this.addCommand("OP", new CallOperator());
 	}
 
 	@Override
 	public void initTable(Namespace gamma) {
-		this.gamma = gamma;
 		gamma.setType(BunType.newValueType("int", long.class));
 		this.classMap.put("int", long.class);
 		gamma.setType(BunType.newValueType("float", double.class));
 		this.classMap.put("float", double.class);
 		gamma.setType(BunType.newValueType("bool", boolean.class));
 		this.classMap.put("bool", boolean.class);
+		gamma.setType(BunType.newValueType("String", String.class));
+		this.classMap.put("String", String.class);
 		gamma.setType(BunType.newVoidType("void", Void.class));
 		this.classMap.put("void", Void.class);
 		gamma.setType(BunType.newAnyType("any", Object.class));
@@ -116,6 +118,21 @@ public class JvmDriver extends BunDriver {
 		}
 	}
 
+	/**
+	 * BunType to Java class
+	 * @param type
+	 * @return
+	 * - throw exception if has no java class.
+	 */
+	private Class<?> toJavaClass(BunType type) {
+		String typeName = type.getName();
+		Class<?> javaClass = this.classMap.get(typeName);
+		if(javaClass == null) {
+			throw new RuntimeException("has no java class: " + typeName);
+		}
+		return javaClass;
+	}
+
 	@Override
 	public void pushGlobalName(PegObject node, String name) {
 		// TODO Auto-generated method stub
@@ -184,36 +201,84 @@ public class JvmDriver extends BunDriver {
 		}
 	}
 
-	private class CallOperator extends DriverCommand {
+	/**
+	 * push value as java boolean.
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
+	private class PushBool extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			callOperator(param);
+			if(param[0].equals("true")) {
+				adapter.push(true);
+			}
+			else {
+				adapter.push(false);
+			}
 			pushTypeToTypeStack(node.getType(null));
 		}
 	}
 
 	/**
-	 * look up operator and generate invokestatic instruction.
-	 * @param params
-	 * - param[0] is operator name, others are param type names.
+	 * push value as java string.
+	 * @author skgchxngsxyz-osx
+	 *
 	 */
-	private void callOperator(String[] params) {
-		String opName = params[0];
-		int size = params.length - 1;
-		Class<?>[] paramClasses = new Class<?>[size];
-		for(int i = 0; i < size; i++) {
-			String paramTypeName = params[i + 1];
-			BunType type = this.gamma.getType(paramTypeName, null);
-			if(type == null) {
-				throw new RuntimeException("undefined type: " + paramTypeName);
-			}
-			Class<?> classInfo = this.classMap.get(type.getName());
-			if(classInfo == null) {
-				throw new RuntimeException("has no typeinfo: " + type.toString());
-			}
-			paramClasses[i] = classInfo;
-			this.popTypeFromTypeStack();
+	private class PushString extends DriverCommand {
+
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			adapter.push(this.parseTokenText(node.getText()));
+			pushTypeToTypeStack(node.getType(null));
 		}
+
+		private String parseTokenText(String text) {
+			StringBuilder sBuilder = new StringBuilder();
+			int size = text.length();
+			for(int i = 0; i < size; i++) {
+				char ch = text.charAt(i);
+				if(ch == '\\') {
+					char nextCh = text.charAt(++i);
+					switch(nextCh) {
+					case 't' : ch = '\t'; break;
+					case 'b' : ch = '\b'; break;
+					case 'n' : ch = '\n'; break;
+					case 'r' : ch = '\r'; break;
+					case 'f' : ch = '\f'; break;
+					case '\'': ch = '\''; break;
+					case '"' : ch = '"';  break;
+					case '\\': ch = '\\'; break;
+					}
+				}
+				sBuilder.append(ch);
+			}
+			return sBuilder.toString();
+		}
+	}
+
+	private class CallOperator extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String opName = node.name.substring(1);
+			int size = node.size();
+			Class<?>[] paramClasses = new Class<?>[size];
+			for(int i = 0; i < size; i++) {
+				paramClasses[i] = toJavaClass(node.get(i).getType(null));
+				popTypeFromTypeStack();
+			}
+			callOperator(opName, paramClasses);
+			pushTypeToTypeStack(node.getType(null));
+		}
+	}
+
+	/**
+	 * look up and generate invokestatic instruction.
+	 * @param opName
+	 * - operator name.
+	 * @param paramClasses
+	 * - operator parameter classes.
+	 */
+	private void callOperator(String opName, Class<?>[] paramClasses) {
 		try {
 			java.lang.reflect.Method method = JvmOperator.class.getMethod(opName, paramClasses);
 			Method methodDesc = Method.getMethod(method);
@@ -226,7 +291,8 @@ public class JvmDriver extends BunDriver {
 			e.printStackTrace();
 		}
 	}
-
+	
+	
 	/**
 	 * definition of builtin function.
 	 * @author skgchxngsxyz-osx
@@ -234,15 +300,109 @@ public class JvmDriver extends BunDriver {
 	 */
 	public static class JvmOperator {
 		// binary op definition
+		// ADD
 		public static long   add(long x, long y)     { return x + y; }
 		public static double add(long x, double y)   { return x + y; }
 		public static double add(double x, long y)   { return x + y; }
 		public static double add(double x, double y) { return x + y; }
+		// string concat
+		public static String add(String left, long right)    { return left + right; }
+		public static String add(String left, double right)  { return left + right; }
+		public static String add(String left, boolean right) { return left + right; }
+		public static String add(String left, Object right)  { return left + right; }
+		public static String add(long left, String right)    { return left + right; }
+		public static String add(double left, String right)  { return left + right; }
+		public static String add(boolean left, String right) { return left + right; }
+		public static String add(Object left, String right)  { return left + right; }
+
+		// SUB
+		public static long   sub(long left, long right)     { return left - right; }
+		public static double sub(long left, double right)   { return left - right; }
+		public static double sub(double left, long right)   { return left - right; }
+		public static double sub(double left, double right) { return left - right; }
+
+		// MUL
+		public static long   mul(long left, long right)     { return left * right; }
+		public static double mul(long left, double right)   { return left * right; }
+		public static double mul(double left, long right)   { return left * right; }
+		public static double mul(double left, double right) { return left * right; }
+
+		// DIV
+		public static long   div(long left, long right)     { return left / right; }
+		public static double div(long left, double right)   { return left / right; }
+		public static double div(double left, long right)   { return left / right; }
+		public static double div(double left, double right) { return left / right; }
+
+		// MOD
+		public static long   mod(long left, long right)     { return left % right; }
+		public static double mod(long left, double right)   { return left % right; }
+		public static double mod(double left, long right)   { return left % right; }
+		public static double mod(double left, double right) { return left % right; }
+
+		// EQ
+		public static boolean eq(long left, long right)       { return left == right; }
+		public static boolean eq(long left, double right)     { return left == right; }
+		public static boolean eq(double left, long right)     { return left == right; }
+		public static boolean eq(double left, double right)   { return left == right; }
+
+		public static boolean eq(boolean left, boolean right) { return left == right; }
+		public static boolean eq(String left, String right)   { return left.equals(right); }
+		public static boolean eq(Object left, Object right)   { return left.equals(right); }
+
+		// NOTEQ
+		public static boolean noteq(long left, long right)       { return left != right; }
+		public static boolean noteq(long left, double right)     { return left != right; }
+		public static boolean noteq(double left, long right)     { return left != right; }
+		public static boolean noteq(double left, double right)   { return left != right; }
+
+		public static boolean noteq(boolean left, boolean right) { return left != right; }
+		public static boolean noteq(String left, String right)   { return !left.equals(right); }
+		public static boolean noteq(Object left, Object right)   { return !left.equals(right); }
+
+		// LT
+		public static boolean lt(long left, long right)     { return left < right; }
+		public static boolean lt(long left, double right)   { return left < right; }
+		public static boolean lt(double left, long right)   { return left < right; }
+		public static boolean lt(double left, double right) { return left < right; }
+
+		// LTE
+		public static boolean lte(long left, long right)     { return left <= right; }
+		public static boolean lte(long left, double right)   { return left <= right; }
+		public static boolean lte(double left, long right)   { return left <= right; }
+		public static boolean lte(double left, double right) { return left <= right; }
+
+		// GT
+		public static boolean gt(long left, long right)     { return left > right; }
+		public static boolean gt(long left, double right)   { return left > right; }
+		public static boolean gt(double left, long right)   { return left > right; }
+		public static boolean gt(double left, double right) { return left > right; }
+
+		// GTE
+		public static boolean gte(long left, long right)     { return left >= right; }
+		public static boolean gte(long left, double right)   { return left >= right; }
+		public static boolean gte(double left, long right)   { return left >= right; }
+		public static boolean gte(double left, double right) { return left >= right; }
+
+		// unary op definition
+		// NOT
+		public static boolean not(boolean right) { return !right; }
+
+		// PLUS
+		public static long   plus(long right)   { return +right; }
+		public static double plus(double right) { return +right; }
+
+		// MINUS
+		public static long   minus(long right)   { return -right; }
+		public static double minus(double right) { return -right; }
+
+		// COMPL
+		public static long compl(long right) { return ~right; }
 
 		// specific op
 		public static void printValue(long value, String typeName)    { System.out.println("(" + typeName + ") " + value); }
 		public static void printValue(double value, String typeName)  { System.out.println("(" + typeName + ") " + value); }
 		public static void printValue(boolean value, String typeName) { System.out.println("(" + typeName + ") " + value); }
+		public static void printValue(String value, String typeName)  { System.out.println("(" + typeName + ") " + value); }
 		public static void printValue(Object value, String typeName)  { System.out.println("(" + typeName + ") " + value); }
 	}
 
