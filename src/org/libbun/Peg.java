@@ -672,10 +672,12 @@ class PegSequence extends PegList {
 
 	@Override
 	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		int stackPosition = source.getStackPosition(this);
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
 			inNode = e.debugMatch(inNode, source);
 			if(inNode.isFailure()) {
+				source.popBack(stackPosition, Peg._BackTrack);
 				return inNode;
 			}
 		}
