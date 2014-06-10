@@ -5,7 +5,7 @@ TopLevel
 Stmt
     = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent _* "else" WS* ":" NL+ Block@)? _* #if>> NL?
     / <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>> NL?
-    / <<"for" WS+ Expr@ WS* ":" NL+ Block@ #for>> NL?
+    / <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>> NL?
     / <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>> NL?
     / <<"return" WS+ Expr@ #return>> NL?
     / <<"class" WS* "(" Symbol@ WS* ")" WS* ":" NL+ ClassBlock@ #class>> NL?
@@ -13,7 +13,7 @@ Stmt
     ;
 
 Block
-    = << (indent _* Stmt@ NL?)+ #block>>;
+    = << (indent WS* Stmt@ NL?)+ #block>>;
 
 ClassBlock
     = Block;
