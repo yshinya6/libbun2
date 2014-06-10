@@ -3,15 +3,62 @@ TopLevel
     = << Stmt@+ #stmts>>;
 
 Stmt
+    = IfStmt
+    / WhileStmt
+    / ForStmt
+    / ReturnStmt
+    / ImportStmt
+    / BreakStmt
+    / ContinueStmt
+    / DefineFunction
+    / DefineClass
+    / Expr EOS?
+    ;
+
+EOS
+    = ";"
+    / NL
+    ;
+
+IfStmt
     = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent _* "else" WS* ":" NL+ Block@)? _* #if>> NL?
-    / <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>> NL?
-    / <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>> NL?
-    / <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>> NL?
-    / <<"return" WS+ Expr@ #return>> NL?
-    / <<"class" WS+ Symbol@ (WS* "(" (Symbol@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>> NL?
-    / <<"import" WS* ImportSymbol@ (WS* "," WS* Symbol@)* #import>> NL?
+    ;
+
+WhileStmt
+    = <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>> NL?
+    ;
+
+ForStmt
+    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>> NL?
+    ;
+
+ReturnStmt
+    = <<"return" WS+ Expr@ #return>> EOS?
+    ;
+
+ImportStmt
+    = <<"import" WS* ImportSymbol@ (WS* "," WS* Symbol@)* #import>> NL?
     / <<"from" WS* Symbol@ WS* "import" WS* ImportSymbol@ (WS* "," WS* ImportSymbol@)* #fromImport>> NL?
-    / Expr (";" / NL)
+    ;
+
+DefineFunction
+    = <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>> NL?
+    ;
+
+DefineClass
+    = <<"class" WS+ Symbol@ (WS* "(" (Symbol@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>> NL?
+    ;
+
+BreakStmt
+    = <<"break" #break>> EOS?
+    ;
+
+ContinueStmt
+    = <<"continue" #continue>> EOS?
+    ;
+
+ReturnStmt
+    = <<"return" WS+ Expr@ #return>> EOS?
     ;
 
 Block
@@ -23,6 +70,8 @@ ClassBlock
 Expr
     = Expr <<@ WS* Op@  WS* Expr@ >>
     / Expr <<@ "[" WS* Expr@ WS* "]" #get>>
+    / Expr <<@ "." Expr@ #field>>
+    / Expr << "(" _* Params@ _* ")" #call>>
     / Symbol <<@ _* '=' _* Expr@ #assign>>
     / Symbol
     / StringLiteral
