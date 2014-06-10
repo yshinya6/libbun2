@@ -12,12 +12,18 @@ Stmt
     / ContinueStmt
     / DefineFunction
     / DefineClass
+    / Print
     / Expr EOS?
+    / NL+
     ;
 
 EOS
     = ";"
     / NL
+    ;
+
+Print
+    = <<"print" WS+ Expr@ #print >>
     ;
 
 IfStmt
@@ -65,14 +71,19 @@ Block
     = << (indent WS* Stmt@ NL?)+ #block>>;
 
 ClassBlock
-    = Block;
+    = << (indent WS* ClassStmt@ NL?)+ #block>>;
+
+ClassStmt
+    = DefineFunction
+    / Assignment
+    ;
 
 Expr
     = Expr <<@ WS* Op@  WS* Expr@ >>
     / Expr <<@ "[" WS* Expr@ WS* "]" #get>>
     / Expr <<@ "." Expr@ #field>>
-    / Expr << "(" _* Params@ _* ")" #call>>
-    / Symbol <<@ _* '=' _* Expr@ #assign>>
+    / Expr <<@ "(" _* Args@ _* ")" #call>>
+    / Expr <<@ _* '=' _* Expr@ #assign>>
     / Symbol
     / StringLiteral
     / Integer
@@ -80,13 +91,19 @@ Expr
     / MapLiteral
     ;
 
+Assignment
+    = Expr;
+
 ArrayLiteral
     = << "[" _* Expr@? (_* "," _* Expr@)* _* "]" #array>>
     / << "[" _* Expr@ _* "for" _* Symbol@ _* "in" _* Expr@ (_* "if" _* Expr@)? _* "]" #listComprehension >>
     ;
 
 MapLiteral
-    = << "{" _* (StringLiteral@ / Symbol@) _* ":" _* Expr@ _* "}" #map>>;
+    = << "{" _* MapContent@? (_* "," _* MapContent@ )* _* "}" #map>>;
+
+MapContent
+    = << (StringLiteral@ / Symbol@) _* ":" _* Expr@ #keyvalue>>;
 
 StringLiteral
     = << '"' ('\\"' / !'"' .)* '"' #string >>
@@ -96,6 +113,9 @@ StringLiteral
 Params
     = << Symbol@? (_* "," _* Symbol@)* _* #params>>;
 
+Args
+    = << Expr@? (_* "," _* Expr@)* _* #args>>;
+
 Op
     = '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<=' #lte / '<' #lt / '>=' #gte / '>' #gt;
 
@@ -104,7 +124,7 @@ Integer
     ;
 
 Symbol
-    = << [a-zA-Z]+ #symbol>>
+    = << [a-zA-Z_][a-zA-Z0-9_]* #symbol>>
     ;
 
 Asterisk
