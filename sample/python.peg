@@ -8,7 +8,9 @@ Stmt
     / <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>> NL?
     / <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>> NL?
     / <<"return" WS+ Expr@ #return>> NL?
-    / <<"class" WS* "(" Symbol@ WS* ")" WS* ":" NL+ ClassBlock@ #class>> NL?
+    / <<"class" WS+ Symbol@ (WS* "(" (Symbol@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>> NL?
+    / <<"import" WS* ImportSymbol@ (WS* "," WS* Symbol@)* #import>> NL?
+    / <<"from" WS* Symbol@ WS* "import" WS* ImportSymbol@ (WS* "," WS* ImportSymbol@)* #fromImport>> NL?
     / Expr (";" / NL)
     ;
 
@@ -54,6 +56,15 @@ Integer
 
 Symbol
     = << [a-zA-Z]+ #symbol>>
+    ;
+
+Asterisk
+    = << '*' #asterisk>>
+    ;
+
+ImportSymbol
+    = Symbol@
+    / Asterisk@
     ;
 
 WS
