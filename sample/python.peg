@@ -20,17 +20,22 @@ ClassBlock
 
 Expr
     = Expr <<@ WS* Op@  WS* Expr@ >>
+    / Expr <<@ "[" WS* Expr@ WS* "]" #get>>
     / Symbol <<@ _* '=' _* Expr@ #assign>>
     / Symbol
     / StringLiteral
     / Integer
     / ArrayLiteral
+    / MapLiteral
     ;
 
 ArrayLiteral
     = << "[" _* Expr@? (_* "," _* Expr@)* _* "]" #array>>
     / << "[" _* Expr@ _* "for" _* Symbol@ _* "in" _* Expr@ (_* "if" _* Expr@)? _* "]" #listComprehension >>
     ;
+
+MapLiteral
+    = << "{" _* (StringLiteral@ / Symbol@) _* ":" _* Expr@ _* "}" #map>>;
 
 StringLiteral
     = << '"' ('\\"' / !'"' .)* '"' #string >>
@@ -44,7 +49,7 @@ Op
     = '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<=' #lte / '<' #lt / '>=' #gte / '>' #gt;
 
 Integer
-    = << [0-9]+ #integer>>
+    = << ('-' WS* / '+' WS*)?[0-9]+ #integer>>
     ;
 
 Symbol
@@ -58,5 +63,6 @@ NL
     = [\n];
 
 _
-    = (WS/NL);
-
+    = WS
+    / NL
+    ;
