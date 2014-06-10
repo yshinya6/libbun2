@@ -1,13 +1,11 @@
 
-bun str: type {
-	str
-}
+typedef str;
 
-bun #coercion(x: String): str {
+bun #coercion(x: unicode): str {
 	str(${x})
 }
 
-bun #coercion(x: str): String {
+bun #coercion(x: str): unicode {
 	ustr(${x})
 }
 

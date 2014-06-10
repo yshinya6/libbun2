@@ -4,7 +4,7 @@ public class Functor {
 	public SymbolTable storedTable = null;
 	public String      name;
 	public boolean     isSymbol;
-	public BunType    funcType;
+	public BunType     funcType;
 	TemplateEngine     template;
 	public Functor     nextChoice = null;
 
@@ -13,7 +13,6 @@ public class Functor {
 		this.isSymbol = isSymbol;
 		this.funcType = funcType;
 	}
-
 	public String key() {
 		if(this.funcType == null) {
 			return this.name + "*";
@@ -28,13 +27,11 @@ public class Functor {
 			return this.name + ":" + this.funcType.getFuncParamSize();
 		}
 	}
-	
 	private String keyTypeRel(String head) {
 		BunType fromType = this.funcType.getFuncParamType(0);
 		BunType toType = this.funcType.getReturnType();
 		return BunType.keyTypeRel(head, fromType, toType);
 	}
-
 	@Override 
 	public String toString() {
 		return this.key();
@@ -46,70 +43,62 @@ public class Functor {
 		}
 		return defaultType;
 	}
-	
 	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		SymbolTable gamma = node.getSymbolTable();
 		BunType varFuncType = this.getVarFuncType();
-		System.out.println("varFuncType: " + varFuncType);
 		for(int i = 0; i < node.size(); i++) {
 			BunType type = this.paramTypeAt(varFuncType, i);
 			if(!gamma.checkTypeAt(node, i, type, hasNextChoice)) {
+				//System.out.println("mismatched varFuncType: " + varFuncType + " at i = " + i);
 				node.matched = null;
 				return;
 			}
 		}
 		node.typed = this.returnType(varFuncType);
 		node.matched = this;
+		//System.out.println("matched varFuncType: " + varFuncType + " returnType = " + node.typed);
 		if(this.template != null) {
 			this.template.check(node, gamma.root.driver);
 		}
 	}
-	
 	private BunType getVarFuncType() {
 		if(this.funcType != null) {
 			return this.funcType.newVarGreekType(null, null);
 		}
 		return null;
 	}
-	
 	private BunType paramTypeAt(BunType varFuncType, int index) {
 		if(varFuncType != null && index < varFuncType.getFuncParamSize()) {
 			return varFuncType.getFuncParamType(index).getRealType();
 		}
 		return BunType.UntypedType;
 	}
-
 	private BunType returnType(BunType varFuncType) {
 		if(varFuncType != null) {
 			return varFuncType.getReturnType().getRealType();
 		}
 		return BunType.UntypedType;
 	}
-
-	
-
 	public void build(PegObject node, BunDriver driver) {
 		if(this.template != null) {
 			this.template.build(node, driver);
 		}
 	}
-
 	public void add(TemplateEngine section) {
 		this.template = section;
 	}
-
+	
 }
+
 
 class ErrorFunctor extends Functor {
 	public ErrorFunctor() {
 		super(BunSymbol.PerrorFunctor, false, null);
 	}
-
 	@Override
 	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		node.matched = this;
 	}
-
 	@Override
 	public void build(PegObject node, BunDriver driver) {
 //		PegObject msgNode = node.get(0, null);
@@ -127,7 +116,6 @@ class BunTypeDefFunctor extends Functor {
 	public BunTypeDefFunctor(String name) {
 		super(name, false, null);
 	}
-
 	@Override 
 	protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 		SymbolTable gamma = node.getSymbolTable();
@@ -135,7 +123,6 @@ class BunTypeDefFunctor extends Functor {
 		gamma.setType(BunType.newValueType(name, null));
 		node.matched = this;
 	}
-
 	@Override
 	public void build(PegObject node, BunDriver driver) {
 	}
@@ -212,7 +199,7 @@ class BunTemplateFunctor extends Functor {
 		typeList.add(this.parseType(gamma, greekList, returnTypeNode));
 		BunType t = BunType.newFuncType(typeList);
 		if(greekList != null) {
-			t = new GreekType(greekList, t);
+			t = new GreekContainerType(greekList, t);
 		}
 		return t;
 	}
