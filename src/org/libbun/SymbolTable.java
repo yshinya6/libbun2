@@ -9,27 +9,22 @@ public class SymbolTable {
 	public SymbolTable(Namespace namespace) {
 		this.root = namespace;
 	}
-
 	SymbolTable(Namespace root, PegObject node) {
 		this.root = root;
 		this.set(node);
 	}
-	
 	public void set(PegObject node) {
 		node.gamma = this;
 		this.scope = node;
 	}
-	
 	public final Namespace getNamespace() {
 		return this.root;
 	}
-	
 	public final void report(PegObject node, String errorType, String msg) {
 		if(this.root.driver != null) {
 			this.root.driver.report(node, errorType, msg);
 		}
 	}
-
 	public final SymbolTable getParentTable() {
 		if(this.scope != null) {
 			PegObject Node = this.scope.parent;
@@ -42,7 +37,6 @@ public class SymbolTable {
 		}
 		return null;
 	}
-
 	public final void setSymbol(String key, Functor f) {
 		if(this.symbolTable == null) {
 			this.symbolTable = new UniMap<Functor>();
@@ -51,7 +45,6 @@ public class SymbolTable {
 		f.storedTable = this;
 		//System.out.println("SET gamma " + this + ", name = " + key);
 	}
-
 	public final Functor getLocalSymbol(String name) {
 		if(this.symbolTable != null) {
 			return this.symbolTable.get(name, null);
@@ -69,7 +62,6 @@ public class SymbolTable {
 			}
 			gamma = gamma.getParentTable();
 		}
-		//		System.out.println("unknown key: " + key);
 		return null;
 	}
 
@@ -79,10 +71,9 @@ public class SymbolTable {
 		f.nextChoice = parent;
 		this.setSymbol(key, f);
 		if(Main.EnableVerbose) {
-			System.err.println("defined functor: " + f.name + ": " + f.funcType + " as " + key + " in " + this);
+			Main._PrintLine("defined functor: " + f.name + ": " + f.funcType + " as " + key + " in " + this);
 		}
 	}
-	
 	
 	public Functor getFunctor(PegObject node) {
 		String key = node.name + ":" + node.size();
@@ -98,45 +89,76 @@ public class SymbolTable {
 		return f;
 	}
 
-	public final boolean tryMatch(PegObject node) {
+	public final void tryMatch(PegObject node) {
 		if(node.matched == null) {
-			Functor cur = this.getFunctor(node);
+			Functor first = this.getFunctor(node);
+			Functor cur = first;
 			while(cur != null) {
 				boolean hasNextChoice = false;
 				if(cur.nextChoice != null) {
 					hasNextChoice = true;
 				}
-				//System.out.println("trying " + cur.funcType);
+				//System.out.println("trying " + cur + ", cur.nextChoice=" + cur.nextChoice);
 				cur.matchSubNode(node, hasNextChoice);
 				if(node.matched != null) {
-					return true;
+					return;
 				}
 				cur = cur.nextChoice;
 			}
-			return false;
+			node.matched = this.mismatchedFunctor(first);
 		}
-		return true;
+		return;
 	}
 
+	Functor mismatchedFunctor(Functor f) {
+		class MismatchedTypeFunctor extends Functor {
+			Functor mismatched;
+			public MismatchedTypeFunctor(Functor mismatched) {
+				super("#unmatched", false, null);
+				this.mismatched = mismatched;
+			}
+			@Override
+			public void build(PegObject node, BunDriver driver) {
+				UniStringBuilder sb = new UniStringBuilder();
+				Functor f = this.mismatched;
+				if(f == null) {
+					driver.report(node, "error", "undefined " + node.name + ":" + node.size());
+					return;
+				}
+				for(int i = 0; f != null; i++) {
+					if(i > 0) {
+						sb.append(" ");
+					}
+					if(f.funcType == null) {;
+						sb.append("*");
+					}
+					else {
+						f.funcType.stringfy(sb);
+					}
+					f = f.nextChoice;
+				}
+				driver.report(node, "error", "mismatched " + node.name + " as " + sb.toString());
+			}
+
+		}
+		return new MismatchedTypeFunctor(f);
+	}
+
+	
 	public final boolean checkTypeAt(PegObject node, int index, BunType type, boolean hasNextChoice) {
 		if(type == BunType.UntypedType) {  // UntypedType does not invoke tryMatch()
 			return true;
 		}
 		if(index < node.size()) {
 			PegObject subnode = node.get(index);
-			if(!this.tryMatch(subnode)) {
-				if(Main.EnableVerbose) {
-					Main._PrintLine("mismatched: " + subnode.name + ":" + node.size() + " as " + type.getName());
-				}
-				return false;
-			}
+			this.tryMatch(subnode);
 			BunType valueType = subnode.getType(BunType.UntypedType);
-			//System.out.println("index="+index + ", type="+type + ", valueType="+valueType + "node=" + node);
 			if(type.is(valueType)) {
 				return true;
 			}
-			subnode.typed = this.getTypeCoersion(valueType, type, hasNextChoice);
-			if(subnode.typed != null) {
+			BunType transType = this.getTypeCoersion(valueType, type, hasNextChoice);
+			if(transType != null) {
+				node.typed = transType;
 				return true;
 			}
 			return false;
@@ -305,12 +327,8 @@ public class SymbolTable {
 		while(context.hasNode()) {
 			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), "TopLevel");
 			node.gamma = this;
-			if(this.tryMatch(node)) {
-				node.build(driver);
-			}
-			else {
-				driver.report(node, "error", "unmatched functor for " + node.name);
-			}
+			this.tryMatch(node);
+			node.build(driver);
 		}
 	}
 

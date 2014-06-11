@@ -237,12 +237,8 @@ public class Main {
 					}
 					if(driver != null) {
 						driver.startTransaction(null);
-						if(gamma.tryMatch(node)) {
-							node.matched.build(node, driver);
-						}
-						else {
-							driver.pushUnknownNode(node);
-						}
+						gamma.tryMatch(node);
+						node.matched.build(node, driver);
 						driver.endTransaction();
 					}
 				}

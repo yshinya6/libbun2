@@ -30,7 +30,7 @@ Template
     >>
   ;
 TemplateName
-  = << '#'? [A-Za-z0-9_.]+ #name >>
+  = << '#'? [A-Za-z0-9_.]+ #name >>  // [A-Za-z0-9_.]
   ;
 GreekList
   = '<' _ << Param@ ((_ ',' _ Param@)*)? #params >> _ '>'
@@ -82,7 +82,7 @@ BunName
   = << [A-Za-z0-9._]+  #symbol >>
   ;
 Option
-  = '"' << (!'"' .)* #value>> '"'
-  / "'" << (!"'" .)* #value>> "'"
-  / Spacing << (![} \t\n] .)* #value >>
+  = Spacing '"' << (!'"' .)* #value>> '"'
+  / Spacing "'" << (!"'" .)* #value>> "'"
+  / Spacing << (![} '"\t\n] .)* #value >>
   ;

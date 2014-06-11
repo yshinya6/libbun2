@@ -1,10 +1,12 @@
 
-typedef NullType;
 //typedef void;
+typedef NullType;
 typedef bool;
 typedef int;
 typedef float;
 typedef unicode;
+
+// type
 
 bun #Tvoid(): void {
 	void
@@ -26,6 +28,7 @@ bun #TString(): unicode {
 	unicode
 }
 
+// literal
 
 bun #null(): NullType {
 	None
@@ -156,7 +159,7 @@ bun #apply(f, args) && typecheck() {
 }
 
 bun #let(name, type, value): void && letvar() {
-	${typeof value} ${name} = ${value}
+	${value} ${name} = ${value}
 }
 
 bun #var(name, type, value): void && letvar() {

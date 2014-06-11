@@ -92,8 +92,12 @@ public abstract class BunType  {
 		return t;
 	}
 	
-	public static BunType newVarType(PegObject node, BunType premise) {
-		return new VarType(node, premise);
+	public static BunType newVarType(BunType premiseType) {
+		return new VarType(premiseType);
+	}
+
+	public static BunType newVarType(PegObject node, BunType premiseType) {
+		return new VarType(node, premiseType);
 	}
 	
 	public final static void setGenerics(GenericType t) {
@@ -168,37 +172,6 @@ public abstract class BunType  {
 		}
 		return null;
 	}
-
-//	public final static FuncType _LookupFuncType2(MetaType P1, MetaType P2, MetaType R) {
-//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[3]);
-//		TypeList.add(P1);
-//		TypeList.add(P2);
-//		TypeList.add(R);
-//		return newFuncType(TypeList);
-//	}
-//
-//	public final static FuncType _LookupFuncType2(MetaType P1, MetaType R) {
-//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[2]);
-//		TypeList.add(P1);
-//		TypeList.add(R);
-//		return newFuncType(TypeList);
-//	}
-//
-//	public final static FuncType newFuncType(MetaType R) {
-//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[2]);
-//		TypeList.add(R);
-//		return newFuncType(TypeList);
-//	}
-//
-//
-//	public final static FuncType _LookupFuncType2(MetaType P1, MetaType P2, MetaType P3, MetaType R) {
-//		UniArray<MetaType> TypeList = new UniArray<MetaType>(new MetaType[3]);
-//		TypeList.add(P1);
-//		TypeList.add(P2);
-//		TypeList.add(P3);
-//		TypeList.add(R);
-//		return newFuncType(TypeList);
-//	}
 
 	// =======================================================================
 	
@@ -276,7 +249,6 @@ class GreekList {
 		this.premiseType = premiseType;
 		this.next = null;
 	}
-	
 	public void append(GreekList entry) {
 		GreekList cur = this;
 		while(cur.next != null) {
@@ -284,7 +256,6 @@ class GreekList {
 		}
 		cur.next = entry;
 	}
-
 	public int size() {
 		int size = 0;
 		GreekList cur = this;
@@ -294,7 +265,6 @@ class GreekList {
 		}
 		return size;
 	}
-	
 	public BunType getGreekType(String name) {
 		int size = 0;
 		GreekList cur = this;
@@ -307,7 +277,6 @@ class GreekList {
 		}
 		return null;
 	}
-	
 	public final BunType getPremiseType(int greekIndex) {
 		int size = 0;
 		GreekList list = this;
@@ -322,30 +291,41 @@ class GreekList {
 	}
 }
 
+abstract class QualifiedType extends BunType {
+	BunType   innerType;
+	public int size() {
+		return this.innerType.size();
+	}
+	public BunType getParamType(int index) {
+		return this.innerType.getParamType(index);
+	}
+	public int getFuncParamSize() {
+		return this.innerType.getFuncParamSize();
+	}
+	public BunType getReturnType() {
+		return this.innerType.getRealType();
+	}
+	public boolean hasVarType() {
+		return this.innerType.hasVarType();
+	}
+	public BunType getRealType() {
+		return this.innerType.getRealType();
+	}
+	public boolean hasGreekType() {
+		return false;
+	}
+}
+
 class GreekType extends BunType {
 	int greekIndex;
-	GreekList greekList;
-	BunType   innerType;
 	public GreekType(int greekIndex) {
 		super();
 		this.greekIndex = greekIndex;
-		this.greekList = null;
-	}
-	public GreekType(GreekList greekList, BunType innerType) {
-		super();
-		this.greekIndex = -1;
-		this.greekList  = greekList;
-		this.innerType  = innerType;
 	}
 	@Override
 	public void stringfy(UniStringBuilder sb) {
-		if(this.innerType != null) {
-			this.innerType.stringfy(sb);
-		}
-		else {
-			sb.append("$");
-			sb.appendInt(this.greekIndex);
-		}
+		sb.append("$");
+		sb.appendInt(this.greekIndex);
 	}
 	@Override
 	public boolean is(BunType valueType) {
@@ -361,16 +341,10 @@ class GreekType extends BunType {
 	}
 	@Override
 	public BunType newVarGreekType(GreekList list, BunType[] buffer) {
-		if(this.innerType != null) {
-			buffer = new BunType[this.greekList.size()];
-			return this.innerType.newVarGreekType(this.greekList, buffer);
+		if(buffer[this.greekIndex] == null) {
+			buffer[this.greekIndex] = BunType.newVarType(list.getPremiseType(this.greekIndex));
 		}
-		else {
-			if(buffer[this.greekIndex] == null) {
-				buffer[this.greekIndex] = BunType.newVarType(null, list.getPremiseType(this.greekIndex));
-			}
-			return buffer[this.greekIndex];
-		}
+		return buffer[this.greekIndex];
 	}
 }
 
@@ -569,46 +543,44 @@ class AnyType extends ValueType {
 }
 
 class VarType extends BunType {
-	public  PegObject node;
+	public  PegObject node = null;
 	private BunType inferredType;
 	private BunType premiseType;
 
-	public VarType(PegObject node, BunType premise) {
+	public VarType(BunType premise) {
 		super();
-		this.node     = node;
 		this.premiseType = premise;
 		this.inferredType = null;
+	}
+	public VarType(PegObject node, BunType premise) {
+		this(premise);
+		this.node = node;
 		node.typed = this;
 	}
-	
 	public int size() {
 		if(this.inferredType != null) {
 			return this.inferredType.size();
 		}
 		return 0;
 	}
-
 	public BunType getParamType(int index) {
 		if(this.inferredType != null) {
 			return this.inferredType.getParamType(index);
 		}
 		return this;
 	}
-
 	public int getFuncParamSize() {
 		if(this.inferredType != null) {
 			return this.inferredType.getFuncParamSize();
 		}
 		return 0;
 	}
-
 	public BunType getReturnType() {
 		if(this.inferredType != null) {
 			return this.inferredType.getReturnType();
 		}
 		return this;
 	}
-
 	@Override
 	public BunType getRealType() {
 		if(this.inferredType != null) {
@@ -616,12 +588,10 @@ class VarType extends BunType {
 		}
 		return this;
 	}
-	
 	@Override
 	public boolean hasVarType() {
 		return true;
 	}
-	
 	@Override
 	public void stringfy(UniStringBuilder sb) {
 		if(this.inferredType != null) {
@@ -632,22 +602,19 @@ class VarType extends BunType {
 		}
 		sb.append("?");
 	}
-
 	public final boolean is(BunType valueType) {
 		if(this == valueType) {
 			return true;
 		}
 		if(this.inferredType == null) {
-			if(this.premiseType != null) {
-				this.premiseType.accept(valueType);
-			}
+//			if(this.premiseType != null) {
+//				this.premiseType.accept(valueType);
+//			}
 			this.inferredType = valueType;
 			return true;
 		}
 		return this.inferredType.is(valueType);
 	}
-
-	
 }
 
 class TransType extends BunType {

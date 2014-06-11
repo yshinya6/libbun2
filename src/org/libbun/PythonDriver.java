@@ -10,7 +10,7 @@ public class PythonDriver extends SourceDriver {
 		gamma.setType(BunType.newGreekType("beta", 0, null));
 		KonohaTypeChecker.initDriver(this);
 		gamma.loadBunModel("lib/driver/python/konoha.bun", this);
-		gamma.loadBunModel("lib/driver/python/konoha_python.bun", this);
+		gamma.loadBunModel("lib/driver/python/python_types.bun", this);
 	}
 
 	@Override

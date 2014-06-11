@@ -55,6 +55,10 @@ public abstract class BunDriver {
 		System.err.println(node.formatSourceMessage(errorType, msg));
 	}
 
+	public void performChecker(String checkerName, SymbolTable gamma, PegObject node) {
+		return;
+	}
+
 }
 
 abstract class SourceDriver extends BunDriver {
