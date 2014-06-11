@@ -30,7 +30,7 @@ Template
     >>
   ;
 TemplateName
-  = << '#'? [A-Za-z0-9_.]+ #name >>
+  = << '#'? [A-Za-z0-9_.]+ #name >>  // [A-Za-z0-9_.]
   ;
 GreekList
   = '<' _ << Param@ ((_ ',' _ Param@)*)? #params >> _ '>'
