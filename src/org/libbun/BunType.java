@@ -330,11 +330,20 @@ abstract class QualifiedType extends BunType {
 	}
 }
 
-class VariableType extends QualifiedType {
-	
-}
-
-
+//class VariableType extends QualifiedType {
+//	@Override
+//	public void stringfy(UniStringBuilder sb) {
+//		sb.append("@Variable" );
+//		this.innerType.stringfy(sb);
+//	}
+//
+//	@Override
+//	public boolean is(BunType valueType) {
+//		return false;
+//	}
+//}
+//
+//
 
 class GreekType extends BunType {
 	int greekIndex;

@@ -164,12 +164,6 @@ public class JvmDriver extends BunDriver {
 	}
 
 	@Override
-	public void pushNewLine() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public void pushCode(String text) {
 		// TODO Auto-generated method stub
 		
