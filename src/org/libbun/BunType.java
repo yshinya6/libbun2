@@ -55,8 +55,8 @@ public abstract class BunType  {
 
 	public abstract void    stringfy(UniStringBuilder sb);
 	public abstract boolean is(BunType valueType);
-	public boolean accept(BunType valueType) {
-		return this.is(valueType);
+	public boolean accept(PegObject node) {
+		return this.is(node.getType(BunType.UntypedType));
 	}
 		
 	public void build(PegObject node, BunDriver driver) {
@@ -351,12 +351,10 @@ class GreekType extends BunType {
 
 class UnionType extends BunType {
 	public BunType[] types;
-	
 	public UnionType() {
 		super();
 		this.types = BunType.emptyTypes;
 	}
-	
 	@Override
 	public void stringfy(UniStringBuilder sb) {
 		for(int i = 0; i < types.length; i++) {
@@ -366,7 +364,6 @@ class UnionType extends BunType {
 			types[i].stringfy(sb);
 		}
 	}
-	
 	public void add(BunType t) {
 		assert(this.typeId == -1);
 		t = t.getRealType();
@@ -380,7 +377,6 @@ class UnionType extends BunType {
 			this.types = BunType.addTypes(this.types, t);
 		}
 	}
-
 	@Override
 	public boolean is(BunType valueType) {
 		valueType = valueType.getRealType();
@@ -400,27 +396,16 @@ class UnionType extends BunType {
 	}
 
 	@Override
-	public boolean accept(BunType valueType) {
-		valueType = valueType.getRealType();
-		if(this == valueType) {
+	public boolean accept(PegObject node) {
+		BunType nodeType = node.getType(BunType.UntypedType);
+		if(this.is(nodeType)) {
 			return true;
 		}
-		if(valueType instanceof UnionType) {
-			UnionType ut = (UnionType)valueType;
-			for(int i = 0; i < ut.types.length; i++) {
-				if(!this.accept(ut.types[i])) {
-					return false;
-				}
-			}
-			return true;
-		}
-		else {
-			for(int i = 0; i < types.length; i++) {
-				if(types[i].accept(valueType)) {
-					return true;
-				}
-			}
-		}
+//		for(int i = 0; i < types.length; i++) {
+//			if(types[i].accept(node)) {
+//				return true;
+//			}
+//		}
 		return false;
 	}
 
@@ -493,22 +478,28 @@ class ValueType extends BunType {
 		return false;
 	}
 	
-	public boolean accept(BunType valueType) {
-		valueType = valueType.getRealType();
-		if(valueType == this) {
+	public boolean accept(PegObject node) {
+		BunType nodeType = node.getType(BunType.UntypedType);
+		if(this.is(nodeType)) {
 			return true;
 		}
-		for(int i = 0; i < this.superTypes.length; i++) {
-			if(this.superTypes[i] == valueType) {
-				return true;
-			}
-		}
-		for(int i = 0; i < this.superTypes.length; i++) {
-			if(this.superTypes[i].accept(valueType)) {
-				this.superTypes = BunType.addTypes(this.superTypes, valueType);
-				return true;
-			}
-		}
+//
+//		node = node.getRealType();
+//		if(node == this) {
+//			return true;
+//		}
+//		for(int i = 0; i < this.superTypes.length; i++) {
+//			if(this.superTypes[i] == node) {
+//				return true;
+//			}
+//		}
+//		for(int i = 0; i < this.superTypes.length; i++) {
+//			if(this.superTypes[i].accept(node)) {
+//				this.superTypes = BunType.addTypes(this.superTypes, node);
+//				return true;
+//			}
+//		}
+//		return false;
 		return false;
 	}
 	

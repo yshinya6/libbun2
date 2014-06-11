@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream.PutField;
 
-import org.libbun.JvmDriver.DebugableJvmDriver;
+//import org.libbun.JvmDriver.DebugableJvmDriver;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -168,8 +168,8 @@ public class Main {
 	static {
 		driverMap.put("py", PythonDriver.class);
 		driverMap.put("python", PythonDriver.class);
-		driverMap.put("jvm", JvmDriver.class);
-		driverMap.put("jvm-debug", DebugableJvmDriver.class);
+//		driverMap.put("jvm", JvmDriver.class);
+//		driverMap.put("jvm-debug", DebugableJvmDriver.class);
 	}
 
 	private static BunDriver loadDriver(String driverName) {
