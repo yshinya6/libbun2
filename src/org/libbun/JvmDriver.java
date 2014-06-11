@@ -5,34 +5,73 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
+/**
+ * generate java byte code and invoke.
+ * @author skgchxngsxyz-osx
+ *
+ */
 public class JvmDriver extends BunDriver {
+	public final static String letHolderSuffix = "_LetVarHolder";
+	public final static String letHolderFieldName = "letValue";
+
+	/**
+	 * used for byte code loading.
+	 */
 	private final JvmByteCodeLoader loader;
+
+	/**
+	 * represent jvm operand stack map.
+	 */
 	private final Stack<BunType> typeStack;
+
+	/**
+	 * used for bun type to java class translation.
+	 */
 	private final UniMap<Class<?>> classMap;
+
+	/**
+	 * used for java class generation.
+	 */
 	private ClassBuilder classBuilder;
-	private GeneratorAdapter adapter;
+
+	/**
+	 * used for java method (includes constructor, static initializer) generation.
+	 */
+	private final Stack<MethodBuilder> mBuilders;
+	private Namespace gamma;
 
 	public JvmDriver() {
 		this.loader = new JvmByteCodeLoader();
 		this.typeStack = new Stack<BunType>();
 		this.classMap = new UniMap<Class<?>>();
+		this.mBuilders = new Stack<MethodBuilder>();
 		this.addCommand("PUSH_INT", new PushInt());
 		this.addCommand("PUSH_FLOAT", new PushFloat());
 		this.addCommand("PUSH_BOOL", new PushBool());
 		this.addCommand("PUSH_STRING", new PushString());
 		this.addCommand("OP", new CallOperator());
+		this.addCommand("AND", new CondAnd());
+		this.addCommand("OR", new CondOr());
+		this.addCommand("LET", new LetDecl());
+		this.addCommand("IF", new IfStatement());
+		this.addCommand("BLOCK", new Block());
 	}
 
 	@Override
 	public void initTable(Namespace gamma) {
+		this.gamma = gamma;
 		gamma.setType(BunType.newValueType("int", long.class));
 		this.classMap.put("int", long.class);
 		gamma.setType(BunType.newValueType("float", double.class));
@@ -54,18 +93,21 @@ public class JvmDriver extends BunDriver {
 	@Override
 	public void startTransaction(String fileName) {	// create top level wrapper
 		this.classBuilder = new ClassBuilder();
-		this.adapter = this.classBuilder.createAdapter();
+		this.mBuilders.push(this.classBuilder.createMethodBuilder());
 	}
 
+	/**
+	 * finalize class builder and invoke generated class.
+	 */
 	@Override
 	public void endTransaction() {
 		this.insertPrintIns();
-		this.adapter.returnValue();
-		this.adapter.endMethod();
+		this.mBuilders.peek().returnValue();
+		this.mBuilders.pop().endMethod();
 		this.classBuilder.visitEnd();
 		String className = this.classBuilder.getClassName();
 		byte[] byteCode = this.classBuilder.toByteArray();
-		Class<?> generatedClass = this.loader.createChildLoader().generaeteClassFromByteCode(className, byteCode);
+		Class<?> generatedClass = this.loader.createChildLoader().generateClassFromByteCode(className, byteCode);
 		try {
 			generatedClass.getMethod("invoke").invoke(null);
 		}
@@ -77,6 +119,12 @@ public class JvmDriver extends BunDriver {
 		}
 	}
 
+	/**
+	 * push bun type to type stack
+	 * @param type
+	 * - if not void type, push it to stack.
+	 * throw exception, if illeagal type.
+	 */
 	private void pushTypeToTypeStack(BunType type) {
 		Class<?> javaClass = this.classMap.get(type.getName());
 		if(javaClass == null) {
@@ -100,7 +148,8 @@ public class JvmDriver extends BunDriver {
 	}
 
 	/**
-	 * interactive mode only.
+	 * insert print instruction after top level expression.
+	 * it is interactive mode only.
 	 */
 	private void insertPrintIns() {
 		BunType type = this.popTypeFromTypeStack();
@@ -110,8 +159,8 @@ public class JvmDriver extends BunDriver {
 		Class<?> javaClass = this.classMap.get(type.getName());
 		try {
 			java.lang.reflect.Method method = JvmOperator.class.getMethod("printValue", javaClass, String.class);
-			this.adapter.push(type.getName());
-			this.adapter.invokeStatic(Type.getType(JvmOperator.class), Method.getMethod(method));
+			this.mBuilders.peek().push(type.getName());
+			this.mBuilders.peek().invokeStatic(Type.getType(JvmOperator.class), Method.getMethod(method));
 		}
 		catch(Throwable t) {
 			t.printStackTrace();
@@ -131,6 +180,16 @@ public class JvmDriver extends BunDriver {
 			throw new RuntimeException("has no java class: " + typeName);
 		}
 		return javaClass;
+	}
+
+	private BunType toType(PegObject pObject) {
+		String name = pObject.name;
+		String typeName = name.substring(2);
+		BunType type = this.gamma.getType(typeName, null);
+		if(type == null) {
+			throw new RuntimeException("undefined type: " + typeName);
+		}
+		return type;
 	}
 
 	@Override
@@ -183,7 +242,7 @@ public class JvmDriver extends BunDriver {
 	private class PushInt extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			adapter.push(Long.parseLong(node.getText()));
+			mBuilders.peek().push(Long.parseLong(node.getText()));
 			pushTypeToTypeStack(node.getType(null));
 		}
 	}
@@ -196,7 +255,7 @@ public class JvmDriver extends BunDriver {
 	private class PushFloat extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			adapter.push(Double.parseDouble(node.getText()));
+			mBuilders.peek().push(Double.parseDouble(node.getText()));
 			pushTypeToTypeStack(node.getType(null));
 		}
 	}
@@ -210,10 +269,10 @@ public class JvmDriver extends BunDriver {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			if(param[0].equals("true")) {
-				adapter.push(true);
+				mBuilders.peek().push(true);
 			}
 			else {
-				adapter.push(false);
+				mBuilders.peek().push(false);
 			}
 			pushTypeToTypeStack(node.getType(null));
 		}
@@ -225,13 +284,19 @@ public class JvmDriver extends BunDriver {
 	 *
 	 */
 	private class PushString extends DriverCommand {
-
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			adapter.push(this.parseTokenText(node.getText()));
+			mBuilders.peek().push(this.parseTokenText(node.getText()));
 			pushTypeToTypeStack(node.getType(null));
 		}
 
+		/**
+		 * decode escape sequence. 
+		 * @param text
+		 * - may be include encoded escape sequence.
+		 * @return
+		 * - decoded string value.
+		 */
 		private String parseTokenText(String text) {
 			StringBuilder sBuilder = new StringBuilder();
 			int size = text.length();
@@ -256,6 +321,11 @@ public class JvmDriver extends BunDriver {
 		}
 	}
 
+	/**
+	 * generate binary and unary operator call instruction.
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
 	private class CallOperator extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
@@ -282,13 +352,134 @@ public class JvmDriver extends BunDriver {
 		try {
 			java.lang.reflect.Method method = JvmOperator.class.getMethod(opName, paramClasses);
 			Method methodDesc = Method.getMethod(method);
-			adapter.invokeStatic(Type.getType(JvmOperator.class), methodDesc);
+			mBuilders.peek().invokeStatic(Type.getType(JvmOperator.class), methodDesc);
 		}
 		catch(SecurityException e) {
 			e.printStackTrace();
 		}
 		catch(NoSuchMethodException e) {
 			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * generate conditional and.
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
+	private class CondAnd extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			GeneratorAdapter adapter = mBuilders.peek();
+			Label rightLabel = adapter.newLabel();
+			Label mergeLabel = adapter.newLabel();
+			// and left
+			driver.pushNode(node.get(0));
+			adapter.push(true);
+			adapter.ifCmp(org.objectweb.asm.Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, rightLabel);
+			adapter.push(false);
+			adapter.goTo(mergeLabel);
+			// and right
+			adapter.mark(rightLabel);
+			driver.pushNode(node.get(1));
+			adapter.mark(mergeLabel);
+
+			popTypeFromTypeStack();
+			popTypeFromTypeStack();
+			pushTypeToTypeStack(node.getType(null));
+		}
+	}
+
+	/**
+	 * generate condiotional or.
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
+	private class CondOr extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			GeneratorAdapter adapter = mBuilders.peek();
+			Label rightLabel = adapter.newLabel();
+			Label mergeLabel = adapter.newLabel();
+			// or left
+			driver.pushNode(node.get(0));
+			adapter.push(true);
+			adapter.ifCmp(org.objectweb.asm.Type.BOOLEAN_TYPE, GeneratorAdapter.NE, rightLabel);
+			adapter.push(true);
+			adapter.goTo(mergeLabel);
+			// or right
+			adapter.mark(rightLabel);
+			driver.pushNode(node.get(1));
+			adapter.mark(mergeLabel);
+
+			popTypeFromTypeStack();
+			popTypeFromTypeStack();
+			pushTypeToTypeStack(node.getType(null));
+		}
+	}
+
+	/**
+	 * generate let.
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
+	private class LetDecl extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			MethodBuilder currentBuilder = mBuilders.peek();
+			String varName = node.get(0).getText();
+			int scopeDepth = currentBuilder.getScopes().depth();
+			if(scopeDepth > 1) {	// define as local variable.
+				driver.pushNode(node.get(2));
+				Class<?> varClass = toJavaClass(popTypeFromTypeStack());
+				VarEntry entry = currentBuilder.getScopes().addEntry(varName, varClass, true);
+				currentBuilder.storeLocal(entry.getVarIndex(), Type.getType(varClass));
+			}
+			else {	// define as global variable.
+				ClassBuilder cBuilder = new ClassBuilder(varName + JvmDriver.letHolderSuffix);
+				// create static initializer
+				Method methodDesc = Method.getMethod("void <clinit> ()");
+				MethodBuilder mBuilder = new MethodBuilder(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, methodDesc, null, null, cBuilder);
+				mBuilders.push(mBuilder);
+				driver.pushNode(node.get(2));
+				Class<?> varClass = toJavaClass(popTypeFromTypeStack());
+				Type ownerTypeDesc = Type.getType(cBuilder.getClassName());
+				Type fieldTypeDesc = Type.getType(varClass);
+				mBuilder.putStatic(ownerTypeDesc, letHolderFieldName, fieldTypeDesc);
+				mBuilder.returnValue();
+				mBuilder.endMethod();
+				mBuilders.pop();
+
+				// create var field
+				cBuilder.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, letHolderFieldName, fieldTypeDesc.getDescriptor(), null, null);
+
+				// finalize
+				cBuilder.visitEnd();
+				loader.generateClassFromByteCode(cBuilder.getClassName(), cBuilder.toByteArray());
+
+				// initialized let var.
+				currentBuilder.getStatic(ownerTypeDesc, letHolderFieldName, fieldTypeDesc);
+				currentBuilder.pop(varClass);
+			}
+		}
+	}
+
+	private class IfStatement extends DriverCommand {
+
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
+
+	private class Block extends DriverCommand {
+
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 	
@@ -440,16 +631,54 @@ class ClassBuilder extends ClassWriter {
 	}
 
 	/**
+	 * create new ClassBuilder for class.
+	 * @param className
+	 * - fully qualified name. contains (/)
+	 */
+	public ClassBuilder(String className) {
+		super(ClassWriter.COMPUTE_FRAMES);
+		this.fullyQualifiedName = className;
+		this.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, this.fullyQualifiedName, null, "java/lang/Object", null);
+	}
+
+	/**
 	 * create new GeneratorAdapter for top level wrapper method.
 	 * @return
 	 */
-	public GeneratorAdapter createAdapter() {
+	public MethodBuilder createMethodBuilder() {
 		Method methodDesc = Method.getMethod("void invoke()");
-		return new GeneratorAdapter(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC, methodDesc, null, null, this);
+		return new MethodBuilder(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC, methodDesc, null, null, this);
 	}
 
 	public String getClassName() {
 		return this.fullyQualifiedName;
+	}
+}
+
+class MethodBuilder extends GeneratorAdapter {
+	private final VarScopes scopes;
+
+	public MethodBuilder(int arg0, Method arg1, String arg2, Type[] arg3, ClassVisitor arg4) {
+		super(arg0, arg1, arg2, arg3, arg4);
+		int startIndex = 0;
+		if((arg0 & Opcodes.ACC_STATIC) != Opcodes.ACC_STATIC) {
+			startIndex = 1;
+		}
+		this.scopes = new VarScopes(startIndex);
+	}
+
+	public VarScopes getScopes() {
+		return this.scopes;
+	}
+
+	public void pop(Class<?> stackTopClass) {
+		int size = Type.getType(stackTopClass).getSize();
+		if(size == 1) {
+			this.pop();
+		}
+		else if(size == 2) {
+			this.pop2();
+		}
 	}
 }
 
@@ -506,7 +735,7 @@ class JvmByteCodeLoader extends ClassLoader {
 		this.initialized = true;
 	}
 
-	public Class<?> generaeteClassFromByteCode(String className, byte[] byteCode) {
+	public Class<?> generateClassFromByteCode(String className, byte[] byteCode) {
 		this.setByteCode(className, byteCode);
 		this.dump();
 		try {
@@ -542,5 +771,205 @@ class JvmByteCodeLoader extends ClassLoader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+}
+
+class VarScopes {
+	private final Stack<LocalVarScope> scopeStack;
+	private final int baseIndex;
+
+	public VarScopes(int baseIndex) {
+		this.baseIndex = baseIndex;
+		this.scopeStack = new Stack<LocalVarScope>();
+		this.scopeStack.push(GlobalVarScope.getInstance());
+	}
+
+	public void createNewScope() {
+		int index = this.baseIndex;
+		if(this.scopeStack.size() > 1) {
+			index = this.scopeStack.peek().getEndIndex();
+		}
+		this.scopeStack.push(new LocalVarScope(this.scopeStack.peek(), index));
+	}
+
+	public void removeCurrentScope() {
+		if(this.scopeStack.size() > 1) {
+			this.scopeStack.pop();
+		}
+	}
+
+	public VarEntry addEntry(String varName, Class<?> varClass, boolean isReadOnly) {
+		return this.scopeStack.peek().addEntry(varName, varClass, isReadOnly);
+	}
+
+	public VarEntry getEntry(String varName) {
+		return this.scopeStack.peek().getEntry(varName);
+	}
+
+	public int depth() {
+		return this.scopeStack.size();
+	}
+}
+
+/**
+ * represents local variable scope.
+ * @author skgchxngsxyz-osx
+ *
+ */
+class LocalVarScope {
+	/**
+	 * representds parent scope.
+	 * if it is global scope, parent scope is null.
+	 */
+	protected final LocalVarScope parentScope;
+
+	/**
+	 * contains var entries. key is var name.
+	 */
+	protected final Map<String, VarEntry> entryMap;
+
+	/**
+	 * start index of local variable in this scope.
+	 */
+	private final int baseIndex;
+
+	/**
+	 * current local variable index.
+	 * after adding new local variable, increment this index by value size.
+	 */
+	private int currentIndex;
+	
+	public LocalVarScope(LocalVarScope parentScope, int baseIndex) {
+		this.parentScope = parentScope;
+		this.baseIndex = baseIndex;
+		this.currentIndex = this.baseIndex;
+		this.entryMap = new HashMap<String, VarEntry>();
+	}
+
+	/**
+	 * create and add new VarEntry. 
+	 * @param varName
+	 * - variable name.
+	 * @param varClass
+	 * @param isReadOnly
+	 * - if true, represents constant variable.
+	 * @return
+	 * - throw exception if entry has already defined.
+	 */
+	public VarEntry addEntry(String varName, Class<?> varClass, boolean isReadOnly) {
+		if(this.entryMap.containsKey(varName)) {
+			throw new RuntimeException(varName + " is already defined");
+		}
+		int valueSize = Type.getType(varClass).getSize();
+		int varIndex = this.currentIndex;
+		VarEntry entry = new VarEntry(varIndex, false, isReadOnly);
+		this.entryMap.put(varName, entry);
+		this.currentIndex += valueSize;
+		return entry;
+	}
+
+	/**
+	 * get VarEntry.
+	 * @param varName
+	 * - variable name.
+	 * @return
+	 * - throw exception if has no entry.
+	 */
+	public VarEntry getEntry(String varName) {
+		VarEntry entry = this.entryMap.get(varName);
+		if(entry != null) {
+			return  entry;
+		}
+		return this.parentScope.getEntry(varName);
+	}
+
+	/**
+	 * get start index of local variable in this scope.
+	 * @return
+	 */
+	public int getStartIndex() {
+		return this.baseIndex;
+	}
+
+	/**
+	 * get end index of local variable in this scope.
+	 * @return
+	 */
+	public int getEndIndex() {
+		return this.currentIndex;
+	}
+}
+
+class GlobalVarScope extends LocalVarScope {
+	protected GlobalVarScope() {
+		super(null, -1);
+	}
+
+	@Override
+	public VarEntry addEntry(String varName, Class<?> varClass, boolean isReadOnly) {
+		if(this.entryMap.containsKey(varName)) {
+			throw new RuntimeException(varName + " is already defined");
+		}
+		VarEntry entry = new VarEntry(-1, true, isReadOnly);
+		this.entryMap.put(varName, entry);
+		return entry;
+	}
+
+	@Override
+	public VarEntry getEntry(String varName) {
+		VarEntry entry = this.entryMap.get(varName);
+		if(entry != null) {
+			return entry;
+		}
+		throw new RuntimeException("undefined variabel: " + varName);
+	}
+
+	private static class Holder {
+		private final static GlobalVarScope INSTANCE = new GlobalVarScope();
+	}
+
+	public static GlobalVarScope getInstance() {
+		return Holder.INSTANCE;
+	}
+}
+
+/**
+ * variable entry.
+ * @author skgchxngsxyz-osx
+ *
+ */
+class VarEntry {
+	/**
+	 * if local variable, represents jvm local variable table index.
+	 * if global variable, it is meaningless.
+	 */
+	private final int varIndex;
+
+	/**
+	 * if true, represents global variable (constant only).
+	 */
+	private final boolean isGlobal;
+
+	/**
+	 * if true, represent read only variable.
+	 */
+	private final boolean isReadOnly;
+
+	public VarEntry(int varIndex, boolean isGlobal, boolean isReadOnly) {
+		this.varIndex = varIndex;
+		this.isGlobal = isGlobal;
+		this.isReadOnly = isReadOnly;
+	}
+
+	public boolean isReadOnly() {
+		return this.isReadOnly;
+	}
+
+	public boolean isGlobal() {
+		return this.isGlobal;
+	}
+
+	public int getVarIndex() {
+		return this.varIndex;
 	}
 }

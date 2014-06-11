@@ -296,3 +296,20 @@ bun #minus(x : float) : float {
 bun #compl(x : int) : int {
 	${x} ${OP}
 }
+
+// conditional operator
+// And
+bun #and(x : bool, y : bool) : bool {
+	${AND}
+}
+
+// Or
+bun #or(x : bool, y : bool) : bool {
+	${OR}
+}
+
+// LET
+bun #let(name, type, value): void && letvar() {
+	${LET}
+}
+
