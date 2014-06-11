@@ -7,58 +7,63 @@ public abstract class BunType  {
 	BunType() {
 		this.typeInfo = null;
 	}
-
 	public final String getName() {
 		UniStringBuilder sb = new UniStringBuilder();
 		stringfy(sb);
 		return sb.toString();
 	}
-	
 	public final String toString() {
 		UniStringBuilder sb = new UniStringBuilder();
 		stringfy(sb);
 		return sb.toString();
 	}
-
 	public int size() {
 		return 0;
 	}
-
 	public BunType getParamType(int index) {
 		return this;
 	}
-	
 	public int getFuncParamSize() {
 		return 0;
 	}
-
 	public BunType getFuncParamType(int index) {
 		return this;
 	}
-
 	public BunType getReturnType() {
 		return this;
 	}
-
 	public abstract boolean hasVarType();
 	public BunType getRealType() {
 		return this;
 	}
-	
 	public boolean hasGreekType() {
 		return false;
 	}
-
 	public BunType newVarGreekType(GreekList list, BunType[] buffer) {
 		return this;
 	}
 
 	public abstract void    stringfy(UniStringBuilder sb);
-	public abstract boolean is(BunType valueType);
-	public boolean accept(PegObject node) {
-		return this.is(node.getType(BunType.UntypedType));
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		BunType nodeType = node.getType(BunType.UntypedType);
+		return this.is(nodeType) || this.checkCoercion(gamma, node, nodeType, hasNextChoice);
 	}
-		
+	public abstract boolean is(BunType valueType);
+	protected final boolean checkCoercion(SymbolTable gamma, PegObject node, BunType nodeType, boolean hasNextChoice) {
+		String key = BunType.keyTypeRel("#coercion", nodeType, this);
+		Functor f = gamma.getSymbol(key);
+		if(f != null) {
+			if(Main.EnableVerbose) {
+				Main._PrintLine("found type coercion from " + nodeType + " to " + this);
+			}
+			node.typed = BunType.newTransType(key, nodeType, this, f);
+			return true;
+		}
+		if(hasNextChoice) {
+			return false;
+		}
+		return false;  // stupid cast
+	}
 	public void build(PegObject node, BunDriver driver) {
 		node.matched.build(node, driver);
 	}
@@ -171,6 +176,13 @@ public abstract class BunType  {
 			return (FuncType)funcType;
 		}
 		return null;
+	}
+
+	public final static FuncType newFuncType(BunType t, BunType r) {
+		UniArray<BunType> typeList = new UniArray<BunType>(new BunType[2]);
+		typeList.add(t);
+		typeList.add(r);
+		return BunType.newFuncType(typeList);
 	}
 
 	// =======================================================================
@@ -348,7 +360,6 @@ class GreekType extends BunType {
 	}
 }
 
-
 class UnionType extends BunType {
 	public BunType[] types;
 	public UnionType() {
@@ -396,7 +407,7 @@ class UnionType extends BunType {
 	}
 
 	@Override
-	public boolean accept(PegObject node) {
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
 		BunType nodeType = node.getType(BunType.UntypedType);
 		if(this.is(nodeType)) {
 			return true;
@@ -456,10 +467,11 @@ class ValueType extends BunType {
 		superTypes = BunType.emptyTypes;
 	}
 	
-	public void add(BunType t) {
+	public void addSuperType(SymbolTable gamma, BunType t) {
 		this.superTypes = BunType.addTypes(this.superTypes, t);
+		gamma.addUpcast(this, t);
 	}
-	
+
 	@Override
 	public final boolean hasVarType() {
 		return false;
@@ -477,32 +489,6 @@ class ValueType extends BunType {
 		}
 		return false;
 	}
-	
-	public boolean accept(PegObject node) {
-		BunType nodeType = node.getType(BunType.UntypedType);
-		if(this.is(nodeType)) {
-			return true;
-		}
-//
-//		node = node.getRealType();
-//		if(node == this) {
-//			return true;
-//		}
-//		for(int i = 0; i < this.superTypes.length; i++) {
-//			if(this.superTypes[i] == node) {
-//				return true;
-//			}
-//		}
-//		for(int i = 0; i < this.superTypes.length; i++) {
-//			if(this.superTypes[i].accept(node)) {
-//				this.superTypes = BunType.addTypes(this.superTypes, node);
-//				return true;
-//			}
-//		}
-//		return false;
-		return false;
-	}
-	
 }
 
 class UntypedType extends ValueType {

@@ -39,10 +39,6 @@ public class Debugger extends BunDriver {
 	}
 
 	@Override
-	public void pushNewLine() {
-	}
-
-	@Override
 	public void pushCode(String text) {
 	}
 

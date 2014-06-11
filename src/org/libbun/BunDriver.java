@@ -33,6 +33,10 @@ public abstract class BunDriver {
 		Main._PrintLine("Driver pushed unknown node: " + node.name + "\n" + node + "\n");
 	}
 
+	public void pushUpcastNode(BunType castType, PegObject node) {
+		this.pushNode(node);
+	}
+	
 	protected UniMap<DriverCommand> commandMap = new UniMap<DriverCommand>();
 	
 	public boolean hasCommand(String cmd) {
@@ -48,7 +52,6 @@ public abstract class BunDriver {
 		command.invoke(this, node, params);
 	}
 
-	public abstract void pushNewLine();
 	public abstract void pushCode(String text);
 	
 	public void report(PegObject node, String errorType, String msg) {
@@ -58,6 +61,7 @@ public abstract class BunDriver {
 	public void performChecker(String checkerName, SymbolTable gamma, PegObject node) {
 		return;
 	}
+
 
 }
 
@@ -87,11 +91,6 @@ abstract class SourceDriver extends BunDriver {
 	public void endTransaction() {
 		this.builder.show();
 		this.builder = null;
-	}
-
-	@Override
-	public void pushNewLine() {
-		this.builder.appendNewLine();
 	}
 
 	@Override
@@ -160,13 +159,13 @@ abstract class SourceDriver extends BunDriver {
 			}
 			if(node.is("#block")) {
 				for(int i = 0; i < node.size(); i++) {
-					driver.pushNewLine();
+					builder.appendNewLine();
 					driver.pushNode(node.get(i));
 					driver.pushCode(Separator);
 				}
 			}
 			else {
-				driver.pushNewLine();
+				builder.appendNewLine();
 				driver.pushNode(node);
 				driver.pushCode(Separator);
 			}

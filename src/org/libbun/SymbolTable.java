@@ -152,15 +152,18 @@ public class SymbolTable {
 		if(index < node.size()) {
 			PegObject subnode = node.get(index);
 			this.tryMatch(subnode);
-			BunType valueType = subnode.getType(BunType.UntypedType);
-			if(type.is(valueType)) {
+			if(type.accept(this, subnode, hasNextChoice)) {
 				return true;
 			}
-			BunType transType = this.getTypeCoersion(valueType, type, hasNextChoice);
-			if(transType != null) {
-				node.typed = transType;
-				return true;
-			}
+//			BunType valueType = subnode.getType(BunType.UntypedType);
+//			if(type.is(valueType)) {
+//				return true;
+//			}
+//			BunType transType = this.getTypeCoersion(valueType, type, hasNextChoice);
+//			if(transType != null) {
+//				node.typed = transType;
+//				return true;
+//			}
 			return false;
 		}
 		else {
@@ -388,6 +391,19 @@ public class SymbolTable {
 		this.addFunctor(new BunTemplateFunctor("#bun"));
 		this.addFunctor(new ErrorFunctor());
 		this.load(fileName, driver);
+	}
+	public void addUpcast(BunType fromType, BunType toType) {
+		class UpcastFunctor extends Functor {
+			public UpcastFunctor(BunType fromType, BunType toType) {
+				super("#coercion", false, BunType.newFuncType(fromType, toType));
+			}
+			@Override
+			public void build(PegObject node, BunDriver driver) {
+				driver.pushUpcastNode(this.funcType.getReturnType(), node);
+			}			
+		}
+		UpcastFunctor f = new UpcastFunctor(fromType, toType);
+		this.addFunctor(f);
 	}
 
 }
