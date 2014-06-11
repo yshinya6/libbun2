@@ -193,7 +193,47 @@ public class Main {
 		BunDriver driver = loadDriver(DriverName);
 		Namespace gamma = new Namespace(p, driver);
 		driver.initTable(gamma);
-		performShell(gamma, driver);
+		if(InputFileName != null) {
+			loadScript(gamma, driver, InputFileName);
+		}
+		else {
+			performShell(gamma, driver);
+		}
+	}
+
+	private static void loadScript(Namespace gamma, BunDriver driver, String fileName) {
+		String startPoint = "TopLevel";
+		PegSource source = Main.loadSource(fileName);
+		parseLine(gamma, driver, startPoint, source);
+	}
+
+	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, PegSource source) {
+		try {
+			PegParserContext context =  gamma.root.newParserContext("main", source);
+			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
+			if(node.isFailure()) {
+				node.name = BunSymbol.PerrorFunctor;
+			}
+			gamma.set(node);
+			if(PegDebuggerMode) {
+				System.out.println("parsed:\n" + node.toString());
+				if(context.hasChar()) {
+					System.out.println("** uncosumed: '" + context + "' **");
+				}
+				System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
+				System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
+				System.out.println();
+			}
+			if(driver != null) {
+				driver.startTransaction(null);
+				gamma.tryMatch(node);
+				node.matched.build(node, driver);
+				driver.endTransaction();
+			}
+		}
+		catch (Exception e) {
+			PrintStackTrace(e, source.lineNumber);
+		}
 	}
 
 	public final static void performShell(Namespace gamma, BunDriver driver) {
@@ -218,33 +258,8 @@ public class Main {
 				}
 			}
 			if(startPoint != null) {
-				try {
-					PegSource source = new PegSource("(stdin)", linenum, line);
-					PegParserContext context =  gamma.root.newParserContext("main", source);
-					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
-					if(node.isFailure()) {
-						node.name = BunSymbol.PerrorFunctor;
-					}
-					gamma.set(node);
-					if(PegDebuggerMode) {
-						System.out.println("parsed:\n" + node.toString());
-						if(context.hasChar()) {
-							System.out.println("** uncosumed: '" + context + "' **");
-						}
-						System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
-						System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
-						System.out.println();
-					}
-					if(driver != null) {
-						driver.startTransaction(null);
-						gamma.tryMatch(node);
-						node.matched.build(node, driver);
-						driver.endTransaction();
-					}
-				}
-				catch (Exception e) {
-					PrintStackTrace(e, linenum);
-				}
+				PegSource source = new PegSource("(stdin)", linenum, line);
+				parseLine(gamma, driver, startPoint, source);
 			}
 			linenum = linenum + 1;
 		}
