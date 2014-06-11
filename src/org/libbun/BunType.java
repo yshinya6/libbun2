@@ -39,7 +39,7 @@ public abstract class BunType  {
 	public BunType getReturnType() {
 		return this;
 	}
-	
+
 	public abstract boolean hasVarType();
 	public BunType getRealType() {
 		return this;

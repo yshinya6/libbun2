@@ -8,6 +8,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream.PutField;
+
+import org.libbun.JvmDriver.DebugableJvmDriver;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -161,13 +164,26 @@ public class Main {
 	//		return false;
 	//	}
 
+	private final static UniMap<Class<?>> driverMap = new UniMap<Class<?>>();
+	static {
+		driverMap.put("py", PythonDriver.class);
+		driverMap.put("python", PythonDriver.class);
+		driverMap.put("jvm", JvmDriver.class);
+		driverMap.put("jvm-debug", DebugableJvmDriver.class);
+	}
 
 	private static BunDriver loadDriver(String driverName) {
 		if(PegDebuggerMode) {
 			return new Debugger();
 		}
-		BunDriver driver = new PythonDriver();
-		return driver;
+		try {
+			return (BunDriver) driverMap.get(driverName, PythonDriver.class).newInstance();
+		}
+		catch(Throwable t) {
+			System.err.println("cannot load driver: " + driverName);
+			System.err.println("instead load python driver");
+		}
+		return new PythonDriver();
 	}
 
 	public final static void main(String[] args) {
