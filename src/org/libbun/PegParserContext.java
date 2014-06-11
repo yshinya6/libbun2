@@ -96,14 +96,20 @@ public class PegParserContext extends SourceContext {
 			this.memoMiss = this.memoMiss + 1;
 			Peg e = this.parser.getPattern(pattern, this.getFirstChar());
 			PegObject ans = e.debugMatch(parentNode, this);
-			PegObject cloneAns = ans.pegClone(ans); 
-			m.result = cloneAns;
-			m.nextPosition = this.getPosition();
-			if(getLrExistence(pattern)) {
-				return growLR(pattern, pos, m, parentNode);
+			if(pos == this.getPosition() && !ans.isFailure()) {
+				this.memoMap2.remove(key);
+				return ans;
 			}
 			else {
-				return ans;
+				//PegObject cloneAns = ans.pegClone(); 
+				m.result = ans;
+				m.nextPosition = this.getPosition();
+				if(getLrExistence(pattern)) {
+					return growLR(pattern, pos, m, parentNode);
+				}
+				else {
+					return ans;
+				}
 			}
 		}
 		else {

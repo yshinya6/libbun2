@@ -47,7 +47,7 @@ bun #conv(x: int): float {
 	float(${x})
 }
 
-bun #group(expr :alpha) :alpha {
+bun #group(expr: alpha) :alpha {
 	(${expr})
 }
 

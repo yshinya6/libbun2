@@ -260,6 +260,7 @@ class PegCharacter extends PegAtom {
 			}
 		}
 		char ch = source.getChar();
+		//if(this.charset.match(' '))
 		if(!this.charset.match(ch)) {
 			return source.foundFailure(this);
 		}
@@ -289,6 +290,14 @@ class PegLabel extends PegAtom {
 			}
 			else {
 				source.setLrExistence(this.name, false);
+			}
+		}
+		else if(source.getLrExistence(this.symbol) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.symbol, true);
+			}
+			else {
+				source.setLrExistence(this.symbol, false);
 			}
 		}
 		PegObject left = source.parsePegNode(parentNode, this.symbol);
