@@ -32,7 +32,9 @@ public abstract class BunType  {
 	public BunType getReturnType() {
 		return this;
 	}
-	public abstract boolean hasVarType();
+	public boolean hasVarType() {
+		return false;
+	}
 	public BunType getRealType() {
 		return this;
 	}
@@ -327,6 +329,12 @@ abstract class QualifiedType extends BunType {
 		return false;
 	}
 }
+
+class VariableType extends QualifiedType {
+	
+}
+
+
 
 class GreekType extends BunType {
 	int greekIndex;
@@ -766,117 +774,48 @@ class FuncType extends GenericType {
 	public final BunType getReturnType() {
 		return this.typeParams[this.typeParams.length - 1];
 	}
-
 }
 
+class NodeType extends BunType {
+	String symbol;
+	NodeType(String symbol) {
+		this.symbol = symbol;
+	}
+	@Override
+	public void stringfy(UniStringBuilder sb) {
+		sb.append(this.symbol);
+	}
+	@Override
+	public boolean is(BunType valueType) {
+		return false;
+	}
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		if(this.symbol.equals(node.name)) {
+			return true;
+		}
+		return false;
+	}
+}
 
-
-//public class ClassField {
-//	public final int        FieldFlag = 0;
-//	public final ClassType ClassType;
-//	public final MetaType	     FieldType;
-//	public final String	 FieldName;
-//	public final int        FieldNativeIndex = 0;
-//	public final SourceToken     SourceToken;
-//
-//	public ClassField(ClassType ClassType, String FieldName, MetaType FieldType, SourceToken sourceToken2) {
-//		this.ClassType = ClassType;
-//		this.FieldType = FieldType;
-//		this.FieldName = FieldName;
-//		this.SourceToken = sourceToken2;
-//	}
-//
-//
-//}
-
-//public class ClassType extends MetaType {
-//	public final static ClassType _ObjectType = new ClassType("Object");
-//
-//	UniArray<ClassField> FieldList = null;
-//
-//	private ClassType(String ShortName) {
-//		super(MetaType.OpenTypeFlag|MetaType.UniqueTypeFlag, ShortName, MetaType.VarType);
-//		this.typeFlag = Main._UnsetFlag(this.typeFlag, MetaType.OpenTypeFlag);
-//	}
-//
-//	public ClassType(String ShortName, MetaType RefType) {
-//		super(MetaType.OpenTypeFlag|MetaType.UniqueTypeFlag, ShortName, RefType);
-//		if(RefType instanceof ClassType) {
-//			this.EnforceSuperClass((ClassType)RefType);
-//		}
-//	}
-//
-//	public final void EnforceSuperClass(ClassType SuperClass) {
-//		this.refType = SuperClass;
-//		if(SuperClass.FieldList != null) {
-//			this.FieldList = new UniArray<ClassField>(new ClassField[10]);
-//			int i = 0;
-//			while(i < SuperClass.FieldList.size()) {
-//				ClassField Field = SuperClass.FieldList.ArrayValues[i];
-//				this.FieldList.add(Field);
-//				i = i + 1;
-//			}
-//		}
-//	}
-//
-//	public final int GetFieldSize() {
-//		if(this.FieldList != null) {
-//			return this.FieldList.size();
-//		}
-//		return 0;
-//	}
-//
-//	public final ClassField GetFieldAt(int Index) {
-//		return this.FieldList.ArrayValues[Index];
-//	}
-//
-//	public boolean HasField(String FieldName) {
-//		if(this.FieldList != null) {
-//			int i = 0;
-//			while(i < this.FieldList.size()) {
-//				if(FieldName.equals(this.FieldList.ArrayValues[i].FieldName)) {
-//					return true;
-//				}
-//				i = i + 1;
-//			}
-//		}
-//		return false;
-//	}
-//
-//	public MetaType GetFieldType(String FieldName, MetaType DefaultType) {
-//		if(this.FieldList != null) {
-//			int i = 0;
-//			//			System.out.println("FieldSize = " + this.FieldList.size() + " by " + FieldName);
-//			while(i < this.FieldList.size()) {
-//				ClassField Field = this.FieldList.ArrayValues[i];
-//				//				System.out.println("Looking FieldName = " + Field.FieldName + ", " + Field.FieldType);
-//				if(FieldName.equals(Field.FieldName)) {
-//					return Field.FieldType;
-//				}
-//				i = i + 1;
-//			}
-//		}
-//		return DefaultType;
-//	}
-//
-//	public ClassField AppendField(MetaType FieldType, String FieldName, SourceToken sourceToken) {
-//		assert(!FieldType.IsVarType());
-//		if(this.FieldList == null) {
-//			this.FieldList = new UniArray<ClassField>(new ClassField[4]);
-//		}
-//		ClassField ClassField = new ClassField(this, FieldName, FieldType, sourceToken);
-//		//		System.out.println("Append FieldName = " + ClassField.FieldName + ", " + ClassField.FieldType);
-//		assert(ClassField.FieldType != null);
-//		this.FieldList.add(ClassField);
-//		return ClassField;
-//	}
-//
-//	//	public ZNode CheckAllFields(ZGamma Gamma) {
-//	//		// TODO Auto-generated method stub
-//	//
-//	//		return null;  // if no error
-//	//	}
-//
-//
-//}
+class TokenType extends NodeType {
+	TokenType(String symbol) {
+		super(symbol);
+	}
+	@Override
+	public void stringfy(UniStringBuilder sb) {
+		sb.append("'");
+		sb.append(this.symbol);
+		sb.append("'");
+	}
+	@Override
+	public boolean is(BunType valueType) {
+		return false;
+	}
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		if(this.symbol.equals(node.getText())) {
+			return true;
+		}
+		return false;
+	}
+}
 
