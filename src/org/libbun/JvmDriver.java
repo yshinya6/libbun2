@@ -29,6 +29,7 @@ public class JvmDriver extends BunDriver {
 		this.addCommand("PUSH_BOOL", new PushBool());
 		this.addCommand("PUSH_STRING", new PushString());
 		this.addCommand("OP", new CallOperator());
+		this.addCommand("statement", new StatementCommand());
 	}
 
 	@Override
@@ -165,6 +166,18 @@ public class JvmDriver extends BunDriver {
 	public void pushCode(String text) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	private class StatementCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			if(node.is("#block")) {
+				for(int i = 0; i < node.size(); i++) {
+					driver.pushNode(node.get(i));
+					insertPrintIns();
+				}
+			}
+		}
 	}
 
 	/**

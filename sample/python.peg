@@ -1,6 +1,6 @@
 
 TopLevel
-    = << Stmt@+ #stmts>>;
+    = << Stmt@+ #block>>;
 
 Stmt
     = IfStmt EOS?
@@ -16,6 +16,7 @@ Stmt
     / With EOS?
     / Expr EOS?
     / EOS+
+    / catch .*
     ;
 
 EOS
@@ -33,15 +34,15 @@ Print
     ;
 
 IfStmt
-    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent _* "else" WS* ":" NL+ Block@)? _* #if>>
+    = <<"if" WS+ Expr@ WS* ":" Block@ (indent _* "else" WS* ":" NL+ Block@)? #if>>
     ;
 
 WhileStmt
-    = <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>>
+    = <<"while" WS+ Expr@ WS* ":" Block@ #while>>
     ;
 
 ForStmt
-    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>>
+    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" Block@ #for>>
     ;
 
 ReturnStmt
@@ -58,7 +59,11 @@ DefineFunction
     ;
 
 DefineClass
-    = <<"class" WS+ Symbol@ (WS* "(" (Symbol@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>>
+    = <<"class" WS+ Symbol@ (WS* "(" (Extend@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>>
+    ;
+
+Extend
+    = << Symbol@ #extend >>
     ;
 
 BreakStmt
@@ -74,7 +79,9 @@ ReturnStmt
     ;
 
 Block
-    = << (indent WS* Stmt@ NL?)+ #block>>;
+    = NL+ << (indent WS* Stmt@ NL?)+ #block>>
+    / WS* << Stmt@ #block>>
+    ;
 
 ClassBlock
     = << (indent WS* ClassStmt@ NL?)+ #block>>;
@@ -85,16 +92,33 @@ ClassStmt
     ;
 
 Expr
-    = Expr <<@ WS* Op@  WS* Expr@ >>
+    = Comp
     / Expr <<@ "[" WS* Expr@ WS* "]" #get>>
     / Expr <<@ "." Expr@ #field>>
-    / Expr <<@ "(" _* Args@ _* ")" #call>>
+    / Expr <<@ "(" _* Args@ _* ")" #apply>>
     / Expr <<@ _* '=' _* Expr@ #assign>>
-    / Symbol
+    ;
+
+Comp
+    = Sum <<@ WS* ('<=' #lte / '<' #lt / '>=' #gte / '>' #gt / '==' #eq) WS* Sum@ >>*
+    ;
+
+Sum
+    = Product <<@ WS* ('+' #add / '-' #sub) WS* Product@ >>*
+    ;
+
+Product
+    = Value <<@ WS* ('*' #mul / '/' #div / '%' #mod) WS* Value@ >>*
+    ;
+
+Value
+    = Symbol
     / StringLiteral
-    / Integer
+    / Number
     / ArrayLiteral
     / MapLiteral
+    / TupleLiteral
+    / << '(' Expr@ ')' #group >>
     ;
 
 Assignment
@@ -103,6 +127,11 @@ Assignment
 ArrayLiteral
     = << "[" _* Expr@? (_* "," _* Expr@)* _* "]" #array>>
     / << "[" _* Expr@ _* "for" _* Symbol@ _* "in" _* Expr@ (_* "if" _* Expr@)? _* "]" #listComprehension >>
+    ;
+
+TupleLiteral
+    = << '(' Expr@ ')' #group >>
+    / << "(" _* Expr@ (_* "," _* Expr@)+ _* ")" #array>>
     ;
 
 MapLiteral
@@ -125,12 +154,16 @@ Args
 Op
     = '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<=' #lte / '<' #lt / '>=' #gte / '>' #gt;
 
-Integer
-    = << ('-' WS* / '+' WS*)?[0-9]+ #integer>>
+Number
+    = << ('-' WS* / '+' WS*)?('0'/[1-9][0-9]*) '.' [0-9]+ #float >>
+    / << ('-' WS* / '+' WS*)?('0'/[1-9][0-9]*) #integer>>
     ;
 
 Symbol
-    = << [a-zA-Z_][a-zA-Z0-9_]* #symbol>>
+    = << "True" #true >>
+    / << "False" #false >>
+    / << "None" #null >>
+    / << [a-zA-Z_][a-zA-Z0-9_]* #name>>
     ;
 
 Asterisk

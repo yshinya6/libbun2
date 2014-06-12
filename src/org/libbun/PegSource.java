@@ -65,8 +65,15 @@ public class PegSource {
 	
 	public final String getIndentText(int fromPosition) {
 		int startPosition = this.getLineStartPosition(fromPosition);
+		int endPosition = fromPosition;
+		for(; endPosition < this.sourceText.length(); endPosition++) {
+			char ch = this.charAt(endPosition);
+			if(ch != ' ' && ch != '\t') {
+				break;
+			}
+		}
 		int i = startPosition;
-		for(; i <= fromPosition; i++) {
+		for(; i < endPosition; i++) {
 			char ch = this.charAt(i);
 			if(ch != ' ' && ch != '\t') {
 				break;

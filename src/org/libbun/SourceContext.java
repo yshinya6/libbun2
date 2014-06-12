@@ -150,6 +150,25 @@ public class SourceContext {
 		this.sourcePosition = this.endPosition;
 	}
 
+	public final boolean matchIndentSize(String text) {
+		int indentSize = 0;
+		if(this.endPosition - this.sourcePosition >= text.length()) {
+			for(int i = 0; i < this.endPosition; i++) {
+				char ch = this.charAt(this.sourcePosition + i);
+				if(ch != ' ' && ch != '\t') {
+					break;
+				}
+				indentSize++;
+			}
+			if(indentSize != text.length()) {
+				return false;
+			}
+			this.consume(indentSize);
+			return true;
+		}
+		return false;
+	}
+
 	public final boolean match(String text) {
 		if(this.endPosition - this.sourcePosition >= text.length()) {
 			for(int i = 0; i < text.length(); i++) {
