@@ -19,7 +19,7 @@ public class Functor {
 		}
 		else {
 			if(this.name.equals("#coercion") || this.name.equals("#conv")) {
-				return BunType.keyTypeRel(this.name, this.funcType.getFuncParamType(0), this.funcType.getReturnType());
+				return BunType.keyTypeRel(this.name, this.funcType.get(0), this.funcType.getReturnType());
 			}
 			if(this.isSymbol) {
 				return this.name;
@@ -50,19 +50,20 @@ public class Functor {
 		}
 		node.typed = this.returnType(varFuncType);
 		node.matched = this;
-		if(this.funcType instanceof FunctorType) {
-			((FunctorType)this.funcType).check(gamma, node, gamma.root.driver);
-		}
+//		if(this.funcType instanceof FunctorType) {
+//			((FunctorType)this.funcType).check(gamma, node, gamma.root.driver);
+//		}
 	}
 	private BunType getVarFuncType() {
 		if(this.funcType != null) {
-			return this.funcType.newVarGreekType(null, null);
+			//System.out.println("func: " + this.funcType + " greekCount=" + this.funcType.countGreekType());
+			return this.funcType.transformGreekTypeToVarType(null);
 		}
 		return null;
 	}
 	private BunType paramTypeAt(BunType varFuncType, int index) {
 		if(varFuncType != null && index < varFuncType.getFuncParamSize()) {
-			return varFuncType.getFuncParamType(index).getRealType();
+			return varFuncType.get(index).getRealType();
 		}
 		return BunType.UntypedType;
 	}
@@ -118,42 +119,6 @@ class BunTypeDefFunctor extends Functor {
 	}
 	@Override
 	public void build(PegObject node, BunDriver driver) {
-	}
-}
-
-class FunctorType extends QualifiedType {
-	GreekList greekList;
-	String checkerName;
-	public FunctorType(GreekList greekList, BunType innerType, String checkerName) {
-		super();
-		this.greekList  = greekList;
-		this.innerType  = innerType;
-		this.checkerName = checkerName;
-	}
-	@Override
-	public void stringfy(UniStringBuilder sb) {
-		this.innerType.stringfy(sb);
-	}
-	@Override
-	public boolean hasGreekType() {
-		return true;
-	}
-	@Override
-	public BunType newVarGreekType(GreekList list, BunType[] buffer) {
-		if(this.greekList != null) {
-			buffer = new BunType[this.greekList.size()];
-			return this.innerType.newVarGreekType(this.greekList, buffer);
-		}
-		return this.innerType;
-	}
-	@Override
-	public boolean is(BunType valueType) {
-		return false;
-	}
-	public final void check(SymbolTable gamma, PegObject node, BunDriver driver) {
-		if(this.checkerName != null) {
-			driver.performChecker(checkerName, gamma, node);
-		}
 	}
 }
 
@@ -228,29 +193,77 @@ class BunTemplateFunctor extends Functor {
 		}
 		typeList.add(this.parseType(gamma, greekList, returnTypeNode));
 		BunType t = BunType.newFuncType(typeList);
-		if(greekList != null || checkerName != null) {
-			t = new FunctorType(greekList, t, checkerName);
-		}
+//		if(greekList != null || checkerName != null) {
+//			t = new FunctorType(greekList, t, checkerName);
+//		}
 		return t;
 	}
 
-	private BunType parseType(SymbolTable gamma, GreekList greekList, PegObject typeNode) {
-		if(typeNode != null) {
-			if(greekList != null) {
-				String name = typeNode.getText();
-				BunType t = greekList.getGreekType(name);
-				if(t != null) {
-					return t;
-				}
+	private BunType parseType(SymbolTable gamma, GreekList greekList, PegObject node) {
+		if(node == null) {
+			return BunType.UntypedType;
+		}
+		if(greekList != null) {
+			String name = node.getText();
+			BunType t = greekList.getGreekType(name);
+			if(t != null) {
+				return t;
 			}
-			gamma.tryMatch(typeNode);
-			BunType t = typeNode.getType(BunType.UntypedType);
-			if(t instanceof VarType) {
+		}
+		if(node.is("#type")) {
+			if(node.isEmptyToken()) {
+				return BunType.newVarType(node);
+			}
+			String typeName = node.getText();
+			BunType t = gamma.getType(typeName, null);
+			if(t == null) {
 				t = BunType.UntypedType;
-				typeNode.typed = BunType.UntypedType;
 			}
 			return t;
 		}
+		if(node.is("#Tvoid")) {
+			return BunType.VoidType;
+		}
+		if(node.is("#Tany")) {
+			return BunType.AnyType;
+		}
+		if(node.is("#Tvar")) {
+			return BunType.newVarType(node);
+		}
+		if(node.is("#Tbun.node")) {
+			return BunType.newNodeType(node.getText());
+		}
+		if(node.is("#Tbun.optional")) {
+			return BunType.newOptionalType(node.getText());
+		}
+		if(node.is("#Tbun.not")) {
+			return BunType.newNotType(this.parseType(gamma, greekList, node.get(0, null)));
+		}
+		if(node.is("#Tarray")) {
+			return BunType.newGenericType("Array", this.parseType(gamma, greekList, node.get(0, null)));
+		}
+		if(node.is("#Tgeneric")) {
+			UniArray<BunType> list = new UniArray<BunType>(new BunType[node.size()]);
+			for(int i = 1; i < node.size(); i++) {
+				list.add(this.parseType(gamma, greekList, node.get(i, null)));
+			}
+			return BunType.newGenericType(node.textAt(0, ""), list);
+		}
+		if(node.is("#Tbun.and")) {
+			UniArray<BunType> list = new UniArray<BunType>(new BunType[node.size()]);
+			for(int i = 0; i < node.size(); i++) {
+				list.add(this.parseType(gamma, greekList, node.get(i, null)));
+			}
+			return BunType.newAndType(list);
+		}
+		if(node.is("#Tunion")) {
+			UniArray<BunType> list = new UniArray<BunType>(new BunType[node.size()]);
+			for(int i = 0; i < node.size(); i++) {
+				list.add(this.parseType(gamma, greekList, node.get(i, null)));
+			}
+			return BunType.newUnionType(list);
+		}
+		System.out.println("#FIXME: " + node.name);
 		return BunType.UntypedType;
 	}
 

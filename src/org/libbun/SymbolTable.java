@@ -167,7 +167,7 @@ public class SymbolTable {
 			return false;
 		}
 		else {
-			BunType valueType = this.getVoidType();
+			BunType valueType = BunType.VoidType;
 			return type.is(valueType);
 		}
 	}
@@ -313,15 +313,6 @@ public class SymbolTable {
 		}
 		return defaultType;
 	}
-
-	public BunType getVoidType() {
-		return this.getType("void", null);  //FIXME
-	}
-
-	public BunType getAnyType() {
-		return this.getType("any", null);   //FIXME
-	}
-	
 	
 	public void load(String fileName, BunDriver driver) {
 		PegSource source = Main.loadSource(fileName);
@@ -347,7 +338,7 @@ public class SymbolTable {
 		@Override
 		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 			if(node.isEmptyToken()) {
-				node.typed = BunType.newVarType(node, null);
+				node.typed = BunType.newVarType(node);
 			}
 			else {
 				String typeName = node.getText();

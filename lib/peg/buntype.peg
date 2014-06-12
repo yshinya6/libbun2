@@ -14,9 +14,9 @@ SeqType
 AtomType
   = LangType
   / '(' BunType ')'
-  / << '@' TypeName  #Tbun.flag >>
-  / << '#' TypeName  #Tbun.node >>
-  / << '!' LangType@ #Tbun.not >>
+  / '@' << TypeName  #Tbun.flag >>
+  / '#' << TypeName  #Tbun.node >>
+  / '!' << LangType@ #Tbun.not >>
   ;
 
 LangType
