@@ -22,6 +22,10 @@ public class SourceContext {
 	public final int getPosition() {
 		return this.sourcePosition;
 	}
+	
+	public void setPosition(int pos) {
+		this.sourcePosition = pos;
+	}
 
 	public final void rollback(int pos) {
 		if(this.sourcePosition > pos) {
