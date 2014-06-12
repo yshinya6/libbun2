@@ -115,6 +115,19 @@ public class PegObject {
 		childNode.parent = this;
 	}
 
+	public final int count() {
+		if(this.size() == 0) {
+			return 1;
+		}
+		else {
+			int count = 0;
+			for(int i = 0; i < this.size(); i++) {
+				count = count + this.get(i).count();
+			}
+			return count;
+		}
+	}
+
 	public final void checkNullEntry() {
 		for(int i = 0; i < this.size(); i++) {
 			if(this.AST[i] == null) {
@@ -258,6 +271,7 @@ public class PegObject {
 
 	public void setVariable(boolean flag) {
 	}
+
 
 
 }

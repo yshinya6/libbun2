@@ -6,7 +6,6 @@ public class PegParserContext extends SourceContext {
 	final UniArray<Log> logStack = new UniArray<Log>(new Log[128]);
 	private int stackTop = 0;
 
-	private final UniMap<PegObject> memoMap = new UniMap<PegObject>();
 	private UniMap<Memo> memoMap2 = new UniMap<Memo>();
 	
 	private final UniMap<Boolean> lrExistenceMap = new UniMap<Boolean>();
@@ -31,8 +30,6 @@ public class PegParserContext extends SourceContext {
 	int memoMiss = 0;
 	int memoSize = 0;
 	int objectCount = 0;
-	int errorCount = 0;
-
 
 	public PegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
@@ -134,33 +131,6 @@ public class PegParserContext extends SourceContext {
 		}
 		this.setPosition(m.nextPosition);
 		return m.result;
-	}
-
-	public final PegObject parsePegNode2(PegObject parentNode, String pattern, boolean hasNextChoice) {
-		int pos = this.getPosition();
-		String key = pattern + ":" + pos;
-		PegObject node = this.memoMap.get(key, null);
-		if(node != null) {
-			this.memoHit = this.memoHit + 1;
-			return node;
-		}
-		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
-		if(e != null) {
-			node = e.debugMatch(parentNode, this);
-			if(node.isFailure() && hasNextChoice) {
-				this.memoMiss = this.memoMiss + 1;
-				this.memoMap.put(key, node);
-				return node;
-			}
-			if(node != parentNode && node.isFailure()) {
-				this.memoMiss = this.memoMiss + 1;
-				this.memoMap.put(key, node);
-				return node;
-			}
-			return node;
-		}
-		Main._Exit(1, "undefined label " + pattern + " '" + this.getFirstChar() + "'");
-		return this.foundFailureNode;
 	}
 
 	public final PegObject parsePegNodeNon(PegObject parentNode, String pattern, boolean hasNextChoice) {

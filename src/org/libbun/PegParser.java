@@ -10,6 +10,7 @@ public final class PegParser {
 	public PegParser() {
 		this.initParser();
 	}
+	
 	public void initParser() {
 		this.pegMap = new UniMap<Peg>();
 	}

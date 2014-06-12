@@ -226,7 +226,7 @@ public class Main {
 				if(context.hasChar()) {
 					System.out.println("** uncosumed: '" + context + "' **");
 				}
-				System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
+				System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", created_object=" + context.objectCount + ", used_object=" + node.count());
 				System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
 				System.out.println();
 			}
