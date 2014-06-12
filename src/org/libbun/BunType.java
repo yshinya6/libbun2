@@ -7,58 +7,65 @@ public abstract class BunType  {
 	BunType() {
 		this.typeInfo = null;
 	}
-
 	public final String getName() {
 		UniStringBuilder sb = new UniStringBuilder();
 		stringfy(sb);
 		return sb.toString();
 	}
-	
 	public final String toString() {
 		UniStringBuilder sb = new UniStringBuilder();
 		stringfy(sb);
 		return sb.toString();
 	}
-
 	public int size() {
 		return 0;
 	}
-
 	public BunType getParamType(int index) {
 		return this;
 	}
-	
 	public int getFuncParamSize() {
 		return 0;
 	}
-
 	public BunType getFuncParamType(int index) {
 		return this;
 	}
-
 	public BunType getReturnType() {
 		return this;
 	}
-
-	public abstract boolean hasVarType();
+	public boolean hasVarType() {
+		return false;
+	}
 	public BunType getRealType() {
 		return this;
 	}
-	
 	public boolean hasGreekType() {
 		return false;
 	}
-
 	public BunType newVarGreekType(GreekList list, BunType[] buffer) {
 		return this;
 	}
 
 	public abstract void    stringfy(UniStringBuilder sb);
-	public abstract boolean is(BunType valueType);
-	public boolean accept(BunType valueType) {
-		return this.is(valueType);
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		BunType nodeType = node.getType(BunType.UntypedType);
+		return this.is(nodeType) || this.checkCoercion(gamma, node, nodeType, hasNextChoice);
 	}
-		
+	public abstract boolean is(BunType valueType);
+	protected final boolean checkCoercion(SymbolTable gamma, PegObject node, BunType nodeType, boolean hasNextChoice) {
+		String key = BunType.keyTypeRel("#coercion", nodeType, this);
+		Functor f = gamma.getSymbol(key);
+		if(f != null) {
+			if(Main.EnableVerbose) {
+				Main._PrintLine("found type coercion from " + nodeType + " to " + this);
+			}
+			node.typed = BunType.newTransType(key, nodeType, this, f);
+			return true;
+		}
+		if(hasNextChoice) {
+			return false;
+		}
+		return false;  // stupid cast
+	}
 	public void build(PegObject node, BunDriver driver) {
 		node.matched.build(node, driver);
 	}
@@ -171,6 +178,13 @@ public abstract class BunType  {
 			return (FuncType)funcType;
 		}
 		return null;
+	}
+
+	public final static FuncType newFuncType(BunType t, BunType r) {
+		UniArray<BunType> typeList = new UniArray<BunType>(new BunType[2]);
+		typeList.add(t);
+		typeList.add(r);
+		return BunType.newFuncType(typeList);
 	}
 
 	// =======================================================================
@@ -316,6 +330,21 @@ abstract class QualifiedType extends BunType {
 	}
 }
 
+//class VariableType extends QualifiedType {
+//	@Override
+//	public void stringfy(UniStringBuilder sb) {
+//		sb.append("@Variable" );
+//		this.innerType.stringfy(sb);
+//	}
+//
+//	@Override
+//	public boolean is(BunType valueType) {
+//		return false;
+//	}
+//}
+//
+//
+
 class GreekType extends BunType {
 	int greekIndex;
 	public GreekType(int greekIndex) {
@@ -348,15 +377,12 @@ class GreekType extends BunType {
 	}
 }
 
-
 class UnionType extends BunType {
 	public BunType[] types;
-	
 	public UnionType() {
 		super();
 		this.types = BunType.emptyTypes;
 	}
-	
 	@Override
 	public void stringfy(UniStringBuilder sb) {
 		for(int i = 0; i < types.length; i++) {
@@ -366,7 +392,6 @@ class UnionType extends BunType {
 			types[i].stringfy(sb);
 		}
 	}
-	
 	public void add(BunType t) {
 		assert(this.typeId == -1);
 		t = t.getRealType();
@@ -380,7 +405,6 @@ class UnionType extends BunType {
 			this.types = BunType.addTypes(this.types, t);
 		}
 	}
-
 	@Override
 	public boolean is(BunType valueType) {
 		valueType = valueType.getRealType();
@@ -400,27 +424,16 @@ class UnionType extends BunType {
 	}
 
 	@Override
-	public boolean accept(BunType valueType) {
-		valueType = valueType.getRealType();
-		if(this == valueType) {
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		BunType nodeType = node.getType(BunType.UntypedType);
+		if(this.is(nodeType)) {
 			return true;
 		}
-		if(valueType instanceof UnionType) {
-			UnionType ut = (UnionType)valueType;
-			for(int i = 0; i < ut.types.length; i++) {
-				if(!this.accept(ut.types[i])) {
-					return false;
-				}
-			}
-			return true;
-		}
-		else {
-			for(int i = 0; i < types.length; i++) {
-				if(types[i].accept(valueType)) {
-					return true;
-				}
-			}
-		}
+//		for(int i = 0; i < types.length; i++) {
+//			if(types[i].accept(node)) {
+//				return true;
+//			}
+//		}
 		return false;
 	}
 
@@ -471,10 +484,11 @@ class ValueType extends BunType {
 		superTypes = BunType.emptyTypes;
 	}
 	
-	public void add(BunType t) {
+	public void addSuperType(SymbolTable gamma, BunType t) {
 		this.superTypes = BunType.addTypes(this.superTypes, t);
+		gamma.addUpcast(this, t);
 	}
-	
+
 	@Override
 	public final boolean hasVarType() {
 		return false;
@@ -492,26 +506,6 @@ class ValueType extends BunType {
 		}
 		return false;
 	}
-	
-	public boolean accept(BunType valueType) {
-		valueType = valueType.getRealType();
-		if(valueType == this) {
-			return true;
-		}
-		for(int i = 0; i < this.superTypes.length; i++) {
-			if(this.superTypes[i] == valueType) {
-				return true;
-			}
-		}
-		for(int i = 0; i < this.superTypes.length; i++) {
-			if(this.superTypes[i].accept(valueType)) {
-				this.superTypes = BunType.addTypes(this.superTypes, valueType);
-				return true;
-			}
-		}
-		return false;
-	}
-	
 }
 
 class UntypedType extends ValueType {
@@ -789,117 +783,48 @@ class FuncType extends GenericType {
 	public final BunType getReturnType() {
 		return this.typeParams[this.typeParams.length - 1];
 	}
-
 }
 
+class NodeType extends BunType {
+	String symbol;
+	NodeType(String symbol) {
+		this.symbol = symbol;
+	}
+	@Override
+	public void stringfy(UniStringBuilder sb) {
+		sb.append(this.symbol);
+	}
+	@Override
+	public boolean is(BunType valueType) {
+		return false;
+	}
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		if(this.symbol.equals(node.name)) {
+			return true;
+		}
+		return false;
+	}
+}
 
-
-//public class ClassField {
-//	public final int        FieldFlag = 0;
-//	public final ClassType ClassType;
-//	public final MetaType	     FieldType;
-//	public final String	 FieldName;
-//	public final int        FieldNativeIndex = 0;
-//	public final SourceToken     SourceToken;
-//
-//	public ClassField(ClassType ClassType, String FieldName, MetaType FieldType, SourceToken sourceToken2) {
-//		this.ClassType = ClassType;
-//		this.FieldType = FieldType;
-//		this.FieldName = FieldName;
-//		this.SourceToken = sourceToken2;
-//	}
-//
-//
-//}
-
-//public class ClassType extends MetaType {
-//	public final static ClassType _ObjectType = new ClassType("Object");
-//
-//	UniArray<ClassField> FieldList = null;
-//
-//	private ClassType(String ShortName) {
-//		super(MetaType.OpenTypeFlag|MetaType.UniqueTypeFlag, ShortName, MetaType.VarType);
-//		this.typeFlag = Main._UnsetFlag(this.typeFlag, MetaType.OpenTypeFlag);
-//	}
-//
-//	public ClassType(String ShortName, MetaType RefType) {
-//		super(MetaType.OpenTypeFlag|MetaType.UniqueTypeFlag, ShortName, RefType);
-//		if(RefType instanceof ClassType) {
-//			this.EnforceSuperClass((ClassType)RefType);
-//		}
-//	}
-//
-//	public final void EnforceSuperClass(ClassType SuperClass) {
-//		this.refType = SuperClass;
-//		if(SuperClass.FieldList != null) {
-//			this.FieldList = new UniArray<ClassField>(new ClassField[10]);
-//			int i = 0;
-//			while(i < SuperClass.FieldList.size()) {
-//				ClassField Field = SuperClass.FieldList.ArrayValues[i];
-//				this.FieldList.add(Field);
-//				i = i + 1;
-//			}
-//		}
-//	}
-//
-//	public final int GetFieldSize() {
-//		if(this.FieldList != null) {
-//			return this.FieldList.size();
-//		}
-//		return 0;
-//	}
-//
-//	public final ClassField GetFieldAt(int Index) {
-//		return this.FieldList.ArrayValues[Index];
-//	}
-//
-//	public boolean HasField(String FieldName) {
-//		if(this.FieldList != null) {
-//			int i = 0;
-//			while(i < this.FieldList.size()) {
-//				if(FieldName.equals(this.FieldList.ArrayValues[i].FieldName)) {
-//					return true;
-//				}
-//				i = i + 1;
-//			}
-//		}
-//		return false;
-//	}
-//
-//	public MetaType GetFieldType(String FieldName, MetaType DefaultType) {
-//		if(this.FieldList != null) {
-//			int i = 0;
-//			//			System.out.println("FieldSize = " + this.FieldList.size() + " by " + FieldName);
-//			while(i < this.FieldList.size()) {
-//				ClassField Field = this.FieldList.ArrayValues[i];
-//				//				System.out.println("Looking FieldName = " + Field.FieldName + ", " + Field.FieldType);
-//				if(FieldName.equals(Field.FieldName)) {
-//					return Field.FieldType;
-//				}
-//				i = i + 1;
-//			}
-//		}
-//		return DefaultType;
-//	}
-//
-//	public ClassField AppendField(MetaType FieldType, String FieldName, SourceToken sourceToken) {
-//		assert(!FieldType.IsVarType());
-//		if(this.FieldList == null) {
-//			this.FieldList = new UniArray<ClassField>(new ClassField[4]);
-//		}
-//		ClassField ClassField = new ClassField(this, FieldName, FieldType, sourceToken);
-//		//		System.out.println("Append FieldName = " + ClassField.FieldName + ", " + ClassField.FieldType);
-//		assert(ClassField.FieldType != null);
-//		this.FieldList.add(ClassField);
-//		return ClassField;
-//	}
-//
-//	//	public ZNode CheckAllFields(ZGamma Gamma) {
-//	//		// TODO Auto-generated method stub
-//	//
-//	//		return null;  // if no error
-//	//	}
-//
-//
-//}
+class TokenType extends NodeType {
+	TokenType(String symbol) {
+		super(symbol);
+	}
+	@Override
+	public void stringfy(UniStringBuilder sb) {
+		sb.append("'");
+		sb.append(this.symbol);
+		sb.append("'");
+	}
+	@Override
+	public boolean is(BunType valueType) {
+		return false;
+	}
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		if(this.symbol.equals(node.getText())) {
+			return true;
+		}
+		return false;
+	}
+}
 

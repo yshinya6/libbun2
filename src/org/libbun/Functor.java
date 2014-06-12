@@ -19,18 +19,13 @@ public class Functor {
 		}
 		else {
 			if(this.name.equals("#coercion") || this.name.equals("#conv")) {
-				return this.keyTypeRel(this.name);
+				return BunType.keyTypeRel(this.name, this.funcType.getFuncParamType(0), this.funcType.getReturnType());
 			}
 			if(this.isSymbol) {
 				return this.name;
 			}
 			return this.name + ":" + this.funcType.getFuncParamSize();
 		}
-	}
-	private String keyTypeRel(String head) {
-		BunType fromType = this.funcType.getFuncParamType(0);
-		BunType toType = this.funcType.getReturnType();
-		return BunType.keyTypeRel(head, fromType, toType);
 	}
 	@Override 
 	public String toString() {

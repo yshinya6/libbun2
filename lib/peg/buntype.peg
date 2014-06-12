@@ -1,0 +1,42 @@
+
+TopLevel
+  = BunType
+  ;
+
+BunType
+  = SeqType <<@ (SP '|' SP SeqType@)+ #Tunion >>?
+  ;
+
+SeqType
+  = AtomType <<@ (' '+ AtomType@)+ #Tbun.and >>?
+  ;
+
+AtomType
+  = LangType
+  / '(' BunType ')'
+  / << '@' TypeName  #Tbun.flag >>
+  / << '#' TypeName  #Tbun.node >>
+  / << '!' LangType@ #Tbun.not >>
+  ;
+
+LangType
+  = GenericType <<@ SP '[]' #Tarray >>*
+  ;
+
+GenericType
+  = SingleType <<@ SP '<' SP LangType@ SP (',' SP LangType@ SP )* '>' #Tgeneric >>?
+  ;
+
+SingleType
+  = << 'void' #Tvoid >>
+  / << 'any'  #Tany  >>
+  / << '?'    #Tvar  >>
+  / << TypeName #type >>
+  ;
+
+TypeName
+  = [A-Za-z] [A-Za-z0-9_]*
+  ;
+
+SP
+ = [ \t]*
