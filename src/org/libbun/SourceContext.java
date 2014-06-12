@@ -22,6 +22,10 @@ public class SourceContext {
 	public final int getPosition() {
 		return this.sourcePosition;
 	}
+	
+	public void setPosition(int pos) {
+		this.sourcePosition = pos;
+	}
 
 	public final void rollback(int pos) {
 		if(this.sourcePosition > pos) {
@@ -148,6 +152,25 @@ public class SourceContext {
 		}
 		//		System.out.println("skip characters until indent="+indentSize + ", pos = endPosition");
 		this.sourcePosition = this.endPosition;
+	}
+
+	public final boolean matchIndentSize(String text) {
+		int indentSize = 0;
+		if(this.endPosition - this.sourcePosition >= text.length()) {
+			for(int i = 0; i < this.endPosition; i++) {
+				char ch = this.charAt(this.sourcePosition + i);
+				if(ch != ' ' && ch != '\t') {
+					break;
+				}
+				indentSize++;
+			}
+			if(indentSize != text.length()) {
+				return false;
+			}
+			this.consume(indentSize);
+			return true;
+		}
+		return false;
 	}
 
 	public final boolean match(String text) {

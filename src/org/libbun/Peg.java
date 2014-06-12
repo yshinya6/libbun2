@@ -9,7 +9,7 @@ public abstract class Peg {
 
 	PegSource source = null;
 	int       sourcePosition = 0;
-
+	
 	Peg(String leftLabel) {
 		this.name = leftLabel;
 	}
@@ -185,6 +185,14 @@ class PegString extends PegAtom {
 
 	@Override
 	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		if(source.getLrExistence(this.name) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.name, true);
+			}
+			else {
+				source.setLrExistence(this.name, false);
+			}
+		}
 		if(source.match(this.symbol)) {
 			return inNode;
 		}
@@ -243,7 +251,16 @@ class PegCharacter extends PegAtom {
 
 	@Override
 	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		if(source.getLrExistence(this.name) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.name, true);
+			}
+			else {
+				source.setLrExistence(this.name, false);
+			}
+		}
 		char ch = source.getChar();
+		//if(this.charset.match(' '))
 		if(!this.charset.match(ch)) {
 			return source.foundFailure(this);
 		}
@@ -267,6 +284,22 @@ class PegLabel extends PegAtom {
 	}
 
 	@Override protected PegObject lazyMatch(PegObject parentNode, PegParserContext source) {
+		if(source.getLrExistence(this.name) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.name, true);
+			}
+			else {
+				source.setLrExistence(this.name, false);
+			}
+		}
+		else if(source.getLrExistence(this.symbol) == null) {
+			if(this.name.equals(this.symbol)) {
+				source.setLrExistence(this.symbol, true);
+			}
+			else {
+				source.setLrExistence(this.symbol, false);
+			}
+		}
 		PegObject left = source.parsePegNode(parentNode, this.symbol);
 		if(left.isFailure()) {
 			return left;
@@ -970,6 +1003,9 @@ class PegNewObject extends PegList {
 
 	@Override
 	public PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		if(source.getLrExistence(this.name) == null) {
+			source.setLrExistence(this.name, false);
+		}
 		PegObject leftNode = inNode;
 		int pos = source.getPosition();
 		int stack = source.getStackPosition(this);
@@ -1067,8 +1103,7 @@ class PegIndent extends PegAtom {
 	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		if(inNode.source != null) {
 			String indent = inNode.source.getIndentText(inNode.startIndex);
-			System.out.println("###" + indent + "###");
-			if(source.match(indent)) {
+			if(source.matchIndentSize(indent)) {
 				return inNode;
 			}
 			return new PegObject(null); //not match
@@ -1088,4 +1123,17 @@ class PegIndent extends PegAtom {
 	}
 
 }
+
+/*class LRExistenceMap {
+	UniMap<Boolean> lrExistenceMap = new UniMap<Boolean>();
+	
+	public Boolean getLrExistence(String key) {
+		return this.lrExistenceMap.get(key);
+	}
+	
+	public void setLrExistence(String key, Boolean value) {
+		lrExistenceMap.put(key, value);
+	}
+}*/
+
 

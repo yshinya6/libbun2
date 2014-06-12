@@ -25,6 +25,7 @@
 package org.libbun;
 
 import java.util.HashMap;
+import java.util.Iterator;
 
 public final class UniMap <T> {
 	final HashMap<String, T>	m;

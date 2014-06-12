@@ -7,7 +7,26 @@ public class PegParserContext extends SourceContext {
 	private int stackTop = 0;
 
 	private final UniMap<PegObject> memoMap = new UniMap<PegObject>();
-	private final UniMap<Memo> memoMap2 = new UniMap<Memo>();
+	private UniMap<Memo> memoMap2 = new UniMap<Memo>();
+	
+	private final UniMap<Boolean> lrExistenceMap = new UniMap<Boolean>();
+	
+	public Boolean getLrExistence(String key) {
+		return this.lrExistenceMap.get(key);
+	}
+	
+	public void setLrExistence(String key, Boolean value) {
+		lrExistenceMap.put(key, value);
+	}
+	
+	public void initMemo() {
+		this.memoMap2 = new UniMap<Memo>();
+	}
+	
+	public UniMap<Memo> getMemoMap() {
+		return memoMap2;
+	}
+	
 	int memoHit = 0;
 	int memoMiss = 0;
 	int memoSize = 0;
@@ -69,7 +88,30 @@ public class PegParserContext extends SourceContext {
 		int pos = this.getPosition();
 		String key = pattern + ":" + pos;
 		Memo m = this.memoMap2.get(key, null);
-		if(m != null) {
+		if(m == null) {
+			m = new Memo();
+			m.nextPosition = this.getPosition();
+			m.result = foundFailureNode;
+			this.memoMap2.put(key, m);
+			this.memoMiss = this.memoMiss + 1;
+			Peg e = this.parser.getPattern(pattern, this.getFirstChar());
+			PegObject ans = e.debugMatch(parentNode, this);
+			if(pos == this.getPosition() && !ans.isFailure()) {
+				this.memoMap2.remove(key);
+				return ans;
+			}
+			else {
+				m.result = ans;
+				m.nextPosition = this.getPosition();
+				if(getLrExistence(pattern)) {
+					return growLR(pattern, pos, m, parentNode);
+				}
+				else {
+					return ans;
+				}
+			}
+		}
+		else {
 			this.memoHit = this.memoHit + 1;
 			this.sourcePosition = m.nextPosition;
 			if(m.result == null) {
@@ -77,20 +119,21 @@ public class PegParserContext extends SourceContext {
 			}
 			return m.result;
 		}
-		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
-		if(e != null) {
-			PegObject node = e.debugMatch(parentNode, this);
-			m = new Memo();
-			m.nextPosition = this.getPosition();
-			if(node != parentNode) {
-				m.result = node;
+	}
+	
+	public final PegObject growLR(String pattern, int pos, Memo m, PegObject parentNode) {
+		while(true) {
+			this.setPosition(pos);
+			Peg e = this.parser.getPattern(pattern, this.getFirstChar());
+			PegObject ans = e.debugMatch(parentNode, this);
+			if(ans.isFailure() || this.getPosition() <= m.nextPosition){
+				break;
 			}
-			this.memoMiss = this.memoMiss + 1;
-			this.memoMap2.put(key, m);
-			return node;
+			m.result = ans;
+			m.nextPosition = this.getPosition();
 		}
-		Main._Exit(1, "undefined label " + pattern + " '" + this.getFirstChar() + "'");
-		return this.foundFailureNode;
+		this.setPosition(m.nextPosition);
+		return m.result;
 	}
 
 	public final PegObject parsePegNode2(PegObject parentNode, String pattern, boolean hasNextChoice) {
