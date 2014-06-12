@@ -141,8 +141,8 @@ MapContent
     = << (StringLiteral@ / Symbol@) _* ":" _* Expr@ #keyvalue>>;
 
 StringLiteral
-    = << '"' ('\\"' / !'"' .)* '"' #string >>
-    / << "'" ("\\'" / !"'" .)* "'" #string >>
+    = '"' << ('\\"' / !'"' .)* #string >> '"' 
+    / "'" << ("\\'" / !"'" .)* #string >> "'" 
     ;
 
 Params
