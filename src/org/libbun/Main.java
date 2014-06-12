@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -36,6 +37,9 @@ public class Main {
 
 	// --verbose
 	public static boolean EnableVerbose = false;
+
+	// --profile
+	public static boolean ProfileMode = false;
 	
 	// --verbose:peg
 	public static boolean PegDebuggerMode = false;
@@ -71,6 +75,9 @@ public class Main {
 			else if (argument.equals("-i")) {
 				ShellMode = true;
 			}
+			else if (argument.equals("--profile")) {
+				ProfileMode = true;
+			}
 			else if(argument.startsWith("--verbose")) {
 				EnableVerbose = true;
 //				if(argument.equals("--verbose:peg")) {
@@ -95,6 +102,7 @@ public class Main {
 		System.out.println("  --driver|-d  NAME       Driver");
 		System.out.println("  --out|-o  FILE          Output filename");
 		System.out.println("  --verbose               Printing Debug infomation");
+		System.out.println("  --profile               Show memory usage and parse time");
 		Main._Exit(0, Message);
 	}
 	
@@ -182,7 +190,7 @@ public class Main {
 		}
 		return new PythonDriver();
 	}
-	
+
 	public final static void main(String[] args) {
 		parseCommandArgument(args);
 		PegParser p = new PegParser();
@@ -207,6 +215,7 @@ public class Main {
 	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, PegSource source) {
 		try {
 			PegParserContext context =  gamma.root.newParserContext("main", source);
+			ParseProfileStart();
 			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
 			if(node.isFailure()) {
 				node.name = BunSymbol.PerrorFunctor;
@@ -221,6 +230,7 @@ public class Main {
 				System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
 				System.out.println();
 			}
+			ParseProfileStop();
 			if(driver != null) {
 				driver.startTransaction(null);
 				gamma.tryMatch(node);
@@ -230,6 +240,42 @@ public class Main {
 		}
 		catch (Exception e) {
 			PrintStackTrace(e, source.lineNumber);
+		}
+	}
+
+	static long Timer = 0;
+
+	private static void ParseProfileStart() {
+		if(ProfileMode) {
+			Timer = System.currentTimeMillis();
+		}
+	}
+
+	public static String getMemoryInfo() {
+		String info = "";
+		DecimalFormat format_mem =   new DecimalFormat("#,### KB");
+		DecimalFormat format_ratio = new DecimalFormat("##.#");
+		long free =  Runtime.getRuntime().freeMemory() / 1024;
+		long total = Runtime.getRuntime().totalMemory() / 1024;
+		long max =   Runtime.getRuntime().maxMemory() / 1024;
+		long used =  total - free;
+		double ratio = (used * 100 / (double)total);
+
+		info += "Total   = " + format_mem.format(total);
+		info += "\n";
+		info += "Free    = " + format_mem.format(total);
+		info += "\n";
+		info += "use     = " + format_mem.format(used) + " (" + format_ratio.format(ratio) + "%)";
+		info += "\n";
+		info += "can use = " + format_mem.format(max);
+		return info;
+	}
+
+	private static void ParseProfileStop() {
+		if(ProfileMode) {
+			System.out.println("Time    = " + (System.currentTimeMillis() - Timer) + " msec");
+			System.gc();
+			System.out.println(getMemoryInfo());
 		}
 	}
 
