@@ -9,27 +9,22 @@ public class SymbolTable {
 	public SymbolTable(Namespace namespace) {
 		this.root = namespace;
 	}
-
 	SymbolTable(Namespace root, PegObject node) {
 		this.root = root;
 		this.set(node);
 	}
-	
 	public void set(PegObject node) {
 		node.gamma = this;
 		this.scope = node;
 	}
-	
 	public final Namespace getNamespace() {
 		return this.root;
 	}
-	
 	public final void report(PegObject node, String errorType, String msg) {
 		if(this.root.driver != null) {
 			this.root.driver.report(node, errorType, msg);
 		}
 	}
-
 	public final SymbolTable getParentTable() {
 		if(this.scope != null) {
 			PegObject Node = this.scope.parent;
@@ -42,7 +37,6 @@ public class SymbolTable {
 		}
 		return null;
 	}
-
 	public final void setSymbol(String key, Functor f) {
 		if(this.symbolTable == null) {
 			this.symbolTable = new UniMap<Functor>();
@@ -51,7 +45,6 @@ public class SymbolTable {
 		f.storedTable = this;
 		//System.out.println("SET gamma " + this + ", name = " + key);
 	}
-
 	public final Functor getLocalSymbol(String name) {
 		if(this.symbolTable != null) {
 			return this.symbolTable.get(name, null);
@@ -69,7 +62,6 @@ public class SymbolTable {
 			}
 			gamma = gamma.getParentTable();
 		}
-		//		System.out.println("unknown key: " + key);
 		return null;
 	}
 
@@ -79,10 +71,9 @@ public class SymbolTable {
 		f.nextChoice = parent;
 		this.setSymbol(key, f);
 		if(Main.EnableVerbose) {
-			System.err.println("defined functor: " + f.name + ": " + f.funcType + " as " + key + " in " + this);
+			Main._PrintLine("defined functor: " + f.name + ": " + f.funcType + " as " + key + " in " + this);
 		}
 	}
-	
 	
 	public Functor getFunctor(PegObject node) {
 		String key = node.name + ":" + node.size();
@@ -98,63 +89,97 @@ public class SymbolTable {
 		return f;
 	}
 
-	public final boolean tryMatch(PegObject node) {
+	public final void tryMatch(PegObject node) {
 		if(node.matched == null) {
-			Functor cur = this.getFunctor(node);
+			Functor first = this.getFunctor(node);
+			Functor cur = first;
 			while(cur != null) {
 				boolean hasNextChoice = false;
 				if(cur.nextChoice != null) {
 					hasNextChoice = true;
 				}
-				//System.out.println("trying " + cur.funcType);
+				//System.out.println("trying " + cur + ", cur.nextChoice=" + cur.nextChoice);
 				cur.matchSubNode(node, hasNextChoice);
 				if(node.matched != null) {
-					return true;
+					return;
 				}
 				cur = cur.nextChoice;
 			}
-			return false;
+			node.matched = this.mismatchedFunctor(first);
 		}
-		return true;
+		return;
 	}
 
-	public final boolean checkTypeAt(PegObject node, int index, MetaType type, MetaType[] greekContext, boolean hasNextChoice) {
-		if(type == MetaType.UntypedType) {  // UntypedType does not invoke tryMatch()
+	Functor mismatchedFunctor(Functor f) {
+		class MismatchedTypeFunctor extends Functor {
+			Functor mismatched;
+			public MismatchedTypeFunctor(Functor mismatched) {
+				super("#unmatched", false, null);
+				this.mismatched = mismatched;
+			}
+			@Override
+			public void build(PegObject node, BunDriver driver) {
+				UniStringBuilder sb = new UniStringBuilder();
+				Functor f = this.mismatched;
+				if(f == null) {
+					driver.report(node, "error", "undefined " + node.name + ":" + node.size());
+					return;
+				}
+				for(int i = 0; f != null; i++) {
+					if(i > 0) {
+						sb.append(" ");
+					}
+					if(f.funcType == null) {;
+						sb.append("*");
+					}
+					else {
+						f.funcType.stringfy(sb);
+					}
+					f = f.nextChoice;
+				}
+				driver.report(node, "error", "mismatched " + node.name + " as " + sb.toString());
+			}
+
+		}
+		return new MismatchedTypeFunctor(f);
+	}
+
+	
+	public final boolean checkTypeAt(PegObject node, int index, BunType type, boolean hasNextChoice) {
+		if(type == BunType.UntypedType) {  // UntypedType does not invoke tryMatch()
 			return true;
 		}
 		if(index < node.size()) {
 			PegObject subnode = node.get(index);
-			if(!this.tryMatch(subnode)) {
-				if(Main.EnableVerbose) {
-					Main._PrintLine("mismatched: " + subnode.name + ":" + node.size() + " as " + type.getName());
-				}
-				return false;
-			}
-			MetaType valueType = subnode.getType(MetaType.UntypedType);
-			//System.out.println("index="+index + ", type="+type + ", valueType="+valueType + "node=" + node);
-			if(type.is(valueType, greekContext)) {
+			this.tryMatch(subnode);
+			if(type.accept(this, subnode, hasNextChoice)) {
 				return true;
 			}
-			subnode.typed = this.getTypeCoersion(valueType, type, hasNextChoice);
-			if(subnode.typed != null) {
-				return true;
-			}
+//			BunType valueType = subnode.getType(BunType.UntypedType);
+//			if(type.is(valueType)) {
+//				return true;
+//			}
+//			BunType transType = this.getTypeCoersion(valueType, type, hasNextChoice);
+//			if(transType != null) {
+//				node.typed = transType;
+//				return true;
+//			}
 			return false;
 		}
 		else {
-			MetaType valueType = this.getVoidType();
-			return type.is(valueType, greekContext);
+			BunType valueType = this.getVoidType();
+			return type.is(valueType);
 		}
 	}
 		
-	private MetaType getTypeCoersion(MetaType sourceType, MetaType targetType, boolean hasNextChoice) {
-		String key = MetaType.keyTypeRel("#coercion", sourceType, targetType);
+	private BunType getTypeCoersion(BunType sourceType, BunType targetType, boolean hasNextChoice) {
+		String key = BunType.keyTypeRel("#coercion", sourceType, targetType);
 		Functor f = this.getSymbol(key);
 		if(f != null) {
 			if(Main.EnableVerbose) {
 				Main._PrintLine("found type coercion from " + sourceType + " to " + targetType);
 			}
-			return MetaType.newTransType(key, sourceType, targetType, f);
+			return BunType.newTransType(key, sourceType, targetType, f);
 		}
 		if(hasNextChoice) {
 			return null;
@@ -163,7 +188,7 @@ public class SymbolTable {
 	}
 
 	class DefinedTypeFunctor extends Functor {
-		public DefinedTypeFunctor(String name, MetaType type) {
+		public DefinedTypeFunctor(String name, BunType type) {
 			super(name, false, type);
 		}
 
@@ -174,13 +199,13 @@ public class SymbolTable {
 
 		@Override
 		public void build(PegObject node, BunDriver driver) {
-			driver.pushType(node.getType(MetaType.UntypedType));
+			driver.pushType(node.getType(BunType.UntypedType));
 		}
 	}
 
 	class DefinedNameFunctor extends DefinedTypeFunctor {
 		public PegObject initValue;
-		public DefinedNameFunctor(String name, MetaType type, PegObject initValue) {
+		public DefinedNameFunctor(String name, BunType type, PegObject initValue) {
 			super(name, type);
 			this.initValue = initValue;
 		}
@@ -191,7 +216,7 @@ public class SymbolTable {
 	}
 
 	class DefinedGlobalNameFunctor extends DefinedNameFunctor {
-		public DefinedGlobalNameFunctor(String name, MetaType type, PegObject initValue) {
+		public DefinedGlobalNameFunctor(String name, BunType type, PegObject initValue) {
 			super(name, type, initValue);
 		}
 		@Override
@@ -201,7 +226,7 @@ public class SymbolTable {
 	}
 
 	class DefinedFunctionFunctor extends DefinedNameFunctor {
-		public DefinedFunctionFunctor(String name, MetaType type, PegObject funcNode, Functor defined) {
+		public DefinedFunctionFunctor(String name, BunType type, PegObject funcNode, Functor defined) {
 			super(name, type, funcNode);
 			this.nextChoice = defined;
 		}
@@ -211,7 +236,7 @@ public class SymbolTable {
 		}
 	}
 	
-	private Functor setName(boolean GlobalName, String name, PegObject nameNode, MetaType type, PegObject initValue) {
+	private Functor setName(boolean GlobalName, String name, PegObject nameNode, BunType type, PegObject initValue) {
 		Functor defined = this.getLocalSymbol(name);
 		if(defined != null && nameNode != null) {
 			this.report(nameNode, "notice", "duplicated name: " + name);
@@ -233,19 +258,19 @@ public class SymbolTable {
 		return defined;
 	}
 
-	public Functor setName(String name, MetaType type, PegObject initValue) {
+	public Functor setName(String name, BunType type, PegObject initValue) {
 		return this.setName(false, name, null, type, initValue);
 	}
 
-	public Functor setName(PegObject nameNode, MetaType type, PegObject initValue) {
+	public Functor setName(PegObject nameNode, BunType type, PegObject initValue) {
 		return this.setName(false, nameNode.getText(), nameNode, type, initValue);
 	}
 
-	public Functor setGlobalName(PegObject nameNode, MetaType type, PegObject initValue) {
+	public Functor setGlobalName(PegObject nameNode, BunType type, PegObject initValue) {
 		return this.setName(true, nameNode.getText(), nameNode, type, initValue);
 	}
 
-	public Functor setFunctionName(String name, MetaType type, PegObject node) {
+	public Functor setFunctionName(String name, BunType type, PegObject node) {
 		Functor defined = this.getSymbol(name);
 		defined = new DefinedFunctionFunctor(name, type, node, defined);
 		if(Main.EnableVerbose) {
@@ -264,7 +289,7 @@ public class SymbolTable {
 		return null;
 	}
 	
-	public Functor setType(MetaType type) {
+	public Functor setType(BunType type) {
 		String name = type.getName();
 		Functor defined = this.getSymbol(type.getName());
 		if(defined != null) {
@@ -275,7 +300,7 @@ public class SymbolTable {
 		return defined;
 	}
 
-	public MetaType getType(String name, MetaType defaultType) {
+	public BunType getType(String name, BunType defaultType) {
 		Functor f = this.getSymbol(name);
 		if(f != null) {
 			return f.getReturnType(defaultType);
@@ -289,29 +314,25 @@ public class SymbolTable {
 		return defaultType;
 	}
 
-	public MetaType getVoidType() {
+	public BunType getVoidType() {
 		return this.getType("void", null);  //FIXME
 	}
 
-	public MetaType getAnyType() {
+	public BunType getAnyType() {
 		return this.getType("any", null);   //FIXME
 	}
 	
 	
 	public void load(String fileName, BunDriver driver) {
-		BunSource source = Main.loadSource(fileName);
+		PegSource source = Main.loadSource(fileName);
 		this.root.newParserContext(null, source);
 		PegParserContext context =  this.root.newParserContext(null, source);
 		while(context.hasNode()) {
 			context.initMemo();
 			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), "TopLevel");
 			node.gamma = this;
-			if(this.tryMatch(node)) {
-				node.build(driver);
-			}
-			else {
-				driver.report(node, "error", "unmatched functor for " + node.name);
-			}
+			this.tryMatch(node);
+			node.build(driver);
 		}
 	}
 
@@ -327,7 +348,7 @@ public class SymbolTable {
 		@Override
 		protected void matchSubNode(PegObject node, boolean hasNextChoice) {
 			if(node.isEmptyToken()) {
-				node.typed = MetaType.newVarType(node, null);
+				node.typed = BunType.newVarType(node, null);
 			}
 			else {
 				String typeName = node.getText();
@@ -339,7 +360,7 @@ public class SymbolTable {
 
 		@Override
 		public void build(PegObject node, BunDriver driver) {
-			driver.pushType(node.getType(MetaType.UntypedType));
+			driver.pushType(node.getType(BunType.UntypedType));
 		}
 	}
 
@@ -367,9 +388,23 @@ public class SymbolTable {
 	public void loadBunModel(String fileName, BunDriver driver) {
 		this.addFunctor(new TypeFunctor("#type"));
 		this.addFunctor(new NameFunctor("#name"));
-		this.addFunctor(new BunFunctor("#bun"));  // #bun
+		this.addFunctor(new BunTypeDefFunctor("#bun.typedef"));
+		this.addFunctor(new BunTemplateFunctor("#bun"));
 		this.addFunctor(new ErrorFunctor());
 		this.load(fileName, driver);
+	}
+	public void addUpcast(BunType fromType, BunType toType) {
+		class UpcastFunctor extends Functor {
+			public UpcastFunctor(BunType fromType, BunType toType) {
+				super("#coercion", false, BunType.newFuncType(fromType, toType));
+			}
+			@Override
+			public void build(PegObject node, BunDriver driver) {
+				driver.pushUpcastNode(this.funcType.getReturnType(), node);
+			}			
+		}
+		UpcastFunctor f = new UpcastFunctor(fromType, toType);
+		this.addFunctor(f);
 	}
 
 }

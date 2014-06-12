@@ -12,7 +12,7 @@ public abstract class BunDriver {
 	public abstract void pushUndefinedName(PegObject node, String name);
 	public abstract void pushApplyNode(PegObject node, String name);
 
-	public abstract void pushType(MetaType type);
+	public abstract void pushType(BunType type);
 
 	// Template Engine
 	public void pushNode(PegObject node) {
@@ -21,7 +21,7 @@ public abstract class BunDriver {
 			gamma.tryMatch(node);
 		}
 		if(node.matched != null) {
-			MetaType t = node.getType(MetaType.UntypedType);
+			BunType t = node.getType(BunType.UntypedType);
 			t.build(node, this);
 		}
 		else {
@@ -33,6 +33,10 @@ public abstract class BunDriver {
 		Main._PrintLine("Driver pushed unknown node: " + node.name + "\n" + node + "\n");
 	}
 
+	public void pushUpcastNode(BunType castType, PegObject node) {
+		this.pushNode(node);
+	}
+	
 	protected UniMap<DriverCommand> commandMap = new UniMap<DriverCommand>();
 	
 	public boolean hasCommand(String cmd) {
@@ -48,12 +52,16 @@ public abstract class BunDriver {
 		command.invoke(this, node, params);
 	}
 
-	public abstract void pushNewLine();
 	public abstract void pushCode(String text);
 	
 	public void report(PegObject node, String errorType, String msg) {
-		System.err.println(node.source.formatErrorMessage(errorType, msg));
+		System.err.println(node.formatSourceMessage(errorType, msg));
 	}
+
+	public void performChecker(String checkerName, SymbolTable gamma, PegObject node) {
+		return;
+	}
+
 
 }
 
@@ -83,11 +91,6 @@ abstract class SourceDriver extends BunDriver {
 	public void endTransaction() {
 		this.builder.show();
 		this.builder = null;
-	}
-
-	@Override
-	public void pushNewLine() {
-		this.builder.appendNewLine();
 	}
 
 	@Override
@@ -143,7 +146,7 @@ abstract class SourceDriver extends BunDriver {
 	class TypeofCommand extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			driver.pushType(node.getType(MetaType.UntypedType));
+			driver.pushType(node.getType(BunType.UntypedType));
 		}
 	}
 
@@ -156,13 +159,13 @@ abstract class SourceDriver extends BunDriver {
 			}
 			if(node.is("#block")) {
 				for(int i = 0; i < node.size(); i++) {
-					driver.pushNewLine();
+					builder.appendNewLine();
 					driver.pushNode(node.get(i));
 					driver.pushCode(Separator);
 				}
 			}
 			else {
-				driver.pushNewLine();
+				builder.appendNewLine();
 				driver.pushNode(node);
 				driver.pushCode(Separator);
 			}

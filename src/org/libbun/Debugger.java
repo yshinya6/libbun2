@@ -5,7 +5,7 @@ public class Debugger extends BunDriver {
 	// Template Engine
 	public void pushNode(PegObject node) {
 		if(node.isFailure() || node.is("#error")) {
-			String msg = node.getTextAt(0, "syntax error by peg " + node.source.createdPeg);
+			String msg = node.textAt(0, "syntax error by peg " + node.createdPeg);
 			this.report(node, "error", msg);
 		}
 		else {
@@ -39,15 +39,11 @@ public class Debugger extends BunDriver {
 	}
 
 	@Override
-	public void pushNewLine() {
-	}
-
-	@Override
 	public void pushCode(String text) {
 	}
 
 	@Override
-	public void pushType(MetaType type) {
+	public void pushType(BunType type) {
 	}
 
 	@Override

@@ -1,31 +1,29 @@
 package org.libbun;
 
 public final class PegParser {
-	public SourceLogger   logger;
 	UniMap<Peg>           pegMap;
 	UniMap<Peg>           pegCache = null;
 	UniMap<String>        objectLabelMap = null;
 	boolean enableMemo = false;
 	boolean lrExistence = false;
 
-	public PegParser(SourceLogger logger) {
-		this.logger = logger;
+	public PegParser() {
 		this.initParser();
 	}
 	public void initParser() {
 		this.pegMap = new UniMap<Peg>();
 	}
 
-	public PegParserContext newContext(BunSource source, int startIndex, int endIndex) {
+	public PegParserContext newContext(PegSource source, int startIndex, int endIndex) {
 		return new PegParserContext(this, source, startIndex, endIndex);
 	}
 
-	public PegParserContext newContext(BunSource source) {
+	public PegParserContext newContext(PegSource source) {
 		return new PegParserContext(this, source, 0, source.sourceText.length());
 	}
 
 	public final boolean loadPegFile(String fileName) {
-		BunSource source = Main.loadSource(fileName);
+		PegSource source = Main.loadSource(fileName);
 		PegParserParser p = new PegParserParser(this, source);
 		while(p.hasRule()) {
 			p.parseRule();
@@ -38,7 +36,7 @@ public final class PegParser {
 		if(Main.PegDebuggerMode) {
 			System.out.println("importing " + fileName);
 		}
-		PegParser p = new PegParser(null);
+		PegParser p = new PegParser();
 		p.loadPegFile(fileName);
 		UniArray<String> list = p.makeList(label);
 		String prefix = "";

@@ -1,25 +1,23 @@
 package org.libbun;
 
-public class BunSource {
-	public final SourceLogger logger;
+public class PegSource {
 	String fileName;
 	int    lineNumber;
 	public String  sourceText;
 
-	public BunSource(String fileName, int lineNumber, String sourceText, SourceLogger logger) {
+	public PegSource(String fileName, int lineNumber, String sourceText) {
 		this.fileName = fileName;
 		this.lineNumber = lineNumber;
 		this.sourceText = sourceText;
-		this.logger = logger;
 	}
 
-	public SourceToken newToken(Peg createdPeg, int startIndex, int endIndex) {
-		return new SourceToken(createdPeg, this, startIndex, endIndex);
-	}
-
-	public SourceToken newToken(Peg createdPeg, int startIndex, int endIndex, String token) {
-		return new SourceToken(createdPeg, this, startIndex, endIndex, token);
-	}
+//	public SourceToken newToken(Peg createdPeg, int startIndex, int endIndex) {
+//		return new SourceToken(createdPeg, this, startIndex, endIndex);
+//	}
+//
+//	public SourceToken newToken(Peg createdPeg, int startIndex, int endIndex, String token) {
+//		return new SourceToken(createdPeg, this, startIndex, endIndex, token);
+//	}
 
 	public final String substring(int startIndex, int endIndex) {
 		return this.sourceText.substring(startIndex, endIndex);
@@ -64,6 +62,19 @@ public class BunSource {
 		return length;
 
 	}
+	
+	public final String getIndentText(int fromPosition) {
+		int startPosition = this.getLineStartPosition(fromPosition);
+		int i = startPosition;
+		for(; i <= fromPosition; i++) {
+			char ch = this.charAt(i);
+			if(ch != ' ' && ch != '\t') {
+				break;
+			}
+		}
+		return this.substring(startPosition, i);
+	}
+
 
 	public final int getLineStartPosition(int fromPostion) {
 		String s = this.sourceText;

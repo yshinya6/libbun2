@@ -12,10 +12,10 @@ Spacing
   = [ \t]+
   ;
 _ 
-  = ([ \t]+ / Comment)*
+  = ([ \t]+ / Comment / '')*
   ;
 NL 
-  = ([ \t\n]+ / Comment)*
+  = ([ \t\n]+ / Comment/ '')*
   ;
 Comment    
   = '/*' (!'*/' .)* '*/' 

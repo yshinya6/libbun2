@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.DecimalFormat;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -43,6 +42,9 @@ public class Main {
 
 	private static void parseCommandArgument(String[] args) {
 		int index = 0;
+//		Function<String,String> f = (String x) -> String {
+//			return x;
+//		}
 		while (index < args.length) {
 			String argument = args[index];
 			if (!argument.startsWith("-")) {
@@ -159,78 +161,102 @@ public class Main {
 	//		return false;
 	//	}
 
+	private final static UniMap<Class<?>> driverMap = new UniMap<Class<?>>();
+	static {
+		driverMap.put("py", PythonDriver.class);
+		driverMap.put("python", PythonDriver.class);
+//		driverMap.put("jvm", JvmDriver.class);
+//		driverMap.put("jvm-debug", DebugableJvmDriver.class);
+	}
 
 	private static BunDriver loadDriver(String driverName) {
 		if(PegDebuggerMode) {
 			return new Debugger();
 		}
-		BunDriver driver = new PythonDriver();
-		return driver;
+		try {
+			return (BunDriver) driverMap.get(driverName, PythonDriver.class).newInstance();
+		}
+		catch(Throwable t) {
+			System.err.println("cannot load driver: " + driverName);
+			System.err.println("instead load python driver");
+		}
+		return new PythonDriver();
 	}
 	
 	public final static void main(String[] args) {
 		parseCommandArgument(args);
-		PegParser p = new PegParser(null);
+		PegParser p = new PegParser();
 		p.loadPegFile(LanguagePeg);
 		BunDriver driver = loadDriver(DriverName);
 		Namespace gamma = new Namespace(p, driver);
 		driver.initTable(gamma);
-		performShell(gamma, driver);
+		if(InputFileName != null) {
+			loadScript(gamma, driver, InputFileName);
+		}
+		else {
+			performShell(gamma, driver);
+		}
+	}
+
+	private static void loadScript(Namespace gamma, BunDriver driver, String fileName) {
+		String startPoint = "TopLevel";
+		PegSource source = Main.loadSource(fileName);
+		parseLine(gamma, driver, startPoint, source);
+	}
+
+	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, PegSource source) {
+		try {
+			PegParserContext context =  gamma.root.newParserContext("main", source);
+			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
+			if(node.isFailure()) {
+				node.name = BunSymbol.PerrorFunctor;
+			}
+			gamma.set(node);
+			if(PegDebuggerMode) {
+				System.out.println("parsed:\n" + node.toString());
+				if(context.hasChar()) {
+					System.out.println("** uncosumed: '" + context + "' **");
+				}
+				System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
+				System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
+				System.out.println();
+			}
+			if(driver != null) {
+				driver.startTransaction(null);
+				gamma.tryMatch(node);
+				node.matched.build(node, driver);
+				driver.endTransaction();
+			}
+		}
+		catch (Exception e) {
+			PrintStackTrace(e, source.lineNumber);
+		}
 	}
 
 	public final static void performShell(Namespace gamma, BunDriver driver) {
 		Main._PrintLine(ProgName + Version + " (" + CodeName + ") on " + Main._GetPlatform());
 		Main._PrintLine(Copyright);
 		int linenum = 1;
-		String Line = null;
-		while ((Line = readMultiLine(">>> ", "    ")) != null) {
+		String line = null;
+		while ((line = readMultiLine(">>> ", "    ")) != null) {
 			String startPoint = "TopLevel";
 			if(PegDebuggerMode) {
-				if(Line.startsWith("?")) {
-					int loc = Line.indexOf(" ");
+				if(line.startsWith("?")) {
+					int loc = line.indexOf(" ");
 					if(loc > 0) {
-						startPoint = Line.substring(1, loc);
-						Line = Line.substring(loc+1);
+						startPoint = line.substring(1, loc);
+						line = line.substring(loc+1);
 					}
 					else {
 						PegParser p = gamma.root.getParser("main");
-						p.show(Line.substring(1));
+						p.show(line.substring(1));
 						startPoint = null;
 					}
 				}
 			}
 			if(startPoint != null) {
-				try {
-					BunSource source = new BunSource("(stdin)", linenum, Line, null);
-					PegParserContext context =  gamma.root.newParserContext("main", source);
-					PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
-					if(node.isFailure()) {
-						node.name = BunSymbol.PerrorFunctor;
-					}
-					gamma.set(node);
-					if(PegDebuggerMode) {
-						System.out.println("parsed:\n" + node.toString());
-						if(context.hasChar()) {
-							System.out.println("** uncosumed: '" + context + "' **");
-						}
-						System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
-						System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
-						System.out.println();
-					}
-					if(driver != null) {
-						driver.startTransaction(null);
-						if(gamma.tryMatch(node)) {
-							node.matched.build(node, driver);
-						}
-						else {
-							driver.pushUnknownNode(node);
-						}
-						driver.endTransaction();
-					}
-				}
-				catch (Exception e) {
-					PrintStackTrace(e, linenum);
-				}
+				PegSource source = new PegSource("(stdin)", linenum, line);
+				parseLine(gamma, driver, startPoint, source);
 			}
 			linenum = linenum + 1;
 		}
@@ -309,7 +335,7 @@ public class Main {
 
 	// file
 
-	public final static BunSource loadSource(String fileName) {
+	public final static PegSource loadSource(String fileName) {
 		//ZLogger.VerboseLog(ZLogger.VerboseFile, "loading " + FileName);
 		InputStream Stream = Main.class.getResourceAsStream("/" + fileName);
 		if (Stream == null) {
@@ -329,7 +355,7 @@ public class Main {
 				builder.append("\n");
 				line = reader.readLine();
 			}
-			return new BunSource(fileName, 1, builder.toString(), null);
+			return new PegSource(fileName, 1, builder.toString());
 		}
 		catch(IOException e) {
 			e.printStackTrace();
@@ -439,8 +465,8 @@ public class Main {
 		/*"Alpha"*/ "\u03B1", "\u03B2", "\u03B3"
 	};
 
-	public final static MetaType[] _NewTypeArray(int size) {
-		return new MetaType[size];
+	public final static BunType[] _NewTypeArray(int size) {
+		return new BunType[size];
 	}
 
 	public final static PegObject[] _NewPegObjectArray(int size) {

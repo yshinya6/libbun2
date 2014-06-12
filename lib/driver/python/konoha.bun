@@ -1,29 +1,44 @@
 
-bun boolean: type {
+//typedef void;
+typedef NullType;
+typedef bool;
+typedef int;
+typedef float;
+typedef unicode;
+
+// type
+
+bun #Tvoid(): void {
+	void
+}
+
+bun #Tboolean(): bool {
 	bool
 }
 
-bun int: type {
+bun #Tint(): int {
 	int
 }
 
-bun float: type {
+bun #Tdouble(): float {
 	float
 }
 
-bun String: type {
+bun #TString(): unicode {
 	unicode
 }
 
-bun #null(): alpha {
+// literal
+
+bun #null(): NullType {
 	None
 }
 
-bun #true(): boolean {
+bun #true(): bool {
 	True
 }
 
-bun #false(): boolean {
+bun #false(): bool {
 	False
 }
 
@@ -35,7 +50,7 @@ bun #float(): float {
 	${textof this}
 }
 
-bun #string(): String {
+bun #string(): unicode {
 	u"${textof this}"
 }
 
@@ -47,11 +62,11 @@ bun #conv(x: int): float {
 	float(${x})
 }
 
-bun #group(expr: alpha) :alpha {
+bun<T> #group(expr :T) :T {
 	(${expr})
 }
 
-bun #not(x: boolean) :boolean {
+bun #not(x: bool) :bool {
 	!${x}
 }
 
@@ -75,87 +90,83 @@ bun #compl(x: int) :int {
 	~${x}
 }
 
-bun #and(x: boolean, y: boolean): boolean {
+bun #and(x: bool, y: bool): bool {
 	${x} and ${y}
 }
 
-bun #or(x: boolean, y: boolean): boolean {
+bun #or(x: bool, y: bool): bool {
 	${x} or ${y}
 }
 
-bun #assign(x: alpha, y: alpha): void {
+bun<T> #assign(x: T, y: T): void {
 	${x} = ${y}
 }
 
-bun #add(x: alpha, y: alpha) :alpha {
+bun<T> #add(x: T, y: T) :T {
 	(${x} + ${y})
 }
 
-bun #add(x: String, y: any): String {
+bun #add(x: unicode, y: any): unicode {
 	(${x} + ustr(${y}))
 }
 
-bun #add(x: String, y: String): String {
+bun #add(x: unicode, y: unicode): unicode {
 	${x} + ${y}
 }
 
-bun #sub(x: alpha, y: alpha): alpha {
+bun<T> #sub(x: T, y: T): T {
 	(${x} - ${y})
 }
 
-bun #mul(x: alpha, y: alpha): alpha {
+bun<T> #mul(x: T, y: T): T {
 	(${x} * ${y})
 }
 
-bun #div(x: alpha, y: alpha): alpha {
+bun<T> #div(x: T, y: T): T {
 	(${x} / ${y})
 }
 
-bun #mod(x: alpha, y: alpha): alpha {
+bun<T> #mod(x: T, y: T): T {
 	(${x} % ${y})
 }
 
-bun #eq(x: alpha, y: alpha): boolean {
+bun<T> #eq(x: T, y: T): bool {
 	(${x} == ${y})
 }
 
-bun #noteq(x: alpha, y: alpha): boolean {
+bun<T> #noteq(x: T, y: T): bool {
 	(${x} != ${y})
 }
 
-bun #lt(x: alpha, y: alpha): boolean {
+bun<T> #lt(x: T, y: T): bool {
 	(${x} < ${y})
 }
 
-bun #lte(x: alpha, y: alpha): boolean {
+bun<T> #lte(x: T, y: T): bool {
 	(${x} <= ${y})
 }
 
-bun #gt(x: alpha, y: alpha): boolean {
+bun<T> #gt(x: T, y: T): bool {
 	(${x} > ${y})
 }
 
-bun #gte(x: alpha, y: alpha): boolean {
+bun<T> #gte(x: T, y: T): bool {
 	(${x} >= ${y})
 }
 
-bun #apply(f, args) {
-${typecheck}
+bun #apply(f, args) && typecheck() {
 	${f}(${list args ", "})
 }
 
-bun #let(name, type, value): void {
-${type name}
-	${typeof value} ${name} = ${value}
+bun #let(name, type, value): void && letvar() {
+	${value} ${name} = ${value}
 }
 
-bun #var(name, type, value): void {
-${type name}
+bun #var(name, type, value): void && letvar() {
 	${name} = ${value}
 }
 
-bun #function(name, params, rtype, block): void {
-${type name}
+bun #function(name, params, rtype, block): void && letvar() {
 	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
 }
 
@@ -163,27 +174,24 @@ bun #param(name, type): void {
 	${name}
 }
 
-bun #block(*): void {
-${typecheck}
+bun #block(*): void && typecheck() {
 	${statement this}
 }
 
-bun #if(x: boolean, then: void): void {
+bun #if(x: bool, then: void): void {
 	if ${x}: ${begin} ${statement then} ${end}
 }
 
-bun #if(x: boolean, then: void, else: void): void {
+bun #if(x: bool, then: void, else: void): void {
 	if ${x}: ${begin} ${statement then} ${end}
 	else: ${begin} ${statement else} ${end}
 }
 
-bun #return(): void {
-${typecheck}
+bun #return(): void && typecheck() {
 	return
 }
 
-bun #return(expr): void {
-${typecheck}
+bun #return(expr): void && typecheck() {
 	return ${expr}
 }
 

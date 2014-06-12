@@ -12,7 +12,7 @@ Spacing
   = [ \t]+
   ;
 _ 
-  = ([ \t\n]+ / Comment)*
+  = ([ \t\n]+ / Comment / '')*
   ;
 Comment    
   = '/*' (!'*/' .)* '*/' 
@@ -37,7 +37,7 @@ EOL
   ;
 
 FuncDecl
-  = <<Type@2 Spacing Name@0 _ Params@1 _ Block@3  #function>>
+  = <<Type@2 Spacing Name@0 _ Params@1 _ (Block@3 / EOS ) #function >>
   ;
 
 Params

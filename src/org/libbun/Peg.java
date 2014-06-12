@@ -7,7 +7,7 @@ public abstract class Peg {
 	String    name     = null;
 	boolean   debug    = false;
 
-	BunSource source = null;
+	PegSource source = null;
 	int       sourcePosition = 0;
 	
 	Peg(String leftLabel) {
@@ -103,7 +103,7 @@ public abstract class Peg {
 		return sb.toString();
 	}
 
-	void setSource(BunSource source, int sourcePosition) {
+	void setSource(PegSource source, int sourcePosition) {
 		this.source = source;
 		this.sourcePosition = sourcePosition;
 	}
@@ -705,10 +705,12 @@ class PegSequence extends PegList {
 
 	@Override
 	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
+		int stackPosition = source.getStackPosition(this);
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
 			inNode = e.debugMatch(inNode, source);
 			if(inNode.isFailure()) {
+				source.popBack(stackPosition, Peg._BackTrack);
 				return inNode;
 			}
 		}
@@ -789,22 +791,19 @@ class PegChoice extends PegList {
 	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		int stackPosition = source.getStackPosition(this);
 		PegObject node = inNode;
-		SourceToken stackedLocation = null;
-		if(this.hasCatch) {
-			stackedLocation = source.stackFailureLocation(null);
-		}
+		Peg errorPeg = source.storeFailurePeg();
+		int errorPosition = source.storeFailurePosition();
 		for(int i = 0; i < this.size(); i++) {
 			Peg e  = this.get(i);
 			if(e instanceof PegCatch) {
 				node = source.newPegObject("#error");
-				node.source = source.stackFailureLocation(stackedLocation);
+				node.createdPeg = source.storeFailurePeg();
+				node.startIndex = source.storeFailurePosition();
+				node.endIndex = source.storeFailurePosition();
 				if(Main.PegDebuggerMode) {
-					Main._PrintLine(node.source.formatErrorMessage("error: " + this.name, " by " + node.source.createdPeg));
+					Main._PrintLine(node.formatSourceMessage("error: " + this.name, " by " + node.createdPeg));
 				}
-//				System.out.println("@" + this);
-//				System.out.println("node.source=" + node.source.startIndex + ", " + node.source.endIndex);
-//				System.out.println("node.source.peg=" + node.source.createdPeg);
-//				System.out.println("node.source: " + node.source.getText());
+				source.restoreFailure(errorPeg, errorPosition);
 				return e.debugMatch(node, source);
 			}
 			node = e.debugMatch(inNode, source);
@@ -812,9 +811,6 @@ class PegChoice extends PegList {
 				break;
 			}
 			source.popBack(stackPosition, Peg._BackTrack);
-		}
-		if(stackedLocation != null) {
-			source.stackFailureLocation(stackedLocation);
 		}
 		return node;
 	}
@@ -1106,11 +1102,12 @@ class PegIndent extends PegAtom {
 	@Override
 	protected PegObject lazyMatch(PegObject inNode, PegParserContext source) {
 		if(inNode.source != null) {
-			String indent = inNode.source.getIndentText();
+			String indent = inNode.source.getIndentText(inNode.startIndex);
 			System.out.println("###" + indent + "###");
 			if(source.match(indent)) {
 				return inNode;
 			}
+			return new PegObject(null); //not match
 		}
 		return inNode;
 		//return source.newErrorNode(this, "mismatched indent", hasNextChoice);

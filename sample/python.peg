@@ -1,0 +1,154 @@
+
+TopLevel
+    = << Stmt@+ #stmts>>;
+
+Stmt
+    = IfStmt EOS?
+    / WhileStmt EOS?
+    / ForStmt EOS?
+    / ReturnStmt EOS?
+    / ImportStmt EOS?
+    / BreakStmt EOS?
+    / ContinueStmt EOS?
+    / DefineFunction EOS?
+    / DefineClass EOS?
+    / Print EOS?
+    / With EOS?
+    / Expr EOS?
+    / EOS+
+    ;
+
+EOS
+    = ";"
+    / NL
+    / "#" (!'\n' .)* '\n'
+    ;
+
+With
+    = <<"with" WS+ Expr@ WS+ "as" WS+ Symbol@ WS* ":" NL+ Block@ #with>>
+    ;
+
+Print
+    = <<"print" WS+ Expr@ #print >>
+    ;
+
+IfStmt
+    = <<"if" WS+ Expr@ WS* ":" NL+ Block@ (indent _* "else" WS* ":" NL+ Block@)? _* #if>>
+    ;
+
+WhileStmt
+    = <<"while" WS+ Expr@ WS* ":" NL+ Block@ #while>>
+    ;
+
+ForStmt
+    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" NL+ Block@ #for>>
+    ;
+
+ReturnStmt
+    = <<"return" WS+ Expr@ #return>>
+    ;
+
+ImportStmt
+    = <<"import" WS* ImportSymbol@ (WS* "," WS* Symbol@)* #import>>
+    / <<"from" WS* Symbol@ WS* "import" WS* ImportSymbol@ (WS* "," WS* ImportSymbol@)* #fromImport>>
+    ;
+
+DefineFunction
+    = <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>>
+    ;
+
+DefineClass
+    = <<"class" WS+ Symbol@ (WS* "(" (Symbol@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>>
+    ;
+
+BreakStmt
+    = <<"break" #break>>
+    ;
+
+ContinueStmt
+    = <<"continue" #continue>>
+    ;
+
+ReturnStmt
+    = <<"return" WS+ Expr@ #return>>
+    ;
+
+Block
+    = << (indent WS* Stmt@ NL?)+ #block>>;
+
+ClassBlock
+    = << (indent WS* ClassStmt@ NL?)+ #block>>;
+
+ClassStmt
+    = DefineFunction
+    / Assignment
+    ;
+
+Expr
+    = Expr <<@ WS* Op@  WS* Expr@ >>
+    / Expr <<@ "[" WS* Expr@ WS* "]" #get>>
+    / Expr <<@ "." Expr@ #field>>
+    / Expr <<@ "(" _* Args@ _* ")" #call>>
+    / Expr <<@ _* '=' _* Expr@ #assign>>
+    / Symbol
+    / StringLiteral
+    / Integer
+    / ArrayLiteral
+    / MapLiteral
+    ;
+
+Assignment
+    = Expr;
+
+ArrayLiteral
+    = << "[" _* Expr@? (_* "," _* Expr@)* _* "]" #array>>
+    / << "[" _* Expr@ _* "for" _* Symbol@ _* "in" _* Expr@ (_* "if" _* Expr@)? _* "]" #listComprehension >>
+    ;
+
+MapLiteral
+    = << "{" _* MapContent@? (_* "," _* MapContent@ )* _* "}" #map>>;
+
+MapContent
+    = << (StringLiteral@ / Symbol@) _* ":" _* Expr@ #keyvalue>>;
+
+StringLiteral
+    = << '"' ('\\"' / !'"' .)* '"' #string >>
+    / << "'" ("\\'" / !"'" .)* "'" #string >>
+    ;
+
+Params
+    = << Symbol@? (_* "," _* Symbol@)* _* #params>>;
+
+Args
+    = << Expr@? (_* "," _* Expr@)* _* #args>>;
+
+Op
+    = '+' #add / '-' #sub / '*' #mul / '/' #div / '%' #mod / '<=' #lte / '<' #lt / '>=' #gte / '>' #gt;
+
+Integer
+    = << ('-' WS* / '+' WS*)?[0-9]+ #integer>>
+    ;
+
+Symbol
+    = << [a-zA-Z_][a-zA-Z0-9_]* #symbol>>
+    ;
+
+Asterisk
+    = << '*' #asterisk>>
+    ;
+
+ImportSymbol
+    = Symbol@
+    / Asterisk@
+    ;
+
+WS
+    = [ \t];
+
+NL
+    = [\n];
+
+_
+    = WS
+    / NL
+    ;
