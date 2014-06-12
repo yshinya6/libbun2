@@ -48,7 +48,7 @@ public class Functor {
 				return;
 			}
 		}
-		node.typed = this.returnType(varFuncType);
+		this.returnType(varFuncType).typed(gamma, node, true);
 		node.matched = this;
 //		if(this.funcType instanceof FunctorType) {
 //			((FunctorType)this.funcType).check(gamma, node, gamma.root.driver);

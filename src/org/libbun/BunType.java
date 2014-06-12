@@ -377,7 +377,7 @@ abstract class LangType extends BunType {
 		return this.is(nodeType) || this.checkCoercion(gamma, node, nodeType, hasNextChoice);
 	}
 	public void typed(SymbolTable gamma, PegObject node, boolean flag) {
-		if(node.typed != null) {
+		if(node.typed == null) {
 			node.typed = this;
 		}
 	}
