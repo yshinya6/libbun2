@@ -33,20 +33,18 @@ public class JvmDriver extends BunDriver {
 
 	@Override
 	public void initTable(Namespace gamma) {
-		gamma.setType(BunType.newValueType("int", long.class));
-		this.classMap.put("int", long.class);
-		gamma.setType(BunType.newValueType("float", double.class));
-		this.classMap.put("float", double.class);
-		gamma.setType(BunType.newValueType("bool", boolean.class));
-		this.classMap.put("bool", boolean.class);
-		gamma.setType(BunType.newValueType("String", String.class));
-		this.classMap.put("String", String.class);
-		gamma.setType(BunType.newVoidType("void", Void.class));
-		this.classMap.put("void", Void.class);
-		gamma.setType(BunType.newAnyType("any", Object.class));
-		this.classMap.put("any", Object.class);
-		gamma.setType(BunType.newGreekType("alpha", 0, null));
-		gamma.setType(BunType.newGreekType("beta", 0, null));
+//		gamma.setType(BunType.newValueType("int", long.class));
+//		this.classMap.put("int", long.class);
+//		gamma.setType(BunType.newValueType("float", double.class));
+//		this.classMap.put("float", double.class);
+//		gamma.setType(BunType.newValueType("bool", boolean.class));
+//		this.classMap.put("bool", boolean.class);
+//		gamma.setType(BunType.newValueType("String", String.class));
+//		this.classMap.put("String", String.class);
+//		gamma.setType(BunType.newVoidType("void", Void.class));
+//		this.classMap.put("void", Void.class);
+//		gamma.setType(BunType.newAnyType("any", Object.class));
+//		this.classMap.put("any", Object.class);
 		KonohaTypeChecker.initDriver(this);
 		gamma.loadBunModel("lib/driver/jvm/konoha.bun", this);
 	}

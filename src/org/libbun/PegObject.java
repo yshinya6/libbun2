@@ -249,4 +249,15 @@ public class PegObject {
 			driver.pushUnknownNode(this);
 		}
 	}
+
+	
+	public boolean isVariable() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	public void setVariable(boolean flag) {
+	}
+
+
 }
