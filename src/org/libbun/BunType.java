@@ -740,7 +740,7 @@ class TransType extends BunType {
 	}
 	@Override
 	public void typed(SymbolTable gamma, PegObject node, boolean flag) {
-		if(node.typed != null) {
+		if(node.typed == null) {
 			node.typed = this;
 		}
 	}
