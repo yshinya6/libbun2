@@ -165,7 +165,7 @@ public class Main {
 	static {
 		driverMap.put("py", PythonDriver.class);
 		driverMap.put("python", PythonDriver.class);
-//		driverMap.put("jvm", JvmDriver.class);
+		driverMap.put("jvm", JvmDriver.class);
 //		driverMap.put("jvm-debug", DebugableJvmDriver.class);
 	}
 

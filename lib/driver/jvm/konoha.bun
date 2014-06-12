@@ -4,6 +4,10 @@ typedef float
 typedef String
 
 
+bun #block(*): void {
+	${statement this}
+}
+
 bun #integer(): int {
 	${PUSH_INT this}
 }
