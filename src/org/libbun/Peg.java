@@ -382,12 +382,12 @@ class PegOneMore extends PegUnary {
 			if(node.isFailure()) {
 				break;
 			}
-			if(node != prevNode) {
-				this.warning("ignored result of " + this.innerExpr);
-			}
+//			if(node != prevNode) {
+//				this.warning("ignored result of " + this.innerExpr);
+//			}
 			prevNode = node;
 			if(!(startPosition < context.getPosition())) {
-				this.warning("avoid infinite loop " + this);
+//				this.warning("avoid infinite loop " + this);
 				break;
 			}
 			count = count + 1;
@@ -410,20 +410,32 @@ class PegZeroMore extends PegOneMore {
 		super(leftLabel, e, 0);
 	}
 	@Override
+	protected Peg clone(String ns) {
+		Peg e = this.innerExpr.clone(ns);
+		if(e != this) {
+			return new PegZeroMore(this.name, e);
+		}
+		return this;
+	}
+	@Override
+	protected String getOperator() {
+		return "*";
+	}
+	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitZeroMore(this);
 	}
 }
 
-class PegAndPredicate extends PegUnary {
-	PegAndPredicate(String leftLabel, Peg e) {
+class PegAnd extends PegUnary {
+	PegAnd(String leftLabel, Peg e) {
 		super(leftLabel, e, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegAndPredicate(this.name, e);
+			return new PegAnd(this.name, e);
 		}
 		return this;
 	}
@@ -445,15 +457,15 @@ class PegAndPredicate extends PegUnary {
 	}
 }
 
-class PegNotPredicate extends PegUnary {
-	PegNotPredicate(String leftLabel, Peg e) {
+class PegNot extends PegUnary {
+	PegNot(String leftLabel, Peg e) {
 		super(leftLabel, e, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegNotPredicate(this.name, e);
+			return new PegNot(this.name, e);
 		}
 		return this;
 	}

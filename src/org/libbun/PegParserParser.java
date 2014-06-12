@@ -162,14 +162,14 @@ public class PegParserParser extends SourceContext {
 		if(this.match('&')) {
 			right = this.parseSingleExpr(leftLabel);
 			if(right != null) {
-				right = new PegAndPredicate(leftLabel, right);
+				right = new PegAnd(leftLabel, right);
 			}
 			return right;
 		}
 		if(this.match('!')) {
 			right = this.parseSingleExpr(leftLabel);
 			if(right != null) {
-				right = new PegNotPredicate(leftLabel, right);
+				right = new PegNot(leftLabel, right);
 			}
 			return right;
 		}
