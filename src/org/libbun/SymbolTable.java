@@ -317,10 +317,10 @@ public class SymbolTable {
 	public void load(String fileName, BunDriver driver) {
 		PegSource source = Main.loadSource(fileName);
 		this.root.newParserContext(null, source);
-		PegParserContext context =  this.root.newParserContext(null, source);
+		ParserContext context =  this.root.newParserContext(null, source);
 		while(context.hasNode()) {
 			context.initMemo();
-			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), "TopLevel");
+			PegObject node = context.parseNode("TopLevel");
 			node.gamma = this;
 			this.tryMatch(node);
 			node.build(driver);

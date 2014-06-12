@@ -1,14 +1,26 @@
 package org.libbun;
 
-public class PegParserContext extends SourceContext {
-	public  PegParser    parser;
+public class PegParserContext extends ParserContext {
 
 	final UniArray<Log> logStack = new UniArray<Log>(new Log[128]);
 	private int stackTop = 0;
 
 	private UniMap<Memo> memoMap2 = new UniMap<Memo>();
-	
 	private final UniMap<Boolean> lrExistenceMap = new UniMap<Boolean>();
+
+	int memoHit = 0;
+	int memoMiss = 0;
+	int memoSize = 0;
+//	int objectCount = 0;
+
+	public PegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
+		super(parser, source, startIndex, endIndex);
+	}
+
+	@Override
+	public SourceContext subContext(int startIndex, int endIndex) {
+		return new PegParserContext(this.parser, this.source, startIndex, endIndex);
+	}
 	
 	public Boolean getLrExistence(String key) {
 		return this.lrExistenceMap.get(key);
@@ -25,59 +37,9 @@ public class PegParserContext extends SourceContext {
 	public UniMap<Memo> getMemoMap() {
 		return memoMap2;
 	}
-	
-	int memoHit = 0;
-	int memoMiss = 0;
-	int memoSize = 0;
-	int objectCount = 0;
-
-	public PegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
-		super(source, startIndex, endIndex);
-		this.parser = parser;
-	}
-
-	@Override
-	public SourceContext subContext(int startIndex, int endIndex) {
-		return new PegParserContext(this.parser, this.source, startIndex, endIndex);
-	}
-
-
-	@Override
-	public void skipIndent(int indentSize) {
-		int pos = this.sourcePosition;
-		//		this.showPosition("skip characters until indent="+indentSize + ", pos=" + pos, pos);
-		for(;pos < this.endPosition; pos = pos + 1) {
-			char ch = this.charAt(pos);
-			if(ch == '\n' && pos > this.sourcePosition) {
-				int posIndent = this.source.getIndentSize(pos+1);
-				if(posIndent <= indentSize) {
-					this.sourcePosition = pos + 1;
-					//					System.out.println("skip characters until indent="+indentSize + ", pos=" + this.sourcePosition);
-					return ;
-				}
-			}
-		}
-		//		System.out.println("skip characters until indent="+indentSize + ", pos = endPosition");
-		this.sourcePosition = this.endPosition;
-	}
-
-	public boolean hasNode() {
-		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
-		return this.sourcePosition < this.endPosition;
-	}
-
-	public PegObject parseNode(String key) {
-		PegObject po = this.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), key);
-		//return po.eval(this.source, parentNode);
-		return po;
-	}
-
-	public char getFirstChar() {
-		return this.getChar();
-	}
 
 	public boolean isLeftRecursion(String PatternName) {
-		Peg e = this.parser.getRightPattern(PatternName, this.getFirstChar());
+		Peg e = this.parser.getRightPattern(PatternName);
 		return e != null;
 	}
 
@@ -88,10 +50,10 @@ public class PegParserContext extends SourceContext {
 		if(m == null) {
 			m = new Memo();
 			m.nextPosition = this.getPosition();
-			m.result = foundFailureNode;
+			m.result = this.foundFailureNode;
 			this.memoMap2.put(key, m);
 			this.memoMiss = this.memoMiss + 1;
-			Peg e = this.parser.getPattern(pattern, this.getFirstChar());
+			Peg e = this.parser.getPattern(pattern);
 			PegObject ans = e.debugMatch(parentNode, this);
 			if(pos == this.getPosition() && !ans.isFailure()) {
 				this.memoMap2.remove(key);
@@ -121,7 +83,7 @@ public class PegParserContext extends SourceContext {
 	public final PegObject growLR(String pattern, int pos, Memo m, PegObject parentNode) {
 		while(true) {
 			this.setPosition(pos);
-			Peg e = this.parser.getPattern(pattern, this.getFirstChar());
+			Peg e = this.parser.getPattern(pattern);
 			PegObject ans = e.debugMatch(parentNode, this);
 			if(ans.isFailure() || this.getPosition() <= m.nextPosition){
 				break;
@@ -134,17 +96,17 @@ public class PegParserContext extends SourceContext {
 	}
 
 	public final PegObject parsePegNodeNon(PegObject parentNode, String pattern, boolean hasNextChoice) {
-		Peg e = this.parser.getPattern(pattern, this.getFirstChar());
+		Peg e = this.parser.getPattern(pattern);
 		if(e != null) {
 			return e.debugMatch(parentNode, this);
 		}
-		Main._Exit(1, "undefined label " + pattern + " '" + this.getFirstChar() + "'");
+		Main._Exit(1, "undefined label " + pattern);
 		return this.foundFailureNode;
 	}
 
 	public final PegObject parseRightPegNode(PegObject left, String symbol) {
 		String key = this.parser.nameRightJoinName(symbol);
-		Peg e = this.parser.getPattern(key, this.getFirstChar());
+		Peg e = this.parser.getPattern(key);
 		if(e != null) {
 			PegObject right = e.debugMatch(left, this);
 			if(!right.isFailure()) {
@@ -154,7 +116,7 @@ public class PegParserContext extends SourceContext {
 		return left;
 	}
 
-	final int getStackPosition(Peg trace) {
+	public final int getStackPosition(Peg trace) {
 		this.pushImpl(trace, null, '\0', null, 0, null);
 		return this.stackTop;
 	}
@@ -185,7 +147,7 @@ public class PegParserContext extends SourceContext {
 		this.pushImpl(trace, msg, 'm', null, 0, null);
 	}
 
-	void popBack(int stackPostion, boolean backtrack) {
+	public void popBack(int stackPostion, boolean backtrack) {
 		this.stackTop = stackPostion-1;
 		Log log = this.logStack.ArrayValues[stackPostion-1];
 		if(backtrack) {
@@ -197,37 +159,28 @@ public class PegParserContext extends SourceContext {
 		this.pushImpl(trace, "", 'p', parentNode, index, node);
 	}
 
-	public PegObject newPegObject(String name) {
-		PegObject node = new PegObject(name, this.source, null, this.sourcePosition);
-		this.objectCount = this.objectCount + 1;
-		return node;
-	}
-
-	private final PegObject foundFailureNode = new PegObject(null, this.source, null, 0);
-	
-	public final PegObject foundFailure(Peg created) {
-		if(this.sourcePosition >= this.foundFailureNode.endIndex) {  // adding error location
-			//System.out.println("failure found?: " + this.sourcePosition + " > " + token.endIndex);
-			this.foundFailureNode.startIndex = this.sourcePosition;
-			this.foundFailureNode.endIndex = this.sourcePosition;
-			this.foundFailureNode.createdPeg = created;
+	@Override
+	public void addSubObject(PegObject newnode, int stack, int top) {
+		for(int i = stack; i < top; i++) {
+			Log log = this.logStack.ArrayValues[i];
+			if(log.type == 'p' && log.parentNode == newnode) {
+				if(log.index == -1) {
+					newnode.append(log.childNode);
+				}
+				else {
+					newnode.set(log.index, log.childNode);
+				}
+			}
 		}
-		return this.foundFailureNode;
 	}
 	
-	public final Peg storeFailurePeg() {
-		return this.foundFailureNode.createdPeg;
+	public void showStatInfo(PegObject parsedObject) {
+		System.out.println("hit: " + this.memoHit + ", miss: " + this.memoMiss);
+		System.out.println("created_object=" + this.objectCount + ", used_object=" + parsedObject.count());
+		System.out.println("backtrackCount: " + this.backtrackCount + ", backtrackLength: " + this.backtrackSize);
+		System.out.println();
 	}
 
-	public final int storeFailurePosition() {
-		return this.foundFailureNode.endIndex;
-	}
-
-	public final void restoreFailure(Peg created, int pos) {
-		this.foundFailureNode.createdPeg = created;
-		this.foundFailureNode.startIndex   = pos;
-		this.foundFailureNode.endIndex   = pos;
-	}
 }
 
 class Log {

@@ -116,16 +116,11 @@ public class PegObject {
 	}
 
 	public final int count() {
-		if(this.size() == 0) {
-			return 1;
+		int count = 1;
+		for(int i = 0; i < this.size(); i++) {
+			count = count + this.get(i).count();
 		}
-		else {
-			int count = 0;
-			for(int i = 0; i < this.size(); i++) {
-				count = count + this.get(i).count();
-			}
-			return count;
-		}
+		return count;
 	}
 
 	public final void checkNullEntry() {

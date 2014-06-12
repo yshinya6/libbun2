@@ -4,7 +4,6 @@ public final class PegParser {
 	UniMap<Peg>           pegMap;
 	UniMap<Peg>           pegCache = null;
 	UniMap<String>        objectLabelMap = null;
-	boolean enableMemo = false;
 	boolean lrExistence = false;
 
 	public PegParser() {
@@ -15,12 +14,12 @@ public final class PegParser {
 		this.pegMap = new UniMap<Peg>();
 	}
 
-	public PegParserContext newContext(PegSource source, int startIndex, int endIndex) {
-		return new PegParserContext(this, source, startIndex, endIndex);
+	public ParserContext newContext(PegSource source, int startIndex, int endIndex) {
+		return new SimpleParserContext(this, source, startIndex, endIndex);
 	}
 
-	public PegParserContext newContext(PegSource source) {
-		return new PegParserContext(this, source, 0, source.sourceText.length());
+	public ParserContext newContext(PegSource source) {
+		return new SimpleParserContext(this, source, 0, source.sourceText.length());
 	}
 
 	public final boolean loadPegFile(String fileName) {
@@ -222,18 +221,18 @@ public final class PegParser {
 		return this.pegMap.get(name, null);
 	}
 	
-	public final Peg getPattern(String name, char firstChar) {
+	public final Peg getPattern(String name) {
 		if(this.pegCache == null) {
 			this.resetCache();
 		}
 		return this.pegCache.get(name, null);
 	}
 
-	public final Peg getRightPattern(String name, char firstChar) {
+	public final Peg getRightPattern(String name) {
 		if(this.pegCache == null) {
 			this.resetCache();
 		}
-		return this.getPattern(this.nameRightJoinName(name), firstChar);
+		return this.getPattern(this.nameRightJoinName(name));
 	}
 	
 	public final UniArray<String> makeList(String startPoint) {
