@@ -6,7 +6,7 @@ public abstract class Peg {
 	int       flag     = 0;
 	String    name     = null;
 	boolean   debug    = false;
-	boolean   lrExistence = false;
+	boolean   hasLeftRecursion = false;
 
 	PegSource source = null;
 	int       sourcePosition = 0;
@@ -39,12 +39,12 @@ public abstract class Peg {
 		return sb.toString();
 	}
 	
-	public boolean getlrExistence() {
-		return this.lrExistence;
+	public boolean hasLeftRecursion() {
+		return this.hasLeftRecursion;
 	}
 	
-	public void setlrExistense(boolean lrExistense) {
-		this.lrExistence = lrExistense;
+	public void setLeftRecursion(boolean lrExistense) {
+		this.hasLeftRecursion = lrExistense;
 	}
 
 	public final PegSequence appendAsSequence(Peg e) {
@@ -644,8 +644,8 @@ class PegChoice extends PegList {
 				this.name = e.name;
 			}
 			this.list.add(e);
-			if(e.getlrExistence() == true) {
-				this.setlrExistense(true);
+			if(e.hasLeftRecursion() == true) {
+				this.setLeftRecursion(true);
 			}
 		}
 	}

@@ -10,7 +10,6 @@ public class PegParserContext extends ParserContext {
 	int memoHit = 0;
 	int memoMiss = 0;
 	int memoSize = 0;
-//	int objectCount = 0;
 
 	public PegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
 		super(parser, source, startIndex, endIndex);
@@ -53,7 +52,7 @@ public class PegParserContext extends ParserContext {
 			else {
 				m.result = ans;
 				m.nextPosition = this.getPosition();
-				if(e.getlrExistence()) {
+				if(e.hasLeftRecursion()) {
 					return growLR(pattern, pos, m, parentNode);
 				}
 				else {

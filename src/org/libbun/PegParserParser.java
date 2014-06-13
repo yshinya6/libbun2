@@ -147,7 +147,7 @@ public class PegParserParser extends SourceContext {
 			String s = this.source.substring(startIndex, endIndex);
 			right = new PegLabel(leftLabel, s);
 			if(leftLabel.equals(s)) {
-				right.setlrExistense(true);
+				right.setLeftRecursion(true);
 			}
 			right.setSource(this.source, startIndex);
 			return this.parsePostfix(leftLabel, right);
@@ -287,11 +287,11 @@ public class PegParserParser extends SourceContext {
 			Peg right = this.parseSequenceExpr(leftLabel);
 			if(right != null) {
 				boolean lrExistense = false;
-				if(left.getlrExistence() == true) {
+				if(left.hasLeftRecursion() == true) {
 					lrExistense = true;
 				}
 				left = left.appendAsSequence(right);
-				left.setlrExistense(lrExistense);
+				left.setLeftRecursion(lrExistense);
 			}
 		}
 		return left;
@@ -314,11 +314,11 @@ public class PegParserParser extends SourceContext {
 				Peg right = this.parsePegExpr(leftLabel);
 				if(right != null) {
 					boolean lrExistense = false;
-					if(left.getlrExistence() == true) {
+					if(left.hasLeftRecursion() == true) {
 						lrExistense = true;
 					}
 					left = left.appendAsChoice(right);
-					left.setlrExistense(lrExistense);
+					left.setLeftRecursion(lrExistense);
 				}
 			}
 		}
