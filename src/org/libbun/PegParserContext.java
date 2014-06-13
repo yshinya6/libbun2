@@ -6,7 +6,6 @@ public class PegParserContext extends ParserContext {
 	private int stackTop = 0;
 
 	private UniMap<Memo> memoMap2 = new UniMap<Memo>();
-	private final UniMap<Boolean> lrExistenceMap = new UniMap<Boolean>();
 
 	int memoHit = 0;
 	int memoMiss = 0;
@@ -20,14 +19,6 @@ public class PegParserContext extends ParserContext {
 	@Override
 	public SourceContext subContext(int startIndex, int endIndex) {
 		return new PegParserContext(this.parser, this.source, startIndex, endIndex);
-	}
-	
-	public Boolean getLrExistence(String key) {
-		return this.lrExistenceMap.get(key);
-	}
-	
-	public void setLrExistence(String key, Boolean value) {
-		lrExistenceMap.put(key, value);
 	}
 	
 	public void initMemo() {
@@ -62,7 +53,7 @@ public class PegParserContext extends ParserContext {
 			else {
 				m.result = ans;
 				m.nextPosition = this.getPosition();
-				if(getLrExistence(pattern)) {
+				if(e.getlrExistence()) {
 					return growLR(pattern, pos, m, parentNode);
 				}
 				else {

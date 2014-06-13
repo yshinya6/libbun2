@@ -6,6 +6,7 @@ public abstract class Peg {
 	int       flag     = 0;
 	String    name     = null;
 	boolean   debug    = false;
+	boolean   lrExistence = false;
 
 	PegSource source = null;
 	int       sourcePosition = 0;
@@ -36,6 +37,14 @@ public abstract class Peg {
 			sb.append(this.name);
 		}
 		return sb.toString();
+	}
+	
+	public boolean getlrExistence() {
+		return this.lrExistence;
+	}
+	
+	public void setlrExistense(boolean lrExistense) {
+		this.lrExistence = lrExistense;
 	}
 
 	public final PegSequence appendAsSequence(Peg e) {
@@ -635,6 +644,9 @@ class PegChoice extends PegList {
 				this.name = e.name;
 			}
 			this.list.add(e);
+			if(e.getlrExistence() == true) {
+				this.setlrExistense(true);
+			}
 		}
 	}
 	@Override protected void stringfy(UniStringBuilder sb, boolean debugMode) {
