@@ -15,11 +15,11 @@ public final class PegParser {
 	}
 
 	public ParserContext newContext(PegSource source, int startIndex, int endIndex) {
-		return new SimpleParserContext(this, source, startIndex, endIndex);
+		return new PegParserContext(this, source, startIndex, endIndex);
 	}
 
 	public ParserContext newContext(PegSource source) {
-		return new SimpleParserContext(this, source, 0, source.sourceText.length());
+		return new PegParserContext(this, source, 0, source.sourceText.length());
 	}
 
 	public final boolean loadPegFile(String fileName) {
