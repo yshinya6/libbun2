@@ -4,15 +4,15 @@ public abstract class Peg {
 	public final static boolean _BackTrack = true;
 	
 	int       flag     = 0;
-	String    name     = null;
+	String    ruleName     = null;
 	boolean   debug    = false;
 	boolean   hasLeftRecursion = false;
 
 	PegSource source = null;
 	int       sourcePosition = 0;
 	
-	Peg(String leftLabel) {
-		this.name = leftLabel;
+	Peg(String ruleName) {
+		this.ruleName = ruleName;
 	}
 
 	protected abstract Peg clone(String ns);
@@ -32,9 +32,9 @@ public abstract class Peg {
 	@Override public String toString() {
 		UniStringBuilder sb = new UniStringBuilder();
 		this.stringfy(sb, false);
-		if(this.name != null) {
+		if(this.ruleName != null) {
 			sb.append(" defined in ");
-			sb.append(this.name);
+			sb.append(this.ruleName);
 		}
 		return sb.toString();
 	}
@@ -126,8 +126,8 @@ public abstract class Peg {
 
 abstract class PegAtom extends Peg {
 	String symbol;
-	public PegAtom (String leftLabel, String symbol) {
-		super(leftLabel);
+	public PegAtom (String ruleName, String symbol) {
+		super(ruleName);
 		this.symbol = symbol;
 	}
 	@Override
@@ -153,8 +153,8 @@ abstract class PegAtom extends Peg {
 }
 
 class PegString extends PegAtom {
-	public PegString(String leftLabel, String symbol) {
-		super(leftLabel, symbol);
+	public PegString(String ruleName, String symbol) {
+		super(ruleName, symbol);
 	}
 	@Override
 	protected Peg clone(String ns) {
@@ -182,8 +182,8 @@ class PegString extends PegAtom {
 }
 
 class PegAny extends PegAtom {
-	public PegAny(String leftLabel) {
-		super(leftLabel, ".");
+	public PegAny(String ruleName) {
+		super(ruleName, ".");
 	}
 	@Override
 	protected Peg clone(String ns) {
@@ -205,8 +205,8 @@ class PegAny extends PegAtom {
 
 class PegCharacter extends PegAtom {
 	UniCharset charset;
-	public PegCharacter(String leftLabel, String token) {
-		super(leftLabel, token);
+	public PegCharacter(String ruleName, String token) {
+		super(ruleName, token);
 		this.charset = new UniCharset(token);
 	}
 	@Override
@@ -233,13 +233,13 @@ class PegCharacter extends PegAtom {
 }
 
 class PegLabel extends PegAtom {
-	public PegLabel(String leftLabel, String token) {
-		super(leftLabel, token);
+	public PegLabel(String ruleName, String token) {
+		super(ruleName, token);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		if(ns != null && ns.length() > 0) {
-			return new PegLabel(this.name, ns + this.symbol);
+			return new PegLabel(this.ruleName, ns + this.symbol);
 		}
 		return this;
 	}
@@ -276,8 +276,8 @@ class PegLabel extends PegAtom {
 abstract class PegUnary extends Peg {
 	Peg innerExpr;
 	boolean prefix;
-	public PegUnary(String leftLabel, Peg e, boolean prefix) {
-		super(leftLabel);
+	public PegUnary(String ruleName, Peg e, boolean prefix) {
+		super(ruleName);
 		this.innerExpr = e;
 		this.prefix = prefix;
 	}
@@ -318,20 +318,20 @@ abstract class PegUnary extends Peg {
 }
 
 //abstract class PegSuffixed extends PegUnary {
-//	public PegSuffixed(String leftLabel, Peg e) {
-//		super(leftLabel, e, false);
+//	public PegSuffixed(String ruleName, Peg e) {
+//		super(ruleName, e, false);
 //	}
 //}
 
 class PegOptional extends PegUnary {
-	public PegOptional(String leftLabel, Peg e) {
-		super(leftLabel, e, false);
+	public PegOptional(String ruleName, Peg e) {
+		super(ruleName, e, false);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegOptional(this.name, e);
+			return new PegOptional(this.ruleName, e);
 		}
 		return this;
 	}
@@ -360,18 +360,18 @@ class PegOptional extends PegUnary {
 
 class PegOneMore extends PegUnary {
 	public int atleast = 0; 
-	protected PegOneMore(String leftLabel, Peg e, int atLeast) {
-		super(leftLabel, e, false);
+	protected PegOneMore(String ruleName, Peg e, int atLeast) {
+		super(ruleName, e, false);
 		this.atleast = atLeast;
 	}
-	public PegOneMore(String leftLabel, Peg e) {
-		this(leftLabel, e, 1);
+	public PegOneMore(String ruleName, Peg e) {
+		this(ruleName, e, 1);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegOneMore(this.name, e);
+			return new PegOneMore(this.ruleName, e);
 		}
 		return this;
 	}
@@ -415,14 +415,14 @@ class PegOneMore extends PegUnary {
 }
 
 class PegZeroMore extends PegOneMore {
-	public PegZeroMore(String leftLabel, Peg e) {
-		super(leftLabel, e, 0);
+	public PegZeroMore(String ruleName, Peg e) {
+		super(ruleName, e, 0);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegZeroMore(this.name, e);
+			return new PegZeroMore(this.ruleName, e);
 		}
 		return this;
 	}
@@ -437,14 +437,14 @@ class PegZeroMore extends PegOneMore {
 }
 
 class PegAnd extends PegUnary {
-	PegAnd(String leftLabel, Peg e) {
-		super(leftLabel, e, true);
+	PegAnd(String ruleName, Peg e) {
+		super(ruleName, e, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegAnd(this.name, e);
+			return new PegAnd(this.ruleName, e);
 		}
 		return this;
 	}
@@ -467,14 +467,14 @@ class PegAnd extends PegUnary {
 }
 
 class PegNot extends PegUnary {
-	PegNot(String leftLabel, Peg e) {
-		super(leftLabel, e, true);
+	PegNot(String ruleName, Peg e) {
+		super(ruleName, e, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegNot(this.name, e);
+			return new PegNot(this.ruleName, e);
 		}
 		return this;
 	}
@@ -506,7 +506,7 @@ abstract class PegList extends Peg {
 		this.list = new UniArray<Peg>(new Peg[2]);
 	}
 	PegList(Peg first) {
-		super(first.name);
+		super(first.ruleName);
 		this.list = new UniArray<Peg>(new Peg[2]);
 		this.add(first);
 	}
@@ -640,8 +640,8 @@ class PegChoice extends PegList {
 			}
 		}
 		else if(e != null) {
-			if(this.name == null) {
-				this.name = e.name;
+			if(this.ruleName == null) {
+				this.ruleName = e.ruleName;
 			}
 			this.list.add(e);
 			if(e.hasLeftRecursion() == true) {
@@ -672,7 +672,7 @@ class PegChoice extends PegList {
 				node.startIndex = context.storeFailurePosition();
 				node.endIndex = context.storeFailurePosition();
 				if(Main.PegDebuggerMode) {
-					Main._PrintLine(node.formatSourceMessage("error: " + this.name, " by " + node.createdPeg));
+					Main._PrintLine(node.formatSourceMessage("error: " + this.ruleName, " by " + node.createdPeg));
 				}
 				context.restoreFailure(errorPeg, errorPosition);
 				return e.debugMatch(node, context);
@@ -707,8 +707,8 @@ class PegChoice extends PegList {
 
 class PegSetter extends PegUnary {
 	public int index;
-	public PegSetter(String leftLabel, Peg e, int index) {
-		super(leftLabel, e, false);
+	public PegSetter(String ruleName, Peg e, int index) {
+		super(ruleName, e, false);
 		this.innerExpr = e;
 		this.index = index;
 	}
@@ -716,7 +716,7 @@ class PegSetter extends PegUnary {
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegSetter(this.name, e, this.index);
+			return new PegSetter(this.ruleName, e, this.index);
 		}
 		return this;
 	}
@@ -746,8 +746,8 @@ class PegSetter extends PegUnary {
 }
 
 class PegObjectLabel extends PegAtom {
-	public PegObjectLabel(String leftLabel, String objectLabel) {
-		super(leftLabel, objectLabel);
+	public PegObjectLabel(String ruleName, String objectLabel) {
+		super(ruleName, objectLabel);
 	}
 	@Override
 	protected Peg clone(String ns) {
@@ -778,10 +778,10 @@ class PegObjectLabel extends PegAtom {
 class PegNewObject extends PegList {
 	boolean leftJoin = false;
 	String nodeName = "";
-	public PegNewObject(String leftLabel, boolean leftJoin) {
+	public PegNewObject(String ruleName, boolean leftJoin) {
 		super();
 	}
-	public PegNewObject(String leftLabel, boolean leftJoin, Peg e) {
+	public PegNewObject(String ruleName, boolean leftJoin, Peg e) {
 		super(e);
 		this.leftJoin = leftJoin;
 	}
@@ -795,7 +795,7 @@ class PegNewObject extends PegList {
 			}
 		}
 		if(hasClone) {
-			PegList l = new PegNewObject(this.name, this.leftJoin);
+			PegList l = new PegNewObject(this.ruleName, this.leftJoin);
 			for(int i = 0; i < this.list.size(); i++) {
 				l.list.add(this.get(i).clone(ns));
 			}
@@ -878,14 +878,14 @@ class PegNewObject extends PegList {
 // (e / catch e)
 
 class PegCatch extends PegUnary {
-	PegCatch (String leftLabel, Peg first) {
-		super(leftLabel, first, true);
+	PegCatch (String ruleName, Peg first) {
+		super(ruleName, first, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegCatch(this.name, e);
+			return new PegCatch(this.ruleName, e);
 		}
 		return this;
 	}
@@ -905,8 +905,8 @@ class PegCatch extends PegUnary {
 }
 
 class PegIndent extends PegAtom {
-	PegIndent(String leftLabel) {
-		super(leftLabel, "indent");
+	PegIndent(String ruleName) {
+		super(ruleName, "indent");
 		// TODO Auto-generated constructor stub
 	}
 	@Override
