@@ -40,9 +40,12 @@ public class Main {
 
 	// --profile
 	public static boolean ProfileMode = false;
-	
+
 	// --verbose:peg
 	public static boolean PegDebuggerMode = false;
+
+	// --pegNM
+	public static boolean NonMemoPegMode = false;
 
 	private static void parseCommandArgument(String[] args) {
 		int index = 0;
@@ -58,6 +61,12 @@ public class Main {
 			if (argument.equals("--peg") && (index < args.length)) {
 				LanguagePeg = args[index];
 				PegDebuggerMode = true;
+				index = index + 1;
+			}
+			if (argument.equals("--pegNM") && (index < args.length)) {
+				LanguagePeg = args[index];
+				PegDebuggerMode = true;
+				NonMemoPegMode = true;
 				index = index + 1;
 			}
 			else if (argument.equals("-l") && (index < args.length)) {
@@ -105,7 +114,7 @@ public class Main {
 		System.out.println("  --profile               Show memory usage and parse time");
 		Main._Exit(0, Message);
 	}
-	
+
 	private final static UniMap<Class<?>> driverMap = new UniMap<Class<?>>();
 	static {
 		driverMap.put("py", PythonDriver.class);
@@ -353,7 +362,7 @@ public class Main {
 	public final static String _GetEnv(String Name) {
 		return System.getenv(Name);
 	}
-	
+
 	public final static void _Print(Object msg) {
 		System.err.print(msg);
 	}
