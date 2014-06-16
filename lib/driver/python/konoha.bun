@@ -166,6 +166,10 @@ bun #var(name, type, value): void && letvar() {
 	${name} = ${value}
 }
 
+bun #function(name, params, block): void && letvar() {
+	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
+}
+
 bun #function(name, params, rtype, block): void && letvar() {
 	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
 }

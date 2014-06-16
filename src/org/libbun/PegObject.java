@@ -115,6 +115,14 @@ public class PegObject {
 		childNode.parent = this;
 	}
 
+	public final int count() {
+		int count = 1;
+		for(int i = 0; i < this.size(); i++) {
+			count = count + this.get(i).count();
+		}
+		return count;
+	}
+
 	public final void checkNullEntry() {
 		for(int i = 0; i < this.size(); i++) {
 			if(this.AST[i] == null) {
@@ -249,5 +257,16 @@ public class PegObject {
 			driver.pushUnknownNode(this);
 		}
 	}
+
+	
+	public boolean isVariable() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	public void setVariable(boolean flag) {
+	}
+
+
 
 }

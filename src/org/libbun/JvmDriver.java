@@ -62,31 +62,32 @@ public class JvmDriver extends BunDriver {
 		this.addCommand("PUSH_BOOL", new PushBool());
 		this.addCommand("PUSH_STRING", new PushString());
 		this.addCommand("OP", new CallOperator());
+
 		this.addCommand("AND", new CondAnd());
 		this.addCommand("OR", new CondOr());
 		this.addCommand("LET", new LetDecl());
 		this.addCommand("IF", new IfStatement());
 		this.addCommand("BLOCK", new Block());
 		this.addCommand("ins", new InsCommand());
+
+		this.addCommand("statement", new StatementCommand());
 	}
 
 	@Override
 	public void initTable(Namespace gamma) {
-		this.gamma = gamma;
-		gamma.setType(BunType.newValueType("long", long.class));
-		this.classMap.put("long", long.class);
-		gamma.setType(BunType.newValueType("double", double.class));
-		this.classMap.put("double", double.class);
-		gamma.setType(BunType.newValueType("boolean", boolean.class));
-		this.classMap.put("boolean", boolean.class);
-		gamma.setType(BunType.newValueType("String", String.class));
-		this.classMap.put("String", String.class);
-		gamma.setType(BunType.newVoidType("void", Void.class));
-		this.classMap.put("void", Void.class);
-		gamma.setType(BunType.newAnyType("any", Object.class));
-		this.classMap.put("any", Object.class);
-		gamma.setType(BunType.newGreekType("alpha", 0, null));
-		gamma.setType(BunType.newGreekType("beta", 0, null));
+//		gamma.setType(BunType.newValueType("int", long.class));
+//		this.classMap.put("int", long.class);
+//		gamma.setType(BunType.newValueType("float", double.class));
+//		this.classMap.put("float", double.class);
+//		gamma.setType(BunType.newValueType("bool", boolean.class));
+//		this.classMap.put("bool", boolean.class);
+//		gamma.setType(BunType.newValueType("String", String.class));
+//		this.classMap.put("String", String.class);
+//		gamma.setType(BunType.newVoidType("void", Void.class));
+//		this.classMap.put("void", Void.class);
+//		gamma.setType(BunType.newAnyType("any", Object.class));
+//		this.classMap.put("any", Object.class);
+
 		KonohaTypeChecker.initDriver(this);
 		gamma.loadBunModel("lib/driver/jvm/konoha.bun", this);
 	}
@@ -227,6 +228,18 @@ public class JvmDriver extends BunDriver {
 	public void pushCode(String text) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	private class StatementCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			if(node.is("#block")) {
+				for(int i = 0; i < node.size(); i++) {
+					driver.pushNode(node.get(i));
+					insertPrintIns();
+				}
+			}
+		}
 	}
 
 	/**

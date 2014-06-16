@@ -4,8 +4,12 @@ typedef double
 typedef String
 
 
-bun #longeger(): long {
-	${PUSH_LONG this}
+bun #block(*): void {
+	${statement this}
+}
+
+bun #integer(): LONG {
+	${PUSH_INT this}
 }
 
 bun #double() : double {

@@ -1,3 +1,4 @@
+import BunType from buntype.peg;
 
 TopLevel
  = Template
@@ -9,10 +10,10 @@ Spacing
   = [ \t]+
   ;
 _
-  = ([ \t]+ / Comment)*
+  = ([ \t]+ / Comment / '')*
   ;
 NL
-  = ([ \t\n]+ / Comment)*
+  = ([ \t\n]+ / Comment /'')*
   ;
 Comment
   = '/*' (!'*/' .)* '*/'
@@ -25,12 +26,13 @@ TypeDef
 
 Template
   = NL ('bun' / 'template') NL  
-    << GreekList@5? NL TemplateName@0 NL Params@1 _ BunAnno@2 _ Checker@4? _ 
+    << GreekList@5? NL TemplateName@0 NL Params@1 _ BunAnno@2 _ Checker@4? NL 
       '{' _ '\n' Section@3 '}' #bun 
     >>
   ;
 TemplateName
   = << '#'? [A-Za-z0-9_.]+ #name >>  // [A-Za-z0-9_.]
+  / "'" << (!"'" .)* #name >>"'"
   ;
 GreekList
   = '<' _ << Param@ ((_ ',' _ Param@)*)? #params >> _ '>'
@@ -39,7 +41,7 @@ Params
   = << ('(' _ ('*' / (Param@ (_ ',' _ Param@)*)?) _ ')' / '') #params >>
   ;
 Param
-  = << BunName@ _ BunAnno@? #param >>
+  = << ('let' _)? BunName@ _ BunAnno@? #param >>
   ;
 BunAnno 
   = ':' _ BunType 
@@ -47,21 +49,6 @@ BunAnno
   ;
 Checker
   = '&&' _ BunName '()'
-  ;
-BunType
-  = NodeType / ValueType / Type
-  ;
-NodeType
-  = << '#' [A-Za-z0-9_.]+  #Tnode >>
-  ;
-NameType
-  = << '$' [A-Za-z0-9_.]+  #Tref >>
-  ;
-ValueType
-  = << "'" (!"'" .)* "'"   #Tvalue >>
-  ;
-Type
-  = << [A-Za-z] [A-Za-z0-9_]* ('<' _ Type@ _ (',' _ Type@ _ )* '>')? #type >>
   ;
 
 Section

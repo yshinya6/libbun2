@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import java.text.DecimalFormat;
+
 public class Main {
 	public final static String  ProgName  = "libbun";
 	public final static String  CodeName  = "yokohama";
@@ -36,6 +38,9 @@ public class Main {
 
 	// --verbose
 	public static boolean EnableVerbose = false;
+
+	// --profile
+	public static boolean ProfileMode = false;
 	
 	// --verbose:peg
 	public static boolean PegDebuggerMode = false;
@@ -71,6 +76,9 @@ public class Main {
 			else if (argument.equals("-i")) {
 				ShellMode = true;
 			}
+			else if (argument.equals("--profile")) {
+				ProfileMode = true;
+			}
 			else if(argument.startsWith("--verbose")) {
 				EnableVerbose = true;
 //				if(argument.equals("--verbose:peg")) {
@@ -95,72 +103,10 @@ public class Main {
 		System.out.println("  --driver|-d  NAME       Driver");
 		System.out.println("  --out|-o  FILE          Output filename");
 		System.out.println("  --verbose               Printing Debug infomation");
+		System.out.println("  --profile               Show memory usage and parse time");
 		Main._Exit(0, Message);
 	}
 	
-	//	private final static CommonMap<Class<?>> ClassMap = new CommonMap<Class<?>>(null);
-	//
-	//	static {
-	//		ClassMap.put("syntax::bun", libbun.lang.bun.BunGrammar.class);
-	//		ClassMap.put("syntax::bun.extra", libbun.lang.bun.extra.BunExtraGrammar.class);
-	//		ClassMap.put("syntax::bun.regex", libbun.lang.bun.regexp.RegExpGrammar.class);
-	//		ClassMap.put("syntax::bun.shell", libbun.lang.bun.shell.ShellGrammar.class);
-	//
-	//		ClassMap.put("syntax::lisp",   libbun.lang.lisp.LispGrammar.class);
-	//		//		ClassMap.put("syntax::konoha", libbun.lang.konoha.KonohaGrammar.class);
-	//		ClassMap.put("syntax::python", libbun.lang.python.PythonGrammar.class);
-	//
-	//		// source code by file extension
-	//		ClassMap.put("bash", libbun.encode.devel.BashGenerator.class);
-	//		ClassMap.put("bun", libbun.encode.playground.BunGenerator.class);
-	//		ClassMap.put("c",   libbun.encode.playground.CGenerator.class);
-	//		ClassMap.put("cl",  libbun.encode.playground.CommonLispGenerator.class);
-	//		ClassMap.put("cs",  libbun.encode.release.CSharpGenerator.class);
-	//		ClassMap.put("csharp-playground",  libbun.encode.playground.CSharpGenerator.class);
-	//		ClassMap.put("erl", libbun.encode.erlang.ErlangGenerator.class);
-	//
-	//		ClassMap.put("hs",  libbun.encode.haskell.HaskellSourceGenerator.class);
-	//		ClassMap.put("java", libbun.encode.playground.JavaGenerator.class);
-	//		ClassMap.put("js",  libbun.encode.release.JavaScriptGenerator.class);
-	//		ClassMap.put("javascript-playground",  libbun.encode.playground.JavaScriptGenerator.class);
-	//
-	//		ClassMap.put("lua",  libbun.encode.devel.LuaGenerator.class);
-	//
-	//		ClassMap.put("pl",  libbun.encode.obsolete.PerlGenerator.class);
-	//		ClassMap.put("py", libbun.encode.release.PythonGenerator.class);
-	//		ClassMap.put("python-playground", libbun.encode.playground.PythonGenerator.class);
-	//		ClassMap.put("r", libbun.encode.playground.RGenerator.class);
-	//		ClassMap.put("rb", libbun.encode.devel.RubyGenerator.class);
-	//		ClassMap.put("sml", libbun.encode.devel.SMLSharpGenerator.class);
-	//
-	//		ClassMap.put("vba", libbun.encode.devel.VBAGenerator.class);
-	//
-	//		//
-	//		ClassMap.put("ssac", libbun.encode.devel.SSACGenerator.class);
-	//
-	//		// engine
-	//		ClassMap.put("jvm", libbun.encode.jvm.AsmJavaGenerator.class);
-	//		ClassMap.put("debug-jvm", libbun.encode.jvm.DebugAsmGenerator.class);
-	//		ClassMap.put("dump-jvm", libbun.encode.jvm.ByteCodePrinter.class);
-	//		ClassMap.put("ll", libbun.encode.llvm.LLVMSourceGenerator.class);
-	//
-	//	}
-	//
-	//	public final static boolean _LoadGrammar(LibBunGamma Gamma, String ClassName) {
-	//		try {
-	//			Class<?> GrammarClass =  ClassMap.GetOrNull(ClassName.toLowerCase());
-	//			if(GrammarClass == null) {
-	//				GrammarClass = Class.forName(ClassName);
-	//			}
-	//			Method LoaderMethod = GrammarClass.getMethod("LoadGrammar", LibBunGamma.class);
-	//			LoaderMethod.invoke(null, Gamma);
-	//			return true;
-	//		} catch (Exception e) { // naming
-	//			e.printStackTrace();
-	//		}
-	//		return false;
-	//	}
-
 	private final static UniMap<Class<?>> driverMap = new UniMap<Class<?>>();
 	static {
 		driverMap.put("py", PythonDriver.class);
@@ -206,7 +152,8 @@ public class Main {
 
 	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, PegSource source) {
 		try {
-			PegParserContext context =  gamma.root.newParserContext("main", source);
+			ParserContext context =  gamma.newParserContext("main", source);
+			ParseProfileStart();
 			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
 			if(node.isFailure()) {
 				node.name = BunSymbol.PerrorFunctor;
@@ -217,10 +164,10 @@ public class Main {
 				if(context.hasChar()) {
 					System.out.println("** uncosumed: '" + context + "' **");
 				}
-				System.out.println("hit: " + context.memoHit + ", miss: " + context.memoMiss + ", object=" + context.objectCount + ", error=" + context.errorCount);
-				System.out.println("backtrackCount: " + context.backtrackCount + ", backtrackLength: " + context.backtrackSize);
 				System.out.println();
+				context.showStatInfo(node);
 			}
+			ParseProfileStop();
 			if(driver != null) {
 				driver.startTransaction(null);
 				gamma.tryMatch(node);
@@ -230,6 +177,42 @@ public class Main {
 		}
 		catch (Exception e) {
 			PrintStackTrace(e, source.lineNumber);
+		}
+	}
+
+	static long Timer = 0;
+
+	private static void ParseProfileStart() {
+		if(ProfileMode) {
+			Timer = System.currentTimeMillis();
+		}
+	}
+
+	public static String getMemoryInfo() {
+		String info = "";
+		DecimalFormat format_mem =   new DecimalFormat("#,### KB");
+		DecimalFormat format_ratio = new DecimalFormat("##.#");
+		long free =  Runtime.getRuntime().freeMemory() / 1024;
+		long total = Runtime.getRuntime().totalMemory() / 1024;
+		long max =   Runtime.getRuntime().maxMemory() / 1024;
+		long used =  total - free;
+		double ratio = (used * 100 / (double)total);
+
+		info += "Total   = " + format_mem.format(total);
+		info += "\n";
+		info += "Free    = " + format_mem.format(total);
+		info += "\n";
+		info += "use     = " + format_mem.format(used) + " (" + format_ratio.format(ratio) + "%)";
+		info += "\n";
+		info += "can use = " + format_mem.format(max);
+		return info;
+	}
+
+	private static void ParseProfileStop() {
+		if(ProfileMode) {
+			System.out.println("Time    = " + (System.currentTimeMillis() - Timer) + " msec");
+			System.gc();
+			System.out.println(getMemoryInfo());
 		}
 	}
 

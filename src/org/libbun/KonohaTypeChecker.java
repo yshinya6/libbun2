@@ -55,7 +55,7 @@ public class KonohaTypeChecker {
 		//System.out.println("FuncDeclCommand node: " + node);
 		SymbolTable gamma = node.getSymbolTable();
 		for(int i = 0; i < node.size(); i++) {
-			gamma.checkTypeAt(node, i, gamma.getVoidType(), false);
+			gamma.checkTypeAt(node, i, BunType.VoidType, false);
 		}
 		DefinedNameFunctor f = gamma.getName("return");
 		BunType returnType = f.getReturnType(BunType.UntypedType);

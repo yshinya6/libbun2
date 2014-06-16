@@ -4,20 +4,21 @@ public final class PegParser {
 	UniMap<Peg>           pegMap;
 	UniMap<Peg>           pegCache = null;
 	UniMap<String>        objectLabelMap = null;
-	boolean enableMemo = false;
+	boolean lrExistence = false;
 
 	public PegParser() {
 		this.initParser();
 	}
+	
 	public void initParser() {
 		this.pegMap = new UniMap<Peg>();
 	}
 
-	public PegParserContext newContext(PegSource source, int startIndex, int endIndex) {
+	public ParserContext newContext(PegSource source, int startIndex, int endIndex) {
 		return new PegParserContext(this, source, startIndex, endIndex);
 	}
 
-	public PegParserContext newContext(PegSource source) {
+	public ParserContext newContext(PegSource source) {
 		return new PegParserContext(this, source, 0, source.sourceText.length());
 	}
 
@@ -94,7 +95,9 @@ public final class PegParser {
 			if(!e.verify(this)) {
 				noerror = false;
 			}
-			this.removeLeftRecursion(key, e);
+			//this.removeLeftRecursion(key, e);
+			//this.checkLeftRecursion(key, e);
+			this.appendPegCache(key, e);
 //			if(Main.pegDebugger) {
 //				System.out.println(e.toPrintableString(key));
 //			}
@@ -145,10 +148,10 @@ public final class PegParser {
 		this.objectLabelMap.put(objectLabel, objectLabel);
 	}
 
-	private void removeLeftRecursion(String name, Peg e) {
+	private void checkLeftRecursion(String name, Peg e) {
 		if(e instanceof PegChoice) {
 			for(int i = 0; i < e.size(); i++) {
-				this.removeLeftRecursion(name, e.get(i));
+				this.checkLeftRecursion(name, e.get(i));
 			}
 			return;
 		}
@@ -159,8 +162,9 @@ public final class PegParser {
 				if(first instanceof PegLabel) {
 					String label = ((PegLabel) first).symbol;
 					if(label.equals(name)) {
-						String key = this.nameRightJoinName(name);  // left recursion
-						this.appendPegCache(key, seq.cdr());
+						this.lrExistence = true;
+						//String key = this.nameRightJoinName(name);  // left recursion
+						//this.appendPegCache(key, seq.cdr());
 						return;
 					}
 					else {
@@ -217,18 +221,18 @@ public final class PegParser {
 		return this.pegMap.get(name, null);
 	}
 	
-	public final Peg getPattern(String name, char firstChar) {
+	public final Peg getPattern(String name) {
 		if(this.pegCache == null) {
 			this.resetCache();
 		}
 		return this.pegCache.get(name, null);
 	}
 
-	public final Peg getRightPattern(String name, char firstChar) {
+	public final Peg getRightPattern(String name) {
 		if(this.pegCache == null) {
 			this.resetCache();
 		}
-		return this.getPattern(this.nameRightJoinName(name), firstChar);
+		return this.getPattern(this.nameRightJoinName(name));
 	}
 	
 	public final UniArray<String> makeList(String startPoint) {

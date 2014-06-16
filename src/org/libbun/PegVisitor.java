@@ -1,72 +1,20 @@
 package org.libbun;
 
-public class PegVisitor {
-
-	public void visitPegString(PegString pegString) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitPegAny(PegAny pegAny) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitPegCharacter(PegCharacter pegCharacter) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitPegLabel(PegLabel pegLabel) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitPegOptional(PegOptional pegOptionalExpr) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitOneMore(PegOneMore pegOneMoreExpr) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitZeroMore(PegZeroMore pegZeroMoreExpr) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitPegAnd(PegAndPredicate pegAndPredicate) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitPegNot(PegNotPredicate pegNotPredicate) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitSequence(PegSequence pegSequence) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitChoice(PegChoice pegChoice) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitSetter(PegSetter pegSetter) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public void visitNewObject(PegNewObject pegNewObject) {
-		// TODO Auto-generated method stub
-
-	}
-
-
-
+public interface PegVisitor {
+	public void visitPegString(PegString peg);
+	public void visitPegAny(PegAny peg);
+	public void visitPegCharacter(PegCharacter peg);
+	public void visitPegLabel(PegLabel peg);
+	public void visitPegOptional(PegOptional peg);
+	public void visitOneMore(PegOneMore peg);
+	public void visitZeroMore(PegZeroMore peg);
+	public void visitPegAnd(PegAnd peg);
+	public void visitPegNot(PegNot peg);
+	public void visitSequence(PegSequence peg);
+	public void visitChoice(PegChoice peg);
+	public void visitSetter(PegSetter peg);
+	public void visitNewObject(PegNewObject peg);
+	public void visitObjectLabel(PegObjectLabel peg);
+	public void visitCatch(PegCatch peg);
+	public void visitIndent(PegIndent peg);
 }

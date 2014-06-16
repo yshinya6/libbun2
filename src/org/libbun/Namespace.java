@@ -25,7 +25,7 @@ public class Namespace extends SymbolTable {
 		}
 	}
 
-	public PegParserContext newParserContext(String lang, PegSource source) {
+	public ParserContext newParserContext(String lang, PegSource source) {
 		if(lang == null) {
 			lang = this.guessLang(source.fileName, "bun");
 		}

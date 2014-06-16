@@ -144,7 +144,11 @@ public class PegParserParser extends SourceContext {
 		if(this.match(UniCharset.Letter)) {
 			int startIndex = this.getPosition() - 1;
 			int endIndex = this.matchZeroMore(UniCharset.NameSymbol);
-			right = new PegLabel(leftLabel, this.substring(startIndex, endIndex));
+			String s = this.source.substring(startIndex, endIndex);
+			right = new PegLabel(leftLabel, s);
+			if(leftLabel.equals(s)) {
+				right.setLeftRecursion(true);
+			}
 			right.setSource(this.source, startIndex);
 			return this.parsePostfix(leftLabel, right);
 		}
@@ -162,14 +166,14 @@ public class PegParserParser extends SourceContext {
 		if(this.match('&')) {
 			right = this.parseSingleExpr(leftLabel);
 			if(right != null) {
-				right = new PegAndPredicate(leftLabel, right);
+				right = new PegAnd(leftLabel, right);
 			}
 			return right;
 		}
 		if(this.match('!')) {
 			right = this.parseSingleExpr(leftLabel);
 			if(right != null) {
-				right = new PegNotPredicate(leftLabel, right);
+				right = new PegNot(leftLabel, right);
 			}
 			return right;
 		}
@@ -282,7 +286,12 @@ public class PegParserParser extends SourceContext {
 			}
 			Peg right = this.parseSequenceExpr(leftLabel);
 			if(right != null) {
+				boolean lrExistense = false;
+				if(left.hasLeftRecursion() == true) {
+					lrExistense = true;
+				}
 				left = left.appendAsSequence(right);
+				left.setLeftRecursion(lrExistense);
 			}
 		}
 		return left;
@@ -304,7 +313,12 @@ public class PegParserParser extends SourceContext {
 			else {
 				Peg right = this.parsePegExpr(leftLabel);
 				if(right != null) {
+					boolean lrExistense = false;
+					if(left.hasLeftRecursion() == true) {
+						lrExistense = true;
+					}
 					left = left.appendAsChoice(right);
+					left.setLeftRecursion(lrExistense);
 				}
 			}
 		}
