@@ -16,7 +16,7 @@ public final class PegParser {
 
 	public ParserContext newContext(PegSource source, int startIndex, int endIndex) {
 		if (Main.NonMemoPegMode) {
-			return new NonMemoPegParserContext(this, source, startIndex, endIndex);
+			return new DisableMemoPegParserContext(this, source, startIndex, endIndex);
 		}
 		else{
 			return new PegParserContext(this, source, startIndex, endIndex);
@@ -25,7 +25,7 @@ public final class PegParser {
 
 	public ParserContext newContext(PegSource source) {
 		if (Main.NonMemoPegMode) {
-			return new NonMemoPegParserContext(this, source, 0, source.sourceText.length());
+			return new DisableMemoPegParserContext(this, source, 0, source.sourceText.length());
 		}
 		else {
 			return new PegParserContext(this, source, 0, source.sourceText.length());

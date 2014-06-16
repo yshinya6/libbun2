@@ -63,7 +63,7 @@ public class Main {
 				PegDebuggerMode = true;
 				index = index + 1;
 			}
-			else if (argument.equals("--pegNM") && (index < args.length)) {
+			else if (argument.equals("--disable-memo") && (index < args.length)) {
 				LanguagePeg = args[index];
 				PegDebuggerMode = true;
 				NonMemoPegMode = true;
