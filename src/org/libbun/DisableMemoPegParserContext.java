@@ -1,6 +1,6 @@
 package org.libbun;
 
-public class NonMemoPegParserContext extends ParserContext {
+public class DisableMemoPegParserContext extends ParserContext {
 
 	private UniMap<Peg>        pegCache;
 	private UniMap<SimpleMemo> memoMap2 = new UniMap<SimpleMemo>();
@@ -26,11 +26,11 @@ public class NonMemoPegParserContext extends ParserContext {
 	int memoMiss = 0;
 	int memoSize = 0;
 
-	public NonMemoPegParserContext(PegParser parser, PegSource source) {
+	public DisableMemoPegParserContext(PegParser parser, PegSource source) {
 		this(parser, source, 0, source.sourceText.length());
 	}
 
-	public NonMemoPegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
+	public DisableMemoPegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
 		super(parser, source, startIndex, endIndex);
 		this.loadPegDefinition(this.parser.pegMap);
 	}
@@ -118,7 +118,7 @@ public class NonMemoPegParserContext extends ParserContext {
 
 	@Override
 	public SourceContext subContext(int startIndex, int endIndex) {
-		return new NonMemoPegParserContext(this.parser, this.source, startIndex, endIndex);
+		return new DisableMemoPegParserContext(this.parser, this.source, startIndex, endIndex);
 	}
 
 	public void initMemo() {
