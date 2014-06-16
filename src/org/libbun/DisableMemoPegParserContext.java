@@ -17,10 +17,6 @@ public class DisableMemoPegParserContext extends ParserContext {
 		PegObject childNode;
 	}
 
-	int memoHit = 0;
-	int memoMiss = 0;
-	int memoSize = 0;
-
 	public DisableMemoPegParserContext(PegParser parser, PegSource source) {
 		this(parser, source, 0, source.sourceText.length());
 	}
@@ -33,12 +29,6 @@ public class DisableMemoPegParserContext extends ParserContext {
 	public final void loadPegDefinition(UniMap<Peg> pegMap) {
 		this.pegCache = new UniMap<Peg>();
 		UniArray<String> list = pegMap.keys();
-//		for(int i = 0; i < list.size(); i++) {
-//			String key = list.ArrayValues[i];
-//			Peg e = pegMap.get(key, null);
-//			//this.checkLeftRecursion(key, e);
-//			//this.appendPegCache(key, e);
-//		}
 		list = this.pegCache.keys();
 		for(int i = 0; i < list.size(); i++) {
 			String key = list.ArrayValues[i];
@@ -48,69 +38,6 @@ public class DisableMemoPegParserContext extends ParserContext {
 			}
 		}
 	}
-
-//	private void checkLeftRecursion(String name, Peg e) {
-//		if(e instanceof PegChoice) {
-//			for(int i = 0; i < e.size(); i++) {
-//				this.checkLeftRecursion(name, e.get(i));
-//			}
-//			return;
-//		}
-//		if(e instanceof PegSequence) {
-//			PegSequence seq = (PegSequence)e;
-//			if(seq.size() > 1) {
-//				Peg first = seq.get(0);
-//				if(first instanceof PegLabel) {
-//					String label = ((PegLabel) first).symbol;
-//					if(label.equals(name)) {
-//						//this.lrExistence = true;
-//						String key = this.parser.nameRightJoinName(name);  // left recursion
-//						this.appendPegCache(key, seq.cdr());
-//						return;
-//					}
-					// indirect left recursion has not supported
-//					else {
-//						Peg left = this.pegMap.get(label, null);
-//						if(this.hasLabel(name, left)) {
-//							String key = this.nameRightJoinName(label);  // indirect left recursion
-//							this.appendPegCache(key, seq.cdr());
-//							return;
-//						}
-//					}
-//				}
-//			}
-//		}
-//		this.appendPegCache(name, e);
-//	}
-
-//	private void appendPegCache(String name, Peg e) {
-//		Peg defined = this.pegCache.get(name, null);
-//		if(defined != null) {
-//			e = defined.appendAsChoice(e);
-//		}
-//		this.pegCache.put(name, e);
-//	}
-
-//	private boolean hasLabel(String name, Peg e) {
-//		if(e instanceof PegChoice) {
-//			for(int i = 0; i < e.size(); i++) {
-//				if(this.hasLabel(name, e.get(i))) {
-//					return true;
-//				}
-//			}
-//			return false;
-//		}
-//		if(e instanceof PegLabel) {
-//			String label = ((PegLabel) e).symbol;
-//			if(name.equals(label)) {
-//				return true;
-//			}
-//			e = this.pegMap.get(label, null);
-//			return this.hasLabel(name, e);
-//		}
-//		return false;
-//	}
-
 	@Override
 	public SourceContext subContext(int startIndex, int endIndex) {
 		return new DisableMemoPegParserContext(this.parser, this.source, startIndex, endIndex);
@@ -124,23 +51,11 @@ public class DisableMemoPegParserContext extends ParserContext {
 		return this.pegCache.get(this.parser.nameRightJoinName(name), null);
 	}
 
-
 	public final PegObject parsePegNode(PegObject parentNode, String pattern) {
 			Peg e = this.parser.getPattern(pattern);
 			PegObject ans = e.debugMatch(parentNode, this);
 				return ans;
 		}
-
-	public final PegObject parseRightPegNode(PegObject left, String symbol) {
-		Peg e = this.getRightPattern(symbol);
-		if(e != null) {
-			PegObject right = e.debugMatch(left, this);
-			if(!right.isFailure()) {
-				left = right;
-			}
-		}
-		return left;
-	}
 
 	public final int getStackPosition(Peg trace) {
 		this.pushImpl(trace, null, '\0', null, 0, null);
@@ -167,10 +82,6 @@ public class DisableMemoPegParserContext extends ParserContext {
 		log.childNode = childNode;
 		this.stackTop = this.stackTop + 1;
 	}
-
-//	void pushLog(Peg trace, String msg) {
-//		this.pushImpl(trace, msg, 'm', null, 0, null);
-//	}
 
 	@Override
 	public void addSubObject(PegObject newnode, int stack, int top) {
@@ -200,7 +111,6 @@ public class DisableMemoPegParserContext extends ParserContext {
 	}
 
 	public void showStatInfo(PegObject parsedObject) {
-//		System.out.println("hit: " + this.memoHit + ", miss: " + this.memoMiss);
 		System.out.println("created_object=" + this.objectCount + ", used_object=" + parsedObject.count());
 		System.out.println("backtrackCount: " + this.backtrackCount + ", backtrackLength: " + this.backtrackSize);
 		System.out.println();
