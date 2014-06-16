@@ -44,7 +44,6 @@ public class DisableMemoPegParserContext extends ParserContext {
 	}
 
 	public void initMemo() {
-//		this.memoMap2 = new UniMap<SimpleMemo>();
 	}
 
 	public final Peg getRightPattern(String name) {
@@ -52,9 +51,9 @@ public class DisableMemoPegParserContext extends ParserContext {
 	}
 
 	public final PegObject parsePegNode(PegObject parentNode, String pattern) {
-			Peg e = this.parser.getPattern(pattern);
-			PegObject ans = e.debugMatch(parentNode, this);
-				return ans;
+		Peg e = this.parser.getPattern(pattern);
+		PegObject ans = e.debugMatch(parentNode, this);
+		return ans;
 		}
 
 	public final int getStackPosition(Peg trace) {
