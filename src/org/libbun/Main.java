@@ -44,14 +44,11 @@ public class Main {
 	// --verbose:peg
 	public static boolean PegDebuggerMode = false;
 
-	// --pegNM
+	// --disable-memo
 	public static boolean NonMemoPegMode = false;
 
 	private static void parseCommandArgument(String[] args) {
 		int index = 0;
-//		Function<String,String> f = (String x) -> String {
-//			return x;
-//		}
 		while (index < args.length) {
 			String argument = args[index];
 			if (!argument.startsWith("-")) {
@@ -61,12 +58,6 @@ public class Main {
 			if (argument.equals("--peg") && (index < args.length)) {
 				LanguagePeg = args[index];
 				PegDebuggerMode = true;
-				index = index + 1;
-			}
-			else if (argument.equals("--disable-memo") && (index < args.length)) {
-				LanguagePeg = args[index];
-				PegDebuggerMode = true;
-				NonMemoPegMode = true;
 				index = index + 1;
 			}
 			else if (argument.equals("-l") && (index < args.length)) {
@@ -83,6 +74,9 @@ public class Main {
 			}
 			else if (argument.equals("-i")) {
 				ShellMode = true;
+			}
+			else if (argument.equals("--disable-memo")) {
+				NonMemoPegMode = true;
 			}
 			else if (argument.equals("--profile")) {
 				ProfileMode = true;
@@ -146,6 +140,9 @@ public class Main {
 		driver.initTable(gamma);
 		if(InputFileName != null) {
 			loadScript(gamma, driver, InputFileName);
+			if (ShellMode) {
+				performShell(gamma, driver);
+			}
 		}
 		else {
 			performShell(gamma, driver);
