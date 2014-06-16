@@ -28,8 +28,7 @@ public class DisableMemoPegParserContext extends ParserContext {
 
 	public final void loadPegDefinition(UniMap<Peg> pegMap) {
 		this.pegCache = new UniMap<Peg>();
-		UniArray<String> list = pegMap.keys();
-		list = this.pegCache.keys();
+		UniArray<String> list = this.pegCache.keys();
 		for(int i = 0; i < list.size(); i++) {
 			String key = list.ArrayValues[i];
 			Peg e = this.pegCache.get(key, null);
@@ -52,8 +51,7 @@ public class DisableMemoPegParserContext extends ParserContext {
 
 	public final PegObject parsePegNode(PegObject parentNode, String pattern) {
 		Peg e = this.parser.getPattern(pattern);
-		PegObject ans = e.debugMatch(parentNode, this);
-		return ans;
+		return e.debugMatch(parentNode, this);
 	}
 
 	public final int getStackPosition(Peg trace) {
