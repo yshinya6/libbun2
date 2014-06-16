@@ -54,7 +54,7 @@ public class DisableMemoPegParserContext extends ParserContext {
 		Peg e = this.parser.getPattern(pattern);
 		PegObject ans = e.debugMatch(parentNode, this);
 		return ans;
-		}
+	}
 
 	public final int getStackPosition(Peg trace) {
 		this.pushImpl(trace, null, '\0', null, 0, null);

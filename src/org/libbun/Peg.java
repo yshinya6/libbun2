@@ -2,7 +2,7 @@ package org.libbun;
 
 public abstract class Peg {
 	public final static boolean _BackTrack = true;
-
+	
 	int       flag     = 0;
 	String    name     = null;
 	boolean   debug    = false;
@@ -10,7 +10,7 @@ public abstract class Peg {
 
 	PegSource source = null;
 	int       sourcePosition = 0;
-
+	
 	Peg(String leftLabel) {
 		this.name = leftLabel;
 	}
@@ -38,11 +38,11 @@ public abstract class Peg {
 		}
 		return sb.toString();
 	}
-
+	
 	public boolean hasLeftRecursion() {
 		return this.hasLeftRecursion;
 	}
-
+	
 	public void setLeftRecursion(boolean lrExistense) {
 		this.hasLeftRecursion = lrExistense;
 	}
@@ -133,7 +133,7 @@ abstract class PegAtom extends Peg {
 	@Override
 	protected void stringfy(UniStringBuilder sb, boolean debugMode) {
 		sb.append(this.symbol);
-	}
+	}	
 	@Override
 	protected boolean verify(PegParser parser) {
 		return true;
@@ -245,7 +245,10 @@ class PegLabel extends PegAtom {
 	}
 	@Override protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
 		PegObject left = context.parsePegNode(parentNode, this.symbol);
-		return left;
+		if(left.isFailure()) {
+			return left;
+		}
+		return context.parseRightPegNode(left, this.symbol);
 	}
 	@Override
 	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
@@ -356,7 +359,7 @@ class PegOptional extends PegUnary {
 }
 
 class PegOneMore extends PegUnary {
-	public int atleast = 0;
+	public int atleast = 0; 
 	protected PegOneMore(String leftLabel, Peg e, int atLeast) {
 		super(leftLabel, e, false);
 		this.atleast = atLeast;
@@ -594,7 +597,7 @@ class PegSequence extends PegList {
 		visitor.visitSequence(this);
 	}
 	public Peg cdr() {
-		PegSequence seq = new PegSequence(this.get(1));
+		PegSequence seq = new PegSequence(this.get(1)); 
 		for(int i = 2; i < this.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
 			seq.list.add(e);
