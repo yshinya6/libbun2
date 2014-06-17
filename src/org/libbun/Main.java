@@ -41,6 +41,9 @@ public class Main {
 	// --verbose
 	public static boolean EnableVerbose = false;
 
+	// --verbose:ast
+	public static boolean EnableVerboseAst = false;
+
 	// --profile
 	public static boolean ProfileMode = false;
 
@@ -88,10 +91,16 @@ public class Main {
 				ParseOnly = true;
 			}
 			else if(argument.startsWith("--verbose")) {
-				EnableVerbose = true;
-//				if(argument.equals("--verbose:peg")) {
+				if(argument.equals("--verbose:ast")) {
+					EnableVerboseAst = true;
+				}
+//				else if(argument.equals("--verbose:peg")) {
 //					pegDebugger = true;
 //				}
+				else {
+					EnableVerbose = true;
+					EnableVerboseAst = true;
+				}
 			}
 			else {
 				ShowUsage("unknown option: " + argument);
@@ -170,11 +179,13 @@ public class Main {
 				node.name = BunSymbol.PerrorFunctor;
 			}
 			gamma.set(node);
-			if(PegDebuggerMode) {
+			if(PegDebuggerMode || EnableVerboseAst) {
 				System.out.println("parsed:\n" + node.toString());
 				if(context.hasChar()) {
 					System.out.println("** uncosumed: '" + context + "' **");
 				}
+			}
+			if(PegDebuggerMode || EnableVerbose) {
 				System.out.println();
 				context.showStatInfo(node);
 			}
