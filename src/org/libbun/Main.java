@@ -35,6 +35,9 @@ public class Main {
 	//
 	private static String InputFileName = null;
 
+	// --parse-only
+	public static boolean ParseOnly = false;
+
 	// --verbose
 	public static boolean EnableVerbose = false;
 
@@ -80,6 +83,9 @@ public class Main {
 			}
 			else if (argument.equals("--profile")) {
 				ProfileMode = true;
+			}
+			else if (argument.equals("--parse-only")) {
+				ParseOnly = true;
 			}
 			else if(argument.startsWith("--verbose")) {
 				EnableVerbose = true;
@@ -173,7 +179,7 @@ public class Main {
 				context.showStatInfo(node);
 			}
 			ParseProfileStop();
-			if(driver != null) {
+			if(!ParseOnly && driver != null) {
 				driver.startTransaction(null);
 				gamma.tryMatch(node);
 				node.matched.build(node, driver);
