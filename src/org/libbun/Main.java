@@ -130,8 +130,9 @@ public class Main {
 		driverMap.put("py", PythonDriver.class);
 		driverMap.put("python", PythonDriver.class);
 		driverMap.put("jvm", JvmDriver.class);
-		driverMap.put("jvm-debug", JvmDriver.DebugableJvmDriver.class);
+		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
 		driverMap.put("jvm-indy", JvmIndyDriver.class);
+		driverMap.put("jvm-indy-debug", JvmIndyDriver.DebuggableJvmIndyDriver.class);
 	}
 
 	private static BunDriver loadDriver(String driverName) {

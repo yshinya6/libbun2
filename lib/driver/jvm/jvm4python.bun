@@ -1,6 +1,3 @@
-typedef boolean
-typedef long
-typedef double
 typedef String
 typedef void
 typedef Object
@@ -9,122 +6,126 @@ typedef Long
 typedef Double
 typedef Boolean
 
+bun #toplevel(*)  {
+	${TOP_LEVEL this}
+}
+
+
 bun #block(*): void {
 	${statement this}
 }
 
-bun #integer(): Long {
+bun #integer(): Object {
 	${PUSH_AS_LONG_WRAP this}
 }
 
-bun #float() : Double {
+bun #float() : Object {
 	${PUSH_AS_DOUBLE_WRAP this}
 }
 
-bun #true() :Boolean {
+bun #true() : Object {
 	${PUSH_AS_BOOLEAN_WRAP true}
 }
 
-bun #false() :Boolean {
+bun #false() : Object {
 	${PUSH_AS_BOOLEAN_WRAP false}
 }
 
-bun #string() : String {
+bun #string() : Object {
 	${PUSH_AS_STRING}
 }
 
 // binary op definition
 // ADD
-bun #add(x, y) : Object {
+bun #add(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY add bsmBinaryOp Object Object Object}
 }
 
 //SUB
-bun #sub(x, y) : Object {
+bun #sub(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY sub bsmBinaryOp Object Object Object}
 }
 
 // MUL
-bun #mul(x, y) : Object {
+bun #mul(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY mul bsmBinaryOp Object Object Object}
 }
 
 // DIV
-bun #div(x, y) : Object {
+bun #div(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY div bsmBinaryOp Object Object Object}
 }
 
 // MOD
-
-bun #mod(x, y) : Object {
+bun #mod(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY mod bsmBinaryOp Object Object Object}
 }
 
 // EQ
-bun #eq(x, y) : Boolean {
+bun #eq(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY eq bsmCompOp Boolean Object Object}
 }
 
 // NOTEQ
-bun #noteq(x, y) : Boolean {
+bun #noteq(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY noteq bsmCompOp Boolean Object Object}
 }
 
 // LT
-bun #lt(x, y) : Boolean {
+bun #lt(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY lt bsmCompOp Boolean Object Object}
 }
 
 // LTE
-bun #lte(x, y) : Boolean {
+bun #lte(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY lte bsmCompOp Boolean Object Object}
 }
 
 // GT
-bun #gt(x, y) : Boolean {
+bun #gt(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY gt bsmCompOp Boolean Object Object}
 }
 
 // GTE
-
-bun #gte(x, y) : Boolean {
+bun #gte(x : Object, y : Object) : Object {
 	${x} ${y} ${INDY gte bsmCompOp Boolean Object Object}
 }
 
 // unary op definition
 // NOT
-bun #not(x) : Object {
+bun #not(x : Object) : Object {
 	${x} ${INDY not bsmUnaryOp Object Object}
 }
 
 // PLUS
-bun #plus(x) : Object {
+bun #plus(x : Object) : Object {
 	${x} ${INDY plus bsmUnaryOp Object Object}
 }
 
 // MINUS
-bun #minus(x) : Object {
+bun #minus(x : Object) : Object {
 	${x} ${INDY minus bsmUnaryOp Object Object}
 }
 
 // COMPL
-bun #compl(x) : Object {
+bun #compl(x : Object) : Object {
 	${x} ${INDY compl bsmUnaryOp Object Object}
 }
 
 // conditional operator
 // And
-bun #and(x, y) : Boolean {
-	${AND}
+bun #and(x : Object, y : Object) : Object {
+	${AND} ${BOX boolean}
 }
 
 // Or
-bun #or(x, y) : Boolean {
-	${OR}
+bun #or(x : Object, y : Object) : Object {
+	${OR} ${BOX boolean}
 }
 
 // LET
 bun #let(name, type, value): void && letvar() {
 	${LET}
 }
+
 

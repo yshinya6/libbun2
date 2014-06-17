@@ -35,8 +35,12 @@ public class JvmIndyDriver extends JvmDriver {
 		this.initBsmHandle("UnaryOp");
 		this.initBsmHandle("BinaryOp");
 		this.initBsmHandle("CompOp");
-		
-		//JvmByteCodeLoader.setDebugMode(true);
+	}
+
+	public static class DebuggableJvmIndyDriver extends JvmIndyDriver {
+		public DebuggableJvmIndyDriver() {
+			JvmByteCodeLoader.setDebugMode(true);
+		}
 	}
 
 	@Override
@@ -95,7 +99,6 @@ public class JvmIndyDriver extends JvmDriver {
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			mBuilders.peek().push(Long.parseLong(node.getText()));
 			mBuilders.peek().box(Type.LONG_TYPE);
-			pushTypeToTypeStack(node.getType(null));
 		}
 	}
 
@@ -109,7 +112,6 @@ public class JvmIndyDriver extends JvmDriver {
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			mBuilders.peek().push(Double.parseDouble(node.getText()));
 			mBuilders.peek().box(Type.DOUBLE_TYPE);
-			pushTypeToTypeStack(node.getType(null));
 		}
 	}
 
@@ -128,7 +130,6 @@ public class JvmIndyDriver extends JvmDriver {
 				mBuilders.peek().push(false);
 			}
 			mBuilders.peek().box(Type.BOOLEAN_TYPE);
-			pushTypeToTypeStack(node.getType(null));
 		}
 	}
 
@@ -151,7 +152,6 @@ public class JvmIndyDriver extends JvmDriver {
 			}
 			Type typeDesc = Type.getMethodType(returnType, paramTypes);
 			mBuilder.invokeDynamic(methodName, typeDesc.getDescriptor(), handleMap.get(param[1]));
-			pushTypeToTypeStack(node.getType(null));
 		}
 	}
 
