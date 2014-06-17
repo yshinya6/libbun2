@@ -1,0 +1,13 @@
+language: java
+
+jdk:
+    - oraclejdk7
+
+python:
+    - "2.7"
+
+before_script:
+    - "ant"
+
+script:
+    - "python test-peg/tool/testrunner.py"
