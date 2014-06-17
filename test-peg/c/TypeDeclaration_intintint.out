@@ -32,7 +32,17 @@ parsed:
                         }
                      }
                      #initializer {            ## by peg : null
-                        #assignmentexpression: 1   ## by peg : null
+                        #assignmentexpression {            ## by peg : null
+                           #unaryexpression {            ## by peg : null
+                              #postfixexpression {            ## by peg : null
+                                 #primaryexpression {            ## by peg : null
+                                    #constant {            ## by peg : null
+                                       #integerconstant: 1   ## by peg : null
+                                    }
+                                 }
+                              }
+                           }
+                        }
                      }
                   }
                   #initdeclarator {            ## by peg : null
@@ -42,7 +52,17 @@ parsed:
                         }
                      }
                      #initializer {            ## by peg : null
-                        #assignmentexpression: 2   ## by peg : null
+                        #assignmentexpression {            ## by peg : null
+                           #unaryexpression {            ## by peg : null
+                              #postfixexpression {            ## by peg : null
+                                 #primaryexpression {            ## by peg : null
+                                    #constant {            ## by peg : null
+                                       #integerconstant: 2   ## by peg : null
+                                    }
+                                 }
+                              }
+                           }
+                        }
                      }
                   }
                   #initdeclarator {            ## by peg : null
@@ -52,7 +72,17 @@ parsed:
                         }
                      }
                      #initializer {            ## by peg : null
-                        #assignmentexpression: 3   ## by peg : null
+                        #assignmentexpression {            ## by peg : null
+                           #unaryexpression {            ## by peg : null
+                              #postfixexpression {            ## by peg : null
+                                 #primaryexpression {            ## by peg : null
+                                    #constant {            ## by peg : null
+                                       #integerconstant: 3   ## by peg : null
+                                    }
+                                 }
+                              }
+                           }
+                        }
                      }
                   }
                }
@@ -60,7 +90,17 @@ parsed:
             #statement {            ## by peg : null
                #returnstatement {            ## by peg : null
                   #expression {            ## by peg : null
-                     #assignmentexpression: 0   ## by peg : null
+                     #assignmentexpression {            ## by peg : null
+                        #unaryexpression {            ## by peg : null
+                           #postfixexpression {            ## by peg : null
+                              #primaryexpression {            ## by peg : null
+                                 #constant {            ## by peg : null
+                                    #integerconstant: 0   ## by peg : null
+                                 }
+                              }
+                           }
+                        }
+                     }
                   }
                }
             }

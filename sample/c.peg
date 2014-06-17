@@ -383,14 +383,14 @@ JumpStatement
 //-------------------------------------------------------------------------
 
 PrimaryExpression
-    = Identifier
+    = << (Identifier
     / Constant
     / StringLiteral
-    / LPAR Expression RPAR
+    / LPAR Expression RPAR)@ #primaryexpression >>
     ;
 
 PostfixExpression
-    = ( PrimaryExpression
+    = << ( PrimaryExpression@
       / LPAR TypeName RPAR LWING InitializerList COMMA? RWING
       )
       ( LBRK Expression RBRK
@@ -399,7 +399,7 @@ PostfixExpression
       / PTR Identifier
       / INC
       / DEC
-      )*
+      )* #postfixexpression >>
     ;
 
 ArgumentExpressionList
@@ -407,11 +407,11 @@ ArgumentExpressionList
     ;
 
 UnaryExpression
-    = PostfixExpression
+    = << (PostfixExpression@
     / INC UnaryExpression
     / DEC UnaryExpression
     / UnaryOperator CastExpression
-    / SIZEOF (UnaryExpression / LPAR TypeName RPAR )
+    / SIZEOF (UnaryExpression / LPAR TypeName RPAR )) #unaryexpression>>
     ;
 
 UnaryOperator
@@ -649,18 +649,18 @@ HexQuad = HexDigit HexDigit HexDigit HexDigit ;
 //-------------------------------------------------------------------------
 
 Constant
-    = FloatConstant
+    = << (FloatConstant
     / IntegerConstant       // Note: can be a prefix of Float Constant!
     / EnumerationConstant
-    / CharacterConstant
+    / CharacterConstant)@ #constant >>
     ;
 
 IntegerConstant
-    = ( DecimalConstant
+    = << ( DecimalConstant
       / HexConstant
       / OctalConstant
-      )
-    IntegerSuffix? Spacing
+      )@
+    IntegerSuffix@? Spacing #integerconstant >>
     ;
 
 DecimalConstant = [1-9][0-9]* ;
