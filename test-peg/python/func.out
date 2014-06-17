@@ -1,0 +1,27 @@
+parsed:
+#toplevel {            ## by peg : null
+   #function {            ## by peg : null
+      #name: hoge   ## by peg : null
+      #params {            ## by peg : null
+         #name: a   ## by peg : null
+         #name: b   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #if {            ## by peg : null
+            #lt {            ## by peg : null
+               #name: a   ## by peg : null
+               #name: b   ## by peg : null
+            }
+            #block {            ## by peg : null
+               #return {            ## by peg : null
+                  #add {            ## by peg : null
+                     #name: a   ## by peg : null
+                     #name: b   ## by peg : null
+                  }
+               }
+            }
+         }
+      }
+   }
+   #error:    ## by peg : EOS+ defined in Stmt
+}

@@ -1,0 +1,49 @@
+parsed:
+#translationunit {            ## by peg : null
+   #externaldeclaration {            ## by peg : null
+      #functiondefinition {            ## by peg : null
+         #declarationspecifiers {            ## by peg : null
+            #typespecifier: int    ## by peg : null
+         }
+         #declarator {            ## by peg : null
+            #directdeclarator {            ## by peg : null
+               #identifier: main   ## by peg : null
+               #parametertypelist {            ## by peg : null
+                  #parameterlist {            ## by peg : null
+                     #parameterdeclaration {            ## by peg : null
+                        #declarationspecifiers {            ## by peg : null
+                           #typespecifier: int    ## by peg : null
+                        }
+                        #declarator {            ## by peg : null
+                           #directdeclarator {            ## by peg : null
+                              #identifier: argc   ## by peg : null
+                           }
+                        }
+                     }
+                     #parameterdeclaration {            ## by peg : null
+                        #declarationspecifiers {            ## by peg : null
+                           #typespecifier: char    ## by peg : null
+                        }
+                        #declarator {            ## by peg : null
+                           #pointer: **   ## by peg : null
+                           #directdeclarator {            ## by peg : null
+                              #identifier: argv   ## by peg : null
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+         #compoundstatement {            ## by peg : null
+            #statement {            ## by peg : null
+               #returnstatement {            ## by peg : null
+                  #expression {            ## by peg : null
+                     #assignmentexpression: 0   ## by peg : null
+                  }
+               }
+            }
+         }
+      }
+   }
+}

@@ -100,20 +100,20 @@
 //-------------------------------------------------------------------------
 
 TranslationUnit
-    = Spacing ExternalDeclaration+ EOT
+    = << Spacing ExternalDeclaration@+ EOT #translationunit >>
     ;
 
 ExternalDeclaration
-    = <<FunctionDefinition #funcdecl>>
-    / <<Declaration        #vardecl>>
+    = << (FunctionDefinition
+    / Declaration)@ #externaldeclaration >>
     ;
 
 FunctionDefinition
-    = DeclarationSpecifiers Declarator DeclarationList? CompoundStatement
+    = << DeclarationSpecifiers@ Declarator@ DeclarationList@? CompoundStatement@ #functiondefinition>>
     ;
 
 DeclarationList
-    = Declaration+
+    = << Declaration@+ #declarationlist>>
     ;
 
 
@@ -122,47 +122,47 @@ DeclarationList
 //-------------------------------------------------------------------------
 
 Declaration
-    = DeclarationSpecifiers InitDeclaratorList? (Attribute / Assembler)? SEMI ;
+    = << DeclarationSpecifiers@ InitDeclaratorList@? (Attribute / Assembler)@? SEMI #declaration>>;
 
 DeclarationSpecifiers
-    = (( StorageClassSpecifier
+    = << (( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
-       TypedefName
+       )@*
+       TypedefName@
        ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
-      )
-    / ( StorageClassSpecifier
+       )@*
+      ) #declarationspecifiers >>
+    / << ( StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
       / Attribute
-      )+
+      )@+ #declarationspecifiers >>
     ;
 
 InitDeclaratorList
-    = InitDeclarator (COMMA InitDeclarator)*
+    = << InitDeclarator@ (COMMA InitDeclarator@)* #initdeclaratorlist >>
     ;
 
 InitDeclarator
-    = Declarator (EQU Initializer)?
+    = << Declarator@ (EQU Initializer@)? #initdeclarator >>
     ;
 
 StorageClassSpecifier
-    = TYPEDEF
+    = << (TYPEDEF
     / EXTERN
     / STATIC
     / AUTO
-    / REGISTER
+    / REGISTER)@ #storageclassspecifier >>
     ;
 
 TypeSpecifier
-    = VOID
+    = << (VOID
     / CHAR
     / SHORT
     / INT
@@ -174,7 +174,7 @@ TypeSpecifier
     / BOOL
     / COMPLEX
     / StructOrUnionSpecifier
-    / EnumSpecifier
+    / EnumSpecifier)@ #typespecifier >>
     ;
 
 StructOrUnionSpecifier
@@ -250,47 +250,47 @@ AttributeParamList = LPAR (AttributeParam (COMMA AttributeParam)*)? RPAR;
 Assembler = ASM LPAR (StringLiteral (COMMA StringLiteral)*)? RPAR;
 
 Declarator
-    = Pointer? DirectDeclarator
+    = << Pointer@? DirectDeclarator@ #declarator >>
     ;
 
 DirectDeclarator
-    = ( Identifier
-      / LPAR Declarator RPAR
+    = << ( Identifier@
+      / LPAR Declarator@ RPAR
       )
-      ( LBRK TypeQualifier* AssignmentExpression? RBRK
-      / LBRK STATIC TypeQualifier* AssignmentExpression RBRK
-      / LBRK TypeQualifier+ STATIC AssignmentExpression RBRK
-      / LBRK TypeQualifier* STAR RBRK
-      / LPAR ParameterTypeList RPAR
-      / LPAR IdentifierList? RPAR
-      )*
+      ( LBRK@ TypeQualifier@* AssignmentExpression@? RBRK@
+      / LBRK STATIC@ TypeQualifier@* AssignmentExpression@ RBRK
+      / LBRK TypeQualifier@+ STATIC@ AssignmentExpression@ RBRK
+      / LBRK TypeQualifier@* STAR@ RBRK
+      / LPAR@ ParameterTypeList@ RPAR@
+      / LPAR IdentifierList@? RPAR
+      )* #directdeclarator >>
     ;
 
 Pointer
-    = ( STAR TypeQualifier* )+
+    = << ( STAR@ TypeQualifier@* )+ #pointer >>
     ;
 
 ParameterTypeList
-    = ParameterList (COMMA ELLIPSIS)?
+    = << ParameterList@ (COMMA ELLIPSIS)? #parametertypelist >>
     ;
 
 ParameterList
-    = ParameterDeclaration (COMMA ParameterDeclaration)*
+    = << ParameterDeclaration@ (COMMA ParameterDeclaration@)* #parameterlist>>
     ;
 
 ParameterDeclaration
-    = DeclarationSpecifiers
-      ( Declarator
-      / AbstractDeclarator
-      )?
+    = << DeclarationSpecifiers@
+      ( Declarator@
+      / AbstractDeclarator@
+      )? #parameterdeclaration >>
     ;
 
 IdentifierList
-    = Identifier (COMMA Identifier)*
+    = << Identifier@ (COMMA Identifier@)* #identifierlist >>
     ;
 
 TypeName
-    = SpecifierQualifierList AbstractDeclarator?
+    = << SpecifierQualifierList@ AbstractDeclarator@? #typename >>
     ;
 
 AbstractDeclarator
@@ -309,20 +309,20 @@ DirectAbstractDeclarator
     ;
 
 TypedefName
-    = Identifier
+    = << Identifier@ #typedefname >>
     ;
 
 Initializer
-    = AssignmentExpression
-    / LWING InitializerList COMMA? RWING
+    = << AssignmentExpression
+    / LWING InitializerList@ COMMA? RWING #initializer>>
     ;
 
 InitializerList
-    = Designation? Initializer (COMMA Designation? Initializer)*
+    = << Designation@? Initializer@ (COMMA Designation@? Initializer@)* #initializerlist >>
     ;
 
 Designation
-    = Designator+ EQU
+    = << Designator@+ EQU #designation>>
     ;
 
 Designator
@@ -336,12 +336,12 @@ Designator
 //-------------------------------------------------------------------------
 
 Statement
-    = LabeledStatement
+    = << (LabeledStatement
     / CompoundStatement
     / ExpressionStatement
     / SelectionStatement
     / IterationStatement
-    / JumpStatement
+    / JumpStatement )@ #statement >>
     ;
 
 LabeledStatement
@@ -351,11 +351,11 @@ LabeledStatement
     ;
 
 CompoundStatement
-    = LWING ( Declaration / Statement )* RWING
+    = << LWING ( Declaration / Statement )@* RWING #compoundstatement >>
     ;
 
 ExpressionStatement
-    = Expression? SEMI
+    = << Expression@? SEMI #expressionstatement >>
     ;
 
 SelectionStatement
@@ -374,7 +374,7 @@ JumpStatement
     = GOTO Identifier SEMI
     / CONTINUE SEMI
     / BREAK SEMI
-    / RETURN Expression? SEMI
+    / << RETURN@ Expression@? SEMI #returnstatement >>
     ;
 
 
@@ -472,8 +472,8 @@ ConditionalExpression
     ;
 
 AssignmentExpression
-    = << UnaryExpression AssignmentOperator AssignmentExpression #expr1 >>
-    / << ConditionalExpression #expr2 >>
+    = << (UnaryExpression@ AssignmentOperator@ AssignmentExpression@
+    /  ConditionalExpression) #assignmentexpression >>
     ;
 
 AssignmentOperator
@@ -491,7 +491,7 @@ AssignmentOperator
     ;
 
 Expression
-    = AssignmentExpression (COMMA AssignmentExpression)*
+    = << AssignmentExpression@ (COMMA AssignmentExpression@)* #expression >>
     ;
 
 ConstantExpression
@@ -619,7 +619,7 @@ Keyword
 //  distinct from keywords, but it seems so.
 //-------------------------------------------------------------------------
 
-Identifier = !Keyword IdNondigit IdChar* Spacing ;
+Identifier = << !Keyword IdNondigit@ IdChar@* Spacing #identifier >>;
 
 IdNondigit
     = [a-z] / [A-Z] / [_]
@@ -796,4 +796,6 @@ OREQU      =  "|="        Spacing ;
 COMMA      =  ","         Spacing ;
 
 EOT        = !. ;
-TopLevel   = TranslationUnit;
+TopLevel
+    = TranslationUnit
+    ;

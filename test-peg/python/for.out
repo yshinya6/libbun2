@@ -1,0 +1,17 @@
+parsed:
+#toplevel {            ## by peg : null
+   #for {            ## by peg : null
+      #name: x   ## by peg : null
+      #array {            ## by peg : null
+         #integer: 1   ## by peg : null
+         #integer: 2   ## by peg : null
+         #integer: 3   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #add {            ## by peg : null
+            #name: x   ## by peg : null
+            #integer: 1   ## by peg : null
+         }
+      }
+   }
+}

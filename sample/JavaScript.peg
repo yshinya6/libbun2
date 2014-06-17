@@ -1,3 +1,7 @@
+//
+// Based on PEGjs's JavaScript grammar.
+// https://github.com/dmajda/pegjs/blob/master/examples/javascript.pegjs
+//
 
 //
 // JavaScript Grammar
@@ -34,8 +38,8 @@
 // [4] http://boshi.inimino.org/3box/asof/1270029991384/PEG/ECMAScript_unified.peg
 //
 
-Start
-  = __ Program@ __
+TopLevel
+  = __ Program __
   ;
 
 ///* ----- A.1 Lexical Grammar ----- */
@@ -45,12 +49,7 @@ SourceCharacter
   ;
 
 WhiteSpace
-  = "\t"
-  / "\v"
-  / "\f"
-  / " "
-  / "\u00A0"
-  / "\uFEFF"
+  = [\t\f \u00A0\uFEFF]
   / Zs
   ;
 
@@ -84,11 +83,11 @@ SingleLineComment
   ;
 
 Identifier
-  = << !ReservedWord IdentifierName@ #identifier >>
+  = !ReservedWord IdentifierName
   ;
 
 IdentifierName
-  = IdentifierStart IdentifierPart*
+  = << IdentifierStart IdentifierPart* #identifier >>
   ;
 
 IdentifierStart
@@ -108,12 +107,7 @@ IdentifierPart
   ;
 
 UnicodeLetter
-  = Lu
-  / Ll
-  / Lt
-  / Lm
-  / Lo
-  / Nl
+  = Lu / Ll / Lt / Lm / Lo / Nl
   ;
 
 UnicodeCombiningMark
@@ -130,57 +124,26 @@ UnicodeConnectorPunctuation
   ;
 
 ReservedWord
-  = Keyword
-  / FutureReservedWord
-  / NullLiteral
-  / BooleanLiteral
+  = Keyword / FutureReservedWord / NullLiteral / BooleanLiteral
   ;
 
 Keyword
-  = BreakToken
-  / CaseToken
-  / CatchToken
-  / ContinueToken
-  / DebuggerToken
-  / DefaultToken
-  / DeleteToken
-  / DoToken
-  / ElseToken
-  / FinallyToken
-  / ForToken
-  / FunctionToken
-  / IfToken
-  / InstanceofToken
-  / InToken
-  / NewToken
-  / ReturnToken
-  / SwitchToken
-  / ThisToken
-  / ThrowToken
-  / TryToken
-  / TypeofToken
-  / VarToken
-  / VoidToken
-  / WhileToken
-  / WithToken
+  = BreakToken / CaseToken / CatchToken / ContinueToken
+  / DebuggerToken / DefaultToken / DeleteToken / DoToken
+  / ElseToken / FinallyToken / ForToken / FunctionToken
+  / IfToken / InstanceofToken / InToken / NewToken
+  / ReturnToken / SwitchToken / ThisToken / ThrowToken
+  / TryToken / TypeofToken / VarToken / VoidToken
+  / WhileToken / WithToken
   ;
 
 FutureReservedWord
-  = ClassToken
-  / ConstToken
-  / EnumToken
-  / ExportToken
-  / ExtendsToken
-  / ImportToken
-  / SuperToken
+  = ClassToken / ConstToken / EnumToken / ExportToken
+  / ExtendsToken / ImportToken / SuperToken
   ;
 
 Literal
-  = NullLiteral
-  / BooleanLiteral
-  / NumericLiteral
-  / StringLiteral
-  / RegularExpressionLiteral
+  = NullLiteral / BooleanLiteral / NumericLiteral / StringLiteral / RegularExpressionLiteral
   ;
 
 NullLiteral
@@ -188,8 +151,7 @@ NullLiteral
   ;
 
 BooleanLiteral
-  = TrueToken
-  / FalseToken
+  = TrueToken / FalseToken
   ;
 
 //
@@ -225,7 +187,7 @@ ExponentPart
   ;
 
 ExponentIndicator
-  = "e"i
+  = [eE]
   ;
 
 SignedInteger
@@ -233,15 +195,15 @@ SignedInteger
   ;
 
 HexIntegerLiteral
-  = "0x"i $HexDigit+
+  = "0" [xX] $HexDigit+
   ;
 
 HexDigit
-  = [0-9a-f]i
+  = [0-9a-fA-F]
   ;
 
 StringLiteral
-  = '"' << DoubleStringCharacter* $string >> '"'
+  = '"' << DoubleStringCharacter* #string >> '"'
   / "'" << SingleStringCharacter* #string >> "'"
   ;
 
@@ -277,12 +239,7 @@ SingleEscapeCharacter
   = "'"
   / '"'
   / "\\"
-  / "b"
-  / "f"
-  / "n"
-  / "r"
-  / "t"
-  / "v"   // IE does not recognize "\v".
+  / [bfnrtv]   // IE does not recognize "\v".
   ;
 
 NonEscapeCharacter
@@ -292,8 +249,7 @@ NonEscapeCharacter
 EscapeCharacter
   = SingleEscapeCharacter
   / DecimalDigit
-  / "x"
-  / "u"
+  / [xu]
   ;
 
 HexEscapeSequence
@@ -474,12 +430,12 @@ EOF
 ///* ----- A.3 Expressions ----- */
 
 PrimaryExpression
-  = ThisToken@
-  / Identifier@
-  / Literal@
-  / ArrayLiteral@
-  / ObjectLiteral@
-  / "(" __ Expression@ __ ")"
+  = ThisToken
+  / Identifier
+  / Literal
+  / ArrayLiteral
+  / ObjectLiteral
+  / << "(" __ Expression@ __ ")" #group >>
   ;
 
 ArrayLiteral
@@ -498,22 +454,22 @@ Elision
 
 ObjectLiteral
   = "{" __ "}"
-  / "{" __ << PropertyNameAndValueList@ #object >> __ "}"
-  / "{" __ << PropertyNameAndValueList@ #object >> __ "," __ "}"
+  / "{" __ PropertyNameAndValueList@ __ "}"
+  / "{" __ PropertyNameAndValueList@ __ "," __ "}"
   ;
 
 PropertyNameAndValueList
-  = << PropertyAssignment@ (__ "," __ PropertyAssignment@)* #properties >>
+  = << PropertyAssignment@ (__ "," __ PropertyAssignment@)* #object >>
   ;
 
 PropertyAssignment
-  = PropertyName@ __ ":" __ AssignmentExpression@
-  / GetToken __ PropertyName@ __
+  = << PropertyName@ __ ":" __ AssignmentExpression@ #field >>
+  / << GetToken __ PropertyName@ __
     "(" __ ")" __
-    "{" __ FunctionBody@ __ "}"
-  / SetToken __ PropertyName@ __
+    "{" __ FunctionBody@ __ "}" #getter >>
+  / << SetToken __ PropertyName@ __
     "(" __ PropertySetParameterList@ __ ")" __
-    "{" __ FunctionBody@ __ "}"
+    "{" __ FunctionBody@ __ "}" #setter >>
   ;
 
 PropertyName
@@ -523,37 +479,40 @@ PropertyName
   ;
 
 PropertySetParameterList
-  = Identifier@
+  = Identifier
   ;
 
 MemberExpression
-  = << (
-        PrimaryExpression@
-      / FunctionExpression@
-      / NewToken __ MemberExpression@ __ Arguments@
-    )
-    (
-        __ "[" __ Expression@ __ "]"
-      / __ "." __ IdentifierName@
-    )* #memberexpression >>;
+  = Receiver <<@ (__ "[" __ Expression@ __ "]" #index) / (__ "." __ IdentifierName@ #field) >>*
+  ;
+
+Receiver
+  = PrimaryExpression / FunctionExpression / New
+  ;
+
+New
+  = << NewToken __ MemberExpression@ __ Arguments@ #new >>
+  ;
 
 NewExpression
   = MemberExpression
-  / NewToken __ NewExpression@
+  / << NewToken __ NewExpression@ #new >>
   ;
 
 CallExpression
-  = (
-      MemberExpression@ __ Arguments@
-    )
-    (
-        __ Arguments@
-      / __ "[" __ Expression@ __ "]"
-      / __ "." __ IdentifierName@
-    )*;
+  = FirstCall
+    <<@
+        __ Arguments@ #call
+      / __ "[" __ Expression@ __ "]" #index
+      / __ "." __ IdentifierName@ #field
+    >>*;
+
+FirstCall
+  = << MemberExpression@ __ Arguments@ #call >>
+  ;
 
 Arguments
-  = "(" __ (ArgumentList@ __)? ")"
+  = "(" __ (ArgumentList __)? ")"
   ;
 
 ArgumentList
@@ -566,129 +525,125 @@ LeftHandSideExpression
   ;
 
 PostfixExpression
-  = LeftHandSideExpression _ PostfixOperator
+  = << LeftHandSideExpression _ PostfixOperator >>
   / LeftHandSideExpression
   ;
 
 PostfixOperator
-  = "++"
-  / "--"
+  = "++" #postincl
+  / "--" #postdecl
   ;
 
 UnaryExpression
   = PostfixExpression
-  / UnaryOperator@ __ UnaryExpression@ // operator // argument
+  / << UnaryOperator __ UnaryExpression@ >> // operator // argument
   ;
 
 UnaryOperator
-  = $DeleteToken
-  / $VoidToken
-  / $TypeofToken
-  / "++"
-  / "--"
-  / $("+" !"=")
-  / $("-" !"=")
-  / "~"
-  / "!"
+  = $DeleteToken #delete
+  / $VoidToken #void
+  / $TypeofToken #typeof
+  / "++" #preincl
+  / "--" #predecl
+  / $("+" !"=") #plus
+  / $("-" !"=") #minus
+  / "~" #compl
+  / "!" #not
   ;
 
 MultiplicativeExpression
-  = UnaryExpression@ // first
-    (__ MultiplicativeOperator __ UnaryExpression)@* // rest
+  = UnaryExpression // first
+    <<@ __ MultiplicativeOperator __ UnaryExpression@ >>* // rest
   ;
 
 MultiplicativeOperator
-  = $("*" !"=")
-  / $("/" !"=")
-  / $("%" !"=")
+  = $("*" !"=") #mul
+  / $("/" !"=") #div
+  / $("%" !"=") #mod
   ;
 
 AdditiveExpression
-  = MultiplicativeExpression@ // first
-    (__ AdditiveOperator __ MultiplicativeExpression)@* // rest
+  = MultiplicativeExpression // first
+    <<@ __ AdditiveOperator __ MultiplicativeExpression@ >>* // rest
   ;
 
 AdditiveOperator
-  = $("+" ![+=])
-  / $("-" ![-=])
+  = $("+" ![+=]) #add
+  / $("-" ![-=]) #sub
   ;
 
 ShiftExpression
-  = AdditiveExpression@ // first
-    (__ ShiftOperator __ AdditiveExpression)@* // rest
+  = AdditiveExpression // first
+    <<@ __ ShiftOperator __ AdditiveExpression@ >>* // rest
   ;
 
 ShiftOperator
-  = $("<<"  !"=")
-  / $(">>>" !"=")
-  / $(">>"  !"=")
+  = $("<<"  !"=") #lshift
+  / $(">>>" !"=") #rshift
+  / $(">>"  !"=") #rshift
   ;
 
 RelationalExpression
-  = ShiftExpression@ // first
-    (__ RelationalOperator __ ShiftExpression)@* // rest
-  ;
-
-RelationalOperator
-  = "<="
-  / ">="
-  / $("<" !"<")
-  / $(">" !">")
-  / $InstanceofToken
-  / $InToken
-  ;
+  = ShiftExpression // first
+    <<@ __ RelationalOperator __ ShiftExpression@ >>* // rest
+    ;
 
 RelationalExpressionNoIn
-  = ShiftExpression@ // first
-    (__ RelationalOperatorNoIn __ ShiftExpression)@* // rest
+  = ShiftExpression // first
+    <<@ __ RelationalOperatorNoIn __ ShiftExpression@ >>* // rest
+    ;
+
+RelationalOperator
+  = RelationalOperatorNoIn
+  / InToken #in
   ;
 
 RelationalOperatorNoIn
-  = "<="
-  / ">="
-  / $("<" !"<")
-  / $(">" !">")
-  / $InstanceofToken
+  = $("<" !"<") #lt
+  / $(">" !">") #gt
+  / "<=" #lte
+  / ">=" #gte
+  / InstanceofToken #instanceof
   ;
 
 EqualityExpression
-  = RelationalExpression@ // first
-    (__ EqualityOperator __ RelationalExpression)@* // rest
+  = RelationalExpression // first
+    <<@ __ EqualityOperator __ RelationalExpression@ >>* // rest
   ;
 
 EqualityExpressionNoIn
-  = RelationalExpressionNoIn@ // first
-    (__ EqualityOperator __ RelationalExpressionNoIn)@* // rest
+  = RelationalExpressionNoIn // first
+    <<@ __ EqualityOperator __ RelationalExpressionNoIn@ >>* // rest
   ;
 
 EqualityOperator
-  = "==="
-  / "!=="
-  / "=="
-  / "!="
+  = "===" #eq
+  / "==" #eq
+  / "!==" #noteq
+  / "!=" #noteq
   ;
 
 BitwiseANDExpression
-  = EqualityExpression@ // first
-    (__ BitwiseANDOperator __ EqualityExpression)@* // rest
+  = EqualityExpression // first
+    <<@ __ BitwiseANDOperator #and __ EqualityExpression@ >>*// rest
   ;
 
 BitwiseANDExpressionNoIn
-  = EqualityExpressionNoIn@ // first
-    (__ BitwiseANDOperator __ EqualityExpressionNoIn)@* // rest
+  = EqualityExpressionNoIn // first
+    <<@ __ BitwiseANDOperator #and __ EqualityExpressionNoIn@ >>* // rest
   ;
 
 BitwiseANDOperator
   = $("&" ![&=]);
 
 BitwiseXORExpression
-  = BitwiseANDExpression@ // first
-    (__ BitwiseXOROperator __ BitwiseANDExpression)@* // rest
+  = BitwiseANDExpression // first
+    <<@ __ BitwiseXOROperator #bitxor __ BitwiseANDExpression@ >>* // rest
   ;
 
 BitwiseXORExpressionNoIn
-  = BitwiseANDExpressionNoIn@ // first
-    (__ BitwiseXOROperator __ BitwiseANDExpressionNoIn)@* // rest
+  = BitwiseANDExpressionNoIn // first
+    <<@ __ BitwiseXOROperator #bitxor __ BitwiseANDExpressionNoIn@ >>* // rest
   ;
 
 BitwiseXOROperator
@@ -696,13 +651,13 @@ BitwiseXOROperator
   ;
 
 BitwiseORExpression
-  = BitwiseXORExpression@ // first
-    (__ BitwiseOROperator __ BitwiseXORExpression)@* // rest
+  = BitwiseXORExpression // first
+    <<@ __ BitwiseOROperator #bitor __ BitwiseXORExpression@ >>*// rest
   ;
 
 BitwiseORExpressionNoIn
-  = BitwiseXORExpressionNoIn@ // first
-    (__ BitwiseOROperator __ BitwiseXORExpressionNoIn)@* // rest
+  = BitwiseXORExpressionNoIn // first
+    <<@ __ BitwiseOROperator #bitor __ BitwiseXORExpressionNoIn@ >>* // rest
   ;
 
 BitwiseOROperator
@@ -710,13 +665,13 @@ BitwiseOROperator
   ;
 
 LogicalANDExpression
-  = BitwiseORExpression@ // first
-    (__ LogicalANDOperator __ BitwiseORExpression)@* // rest
+  = BitwiseORExpression // first
+    <<@ __ LogicalANDOperator #and __ BitwiseORExpression@ >>*// rest
   ;
 
 LogicalANDExpressionNoIn
-  = BitwiseORExpressionNoIn@ // first
-    (__ LogicalANDOperator __ BitwiseORExpressionNoIn)@* // rest
+  = BitwiseORExpressionNoIn // first
+    <<@ __ LogicalANDOperator #and __ BitwiseORExpressionNoIn@ >>* // rest
   ;
 
 LogicalANDOperator
@@ -724,13 +679,13 @@ LogicalANDOperator
   ;
 
 LogicalORExpression
-  = LogicalANDExpression@ // first
-    (__ LogicalOROperator __ LogicalANDExpression)@* // rest
+  = LogicalANDExpression // first
+    <<@ __ LogicalOROperator #or __ LogicalANDExpression@ >>* // rest
   ;
 
 LogicalORExpressionNoIn
-  = LogicalANDExpressionNoIn@ // first
-    (__ LogicalOROperator __ LogicalANDExpressionNoIn)@* // rest
+  = LogicalANDExpressionNoIn // first
+    <<@ __ LogicalOROperator #or __ LogicalANDExpressionNoIn@ >>* // rest
   ;
 
 LogicalOROperator
@@ -738,132 +693,123 @@ LogicalOROperator
   ;
 
 ConditionalExpression
-  = LogicalORExpression@ __ // test
+  = << LogicalORExpression@ __ // test
     "?" __ AssignmentExpression@ __ // consequent
-    ":" __ AssignmentExpression@ // alternate
+    ":" __ AssignmentExpression@ #trinary >> // alternate
   / LogicalORExpression
   ;
 
 ConditionalExpressionNoIn
-  = LogicalORExpressionNoIn@ __ // test
+  = << LogicalORExpressionNoIn@ __ // test
     "?" __ AssignmentExpression@ __ // consequent
-    ":" __ AssignmentExpressionNoIn@ // alternate
+    ":" __ AssignmentExpressionNoIn@ #conditional >> // alternate
   / LogicalORExpressionNoIn
   ;
 
 AssignmentExpression
-  = LeftHandSideExpression@ __ // left
-    "=" !"=" __
-    AssignmentExpression@ // right
-  / LeftHandSideExpression@ __ // left
-    AssignmentOperator@ __ // operator
-    AssignmentExpression@ // right
+  = << LeftHandSideExpression@ __ // left
+    "=" !"=" __ #assign
+    AssignmentExpression@ >> // right
+  / << LeftHandSideExpression@ __ // left
+    AssignmentOperator __ // operator
+    AssignmentExpression@ >>// right
   / ConditionalExpression
   ;
 
 AssignmentExpressionNoIn
-  = LeftHandSideExpression@ __ // left
-    "=" !"=" __
-    AssignmentExpressionNoIn@ // right
-  / LeftHandSideExpression@ __ // left
-    AssignmentOperator@ __ // operator
-    AssignmentExpressionNoIn@ // right
+  = << LeftHandSideExpression@ __ // left
+    "=" !"=" __ #assign
+    AssignmentExpressionNoIn@ >> // right
+  / << LeftHandSideExpression@ __ // left
+    AssignmentOperator __ // operator
+    AssignmentExpressionNoIn@ >> // right
   / ConditionalExpressionNoIn
   ;
 
 AssignmentOperator
-  = "*="
-  / "/="
-  / "%="
-  / "+="
-  / "-="
-  / "<<="
-  / ">>="
-  / ">>>="
-  / "&="
-  / "^="
-  / "|="
+  = "*=" #assign.mul
+  / "/=" #assign.div
+  / "%=" #assign.mod
+  / "+=" #assign.add
+  / "-=" #assign.sub
+  / "<<=" #assign.lshift
+  / ">>=" #assign.rshift
+  / ">>>=" #assign.rshift
+  / "&=" #assign.bitand
+  / "^=" #assign.bitxor
+  / "|=" #assign.bitor
   ;
 
 Expression
-  = AssignmentExpression@ (__ "," __ AssignmentExpression)@* // first // rest
+  = << AssignmentExpression@ (__ "," __ AssignmentExpression@)+ #comma >>// first // rest
+  / AssignmentExpression
   ;
 
 ExpressionNoIn
-  = AssignmentExpressionNoIn@ (__ "," __ AssignmentExpressionNoIn)@* // first // rest
+  = << AssignmentExpressionNoIn@ (__ "," __ AssignmentExpressionNoIn@)+ #comma >> // first // rest
+  / AssignmentExpressionNoIn
   ;
 
 ///* ----- A.4 Statements ----- */
 
 Statement
-  = Block
-  / VariableStatement
-  / EmptyStatement
-  / ExpressionStatement
-  / IfStatement
-  / IterationStatement
-  / ContinueStatement
-  / BreakStatement
-  / ReturnStatement
-  / WithStatement
-  / LabelledStatement
-  / SwitchStatement
-  / ThrowStatement
-  / TryStatement
-  / DebuggerStatement
+  = Block / VariableStatement / EmptyStatement / ExpressionStatement
+  / IfStatement / IterationStatement / ContinueStatement / BreakStatement
+  / ReturnStatement / WithStatement / LabelledStatement / SwitchStatement
+  / ThrowStatement / TryStatement / DebuggerStatement
   ;
 
 Block
-  = "{" __ (StatementList __)@? "}" // body
+  = "{" __ << (Statement@ __)* #block >> "}" // body
   ;
 
 StatementList
-  = Statement@ (__ Statement)@* // first // rest
+  = << Statement@ __ (Statement@ __)* #block >>
   ;
 
 VariableStatement
-  = VarToken __ VariableDeclarationList@ EOS // declarations
+  = << VarToken __ VariableDeclarationList@ EOS #varstmt >> // declarations
   ;
 
 VariableDeclarationList
-  = VariableDeclaration@ (__ "," __ VariableDeclaration)@* // first // rest
+  = << VariableDeclaration@ (__ "," __ VariableDeclaration@)* #varlist >> // first // rest
   ;
 
 VariableDeclarationListNoIn
-  = VariableDeclarationNoIn@ (__ "," __ VariableDeclarationNoIn)@* // first // rest
+  = << VariableDeclarationNoIn@ (__ "," __ VariableDeclarationNoIn@)* #varlist >>// first // rest
   ;
 
 VariableDeclaration
-  = Identifier@ (__ Initialiser)@? // id // init
+  = << Identifier@ (__ Initialiser)@? #var >> // id // init
   ;
 
 VariableDeclarationNoIn
-  = Identifier@ (__ InitialiserNoIn)@? // id // init
+  = << Identifier@ (__ InitialiserNoIn)@? #var >>// id // init
   ;
 
 Initialiser
-  = "=" !"=" __ AssignmentExpression@ // expression
+  = "=" !"=" << __ AssignmentExpression@ #expr >> // expression
   ;
 
 InitialiserNoIn
-  = "=" !"=" __ AssignmentExpressionNoIn@ // expression
+  = "=" !"=" << __ AssignmentExpressionNoIn@ #expr >> // expression
   ;
 
 EmptyStatement
-  = ";"
+  = <<";" #stmt.empty >>
   ;
 
 ExpressionStatement
-  = !("{" / FunctionToken) Expression@ EOS // expression
+  = !("{" / FunctionToken) << Expression@ EOS #stmt.expression >>// expression
   ;
 
 IfStatement
-  = IfToken __ "(" __ Expression@ __ ")" __ // test
+  = << IfToken __ "(" __ Expression@ __ ")" __ // test
     Statement@ __ // consequent
     ElseToken __
-    Statement@ // alternate
-  / IfToken __ "(" __ Expression@ __ ")" __ // test
-    Statement@ // consequent
+    Statement@  #if >> // alternate
+  / << IfToken __ "(" __ Expression@ __ ")" __ // test
+    Statement@  #if>> // consequent
   ;
 
 IterationStatement
@@ -903,62 +849,62 @@ IterationStatement
   ;
 
 ContinueStatement
-  = ContinueToken EOS
-  / ContinueToken _ Identifier@ EOS // label
+  = << ContinueToken EOS #continue >>
+  / << ContinueToken _ Identifier@ EOS #continue >>// label
   ;
 
 BreakStatement
-  = BreakToken EOS
-  / BreakToken _ Identifier@ EOS // label
+  = << BreakToken EOS #break >>
+  / << BreakToken _ Identifier@ EOS #break >> // label
   ;
 
 ReturnStatement
-  = ReturnToken EOS
-  / ReturnToken _ Expression@ EOS // argument
+  = << ReturnToken EOS #return >>
+  / << ReturnToken _ Expression@ EOS #return >>// argument
   ;
 
 WithStatement
-  = WithToken __ "(" __ Expression@ __ ")" __ // object
-    Statement@ // body
+  = << WithToken __ "(" __ Expression@ __ ")" __ // object
+    Statement@ #with >>// body
   ;
 
 SwitchStatement
-  = SwitchToken __ "(" __ Expression@ __ ")" __ // discriminant
-    CaseBlock@ // cases
+  = << SwitchToken __ "(" __ Expression@ __ ")" __ // discriminant
+    CaseBlock@ #switch >>// cases
   ;
 
 CaseBlock
-  = "{" __ (CaseClauses __)@? "}" // clauses
+  = "{" __ << (CaseClauses@ __)? #caseblock >> "}" // clauses
   / "{" __
-    (CaseClauses __)@? // before
+    << (CaseClauses@ __)? // before
     DefaultClause@ __ // default_
-    (CaseClauses __)@? "}" // after
+    (CaseClauses@ __)? #caseblock >> "}" // after
   ;
 
 CaseClauses
-  = CaseClause@ (__ CaseClause)@* // first // rest
+  = << CaseClause@ (__ CaseClause@)* #cases >>// first // rest
   ;
 
 CaseClause
-  = CaseToken __ Expression@ __ ":" (__ StatementList)@? // test // consequent
+  = << CaseToken __ Expression@ __ ":" (__ StatementList@)? #case >>// test // consequent
   ;
 
 DefaultClause
-  = DefaultToken __ ":" (__ StatementList)@? // consequent
+  = << DefaultToken __ ":" (__ StatementList@)? #case.default >>// consequent
   ;
 
 LabelledStatement
-  = Identifier@ __ ":" __ Statement@ // label // body
+  = << Identifier@ __ ":" __ Statement@ #labeled >>// label // body
   ;
 
 ThrowStatement
-  = ThrowToken _ Expression@ EOS // argument
+  = << ThrowToken _ Expression@ EOS #throw >>// argument
   ;
 
 TryStatement
-  = TryToken __ Block@ __ Catch@ __ Finally@  // block // handler // finalizer
-  / TryToken __ Block@ __ Catch@ // block // handler
-  / TryToken __ Block@ __ Finally@ // block // finalizer
+  = << TryToken __ Block@1 __ Catch@2 __ Finally@3  #try >>// block // handler // finalizer
+  / << TryToken __ Block@1 __ Catch@2 #try >>// block // handler
+  / << TryToken __ Block@1 __ Finally@3 #try >>// block // finalizer
   ;
 
 Catch
@@ -992,15 +938,15 @@ FormalParameterList
   ;
 
 FunctionBody
-  = SourceElements@? // body
+  = SourceElements? // body
   ;
 
 Program
-  = SourceElements@? // body
+  = SourceElements? // body
   ;
 
 SourceElements
-  = SourceElement@ (__ SourceElement)@* // first // rest
+  = << SourceElement@ (__ SourceElement@)* #block >> // first // rest
   ;
 
 SourceElement

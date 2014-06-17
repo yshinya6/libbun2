@@ -36,20 +36,26 @@ public class Main {
 	//
 	private static String InputFileName = null;
 
+	// --parse-only
+	public static boolean ParseOnly = false;
+
 	// --verbose
 	public static boolean EnableVerbose = false;
 
+	// --verbose:ast
+	public static boolean EnableVerboseAst = false;
+
 	// --profile
 	public static boolean ProfileMode = false;
-	
+
 	// --verbose:peg
 	public static boolean PegDebuggerMode = false;
 
+	// --disable-memo
+	public static boolean NonMemoPegMode = false;
+
 	private static void parseCommandArgument(String[] args) {
 		int index = 0;
-//		Function<String,String> f = (String x) -> String {
-//			return x;
-//		}
 		while (index < args.length) {
 			String argument = args[index];
 			if (!argument.startsWith("-")) {
@@ -76,14 +82,26 @@ public class Main {
 			else if (argument.equals("-i")) {
 				ShellMode = true;
 			}
+			else if (argument.equals("--disable-memo")) {
+				NonMemoPegMode = true;
+			}
 			else if (argument.equals("--profile")) {
 				ProfileMode = true;
 			}
+			else if (argument.equals("--parse-only")) {
+				ParseOnly = true;
+			}
 			else if(argument.startsWith("--verbose")) {
-				EnableVerbose = true;
-//				if(argument.equals("--verbose:peg")) {
+				if(argument.equals("--verbose:ast")) {
+					EnableVerboseAst = true;
+				}
+//				else if(argument.equals("--verbose:peg")) {
 //					pegDebugger = true;
 //				}
+				else {
+					EnableVerbose = true;
+					EnableVerboseAst = true;
+				}
 			}
 			else {
 				ShowUsage("unknown option: " + argument);
@@ -106,7 +124,7 @@ public class Main {
 		System.out.println("  --profile               Show memory usage and parse time");
 		Main._Exit(0, Message);
 	}
-	
+
 	private final static UniMap<Class<?>> driverMap = new UniMap<Class<?>>();
 	static {
 		driverMap.put("py", PythonDriver.class);
@@ -139,6 +157,9 @@ public class Main {
 		driver.initTable(gamma);
 		if(InputFileName != null) {
 			loadScript(gamma, driver, InputFileName);
+			if (ShellMode) {
+				performShell(gamma, driver);
+			}
 		}
 		else {
 			performShell(gamma, driver);
@@ -160,16 +181,18 @@ public class Main {
 				node.name = BunSymbol.PerrorFunctor;
 			}
 			gamma.set(node);
-			if(PegDebuggerMode) {
+			if(PegDebuggerMode || EnableVerboseAst) {
 				System.out.println("parsed:\n" + node.toString());
 				if(context.hasChar()) {
 					System.out.println("** uncosumed: '" + context + "' **");
 				}
+			}
+			if(PegDebuggerMode || EnableVerbose) {
 				System.out.println();
 				context.showStatInfo(node);
 			}
 			ParseProfileStop();
-			if(driver != null) {
+			if(!ParseOnly && driver != null) {
 				driver.startTransaction(null);
 				gamma.tryMatch(node);
 				node.matched.build(node, driver);
@@ -355,7 +378,7 @@ public class Main {
 	public final static String _GetEnv(String Name) {
 		return System.getenv(Name);
 	}
-	
+
 	public final static void _Print(Object msg) {
 		System.err.print(msg);
 	}
