@@ -1,6 +1,6 @@
 
 TopLevel
-    = << Stmt@+ #block>>;
+    = << Stmt@+ #toplevel>>;
 
 Stmt
     = IfStmt EOS?

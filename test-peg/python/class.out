@@ -1,0 +1,24 @@
+parsed:
+#toplevel {            ## by peg : null
+   #class {            ## by peg : null
+      #name: A   ## by peg : null
+      #block {            ## by peg : null
+         #function {            ## by peg : null
+            #name: __init__   ## by peg : null
+            #params {            ## by peg : null
+               #name: self   ## by peg : null
+            }
+            #block {            ## by peg : null
+               #assign {            ## by peg : null
+                  #field {            ## by peg : null
+                     #name: self   ## by peg : null
+                     #name: a   ## by peg : null
+                  }
+                  #integer: 1   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #error:    ## by peg : EOS+ defined in Stmt
+}

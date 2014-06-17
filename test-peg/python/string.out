@@ -1,0 +1,5 @@
+parsed:
+#toplevel {            ## by peg : null
+   #string: hpge   ## by peg : null
+   #string: hoge   ## by peg : null
+}
