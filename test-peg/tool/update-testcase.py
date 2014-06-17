@@ -18,10 +18,8 @@ else:
     root = os.path.abspath(os.path.dirname(__file__) + "/../../")
     runner.load_config(root, conf)
     (status, output, erros) = runner.run_once(root, runner.conf["peg"], test)
-    path = test.split("/")
-    path[-1] = path[-1].replace(runner.conf["input.ext"],
-            runner.conf["output.ext"])
-    outfile = "/".join(path)
+    base, ext = os.path.splitext(test)
+    outfile = base + "." + runner.conf["output.ext"]
     f = open(outfile, 'w')
     f.write(output)
-    print outfile
+    print "# generating " + outfile
