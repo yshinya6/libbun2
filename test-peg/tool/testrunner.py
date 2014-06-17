@@ -8,7 +8,8 @@ def log(level, message):
 
 def collect_files(path, pattern):
     files = [join(path, f) for f in os.listdir(path) if isfile(join(path, f)) ]
-    return fnmatch.filter(files, "*." + pattern)
+    files = fnmatch.filter(files, "*." + pattern)
+    return map(lambda x : os.path.splitext(x)[0], files)
 
 class TestRunner:
     def __init__(self, verbose):
@@ -43,18 +44,14 @@ class TestRunner:
             return False
 
         inputs  = collect_files(path, self.conf["input.ext"])
-        outputs = collect_files(path, self.conf["output.ext"])
-        inputs.sort(); outputs.sort();
-        if len(inputs) != len(outputs):
-            log("warning",
-                    "some test result or test file is missing. (" + path + ")")
-            return False
-        m = {}
-        i = 0
-        while i < len(inputs):
-            m[inputs[i]] = outputs[i]
-            i += 1
-        self.testcases = m
+        inputs.sort();
+        for f in inputs:
+            result = f + "." + self.conf["output.ext"]
+            if not(os.path.exists(result)):
+                log("warning", result + " is not found")
+                return False
+
+        self.testcases = inputs
         return True
 
     def run_once(self, root, peg, input_file):
@@ -78,14 +75,17 @@ class TestRunner:
         if len(self.testcases) == 0:
             return
 
-        for (k,v) in self.testcases.items():
-            (status, output, erros) = self.run_once(root, self.conf["peg"], k)
+        for f in self.testcases:
+            input_file  = f + "." + self.conf["input.ext"]
+            output_file = f + "." + self.conf["output.ext"]
+            syntax_file = self.conf["peg"]
+            (status, output, erros) = self.run_once(root, syntax_file, input_file)
             #if self.verbose:
             #    print 'return: %d' % (status)
             #    print 'stdout: %s' % (output, )
             #    print 'stderr: %s' % (errors, )
             executed += 1
-            expected = open(v, "r").read()
+            expected = open(output_file, "r").read()
             if status == 0 and expected == output:
                 passed += 1
             if self.verbose:
