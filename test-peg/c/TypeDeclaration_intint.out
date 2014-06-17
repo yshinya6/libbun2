@@ -45,6 +45,26 @@ parsed:
                         }
                      }
                   }
+                  #initdeclarator {            ## by peg : null
+                     #declarator {            ## by peg : null
+                        #directdeclarator {            ## by peg : null
+                           #identifier: b    ## by peg : null
+                        }
+                     }
+                     #initializer {            ## by peg : null
+                        #assignmentexpression {            ## by peg : null
+                           #unaryexpression {            ## by peg : null
+                              #postfixexpression {            ## by peg : null
+                                 #primaryexpression {            ## by peg : null
+                                    #constant {            ## by peg : null
+                                       #integerconstant: 2   ## by peg : null
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                     }
+                  }
                }
             }
             #statement {            ## by peg : null
