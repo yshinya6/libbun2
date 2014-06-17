@@ -1,0 +1,5 @@
+{
+    "peg" : "#{SOURCE_ROOT}/sample/python.peg",
+    "input.ext" : "py",
+    "output.ext" : "out"
+}

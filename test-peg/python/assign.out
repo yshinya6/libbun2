@@ -1,0 +1,15 @@
+parsed:
+#toplevel {            ## by peg : null
+   #assign {            ## by peg : null
+      #name: a   ## by peg : null
+      #integer: 1   ## by peg : null
+   }
+   #assign {            ## by peg : null
+      #name: b   ## by peg : null
+      #array {            ## by peg : null
+         #integer: 1   ## by peg : null
+         #integer: 2   ## by peg : null
+         #integer: 3   ## by peg : null
+      }
+   }
+}
