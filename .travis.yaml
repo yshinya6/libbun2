@@ -7,7 +7,7 @@ python:
     - "2.7"
 
 before_script:
-    - "ant"
+    - ant
 
 script:
-    - "python test-peg/tool/testrunner.py"
+    - python test-peg/tool/testrunner.py
