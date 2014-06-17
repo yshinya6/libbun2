@@ -1,0 +1,130 @@
+typedef boolean
+typedef long
+typedef double
+typedef String
+typedef void
+typedef Object
+
+typedef Long
+typedef Double
+typedef Boolean
+
+bun #block(*): void {
+	${statement this}
+}
+
+bun #integer(): Long {
+	${PUSH_AS_LONG_WRAP this}
+}
+
+bun #float() : Double {
+	${PUSH_AS_DOUBLE_WRAP this}
+}
+
+bun #true() :Boolean {
+	${PUSH_AS_BOOLEAN_WRAP true}
+}
+
+bun #false() :Boolean {
+	${PUSH_AS_BOOLEAN_WRAP false}
+}
+
+bun #string() : String {
+	${PUSH_AS_STRING}
+}
+
+// binary op definition
+// ADD
+bun #add(x, y) : Object {
+	${x} ${y} ${INDY add bsmBinaryOp Object Object Object}
+}
+
+//SUB
+bun #sub(x, y) : Object {
+	${x} ${y} ${INDY sub bsmBinaryOp Object Object Object}
+}
+
+// MUL
+bun #mul(x, y) : Object {
+	${x} ${y} ${INDY mul bsmBinaryOp Object Object Object}
+}
+
+// DIV
+bun #div(x, y) : Object {
+	${x} ${y} ${INDY div bsmBinaryOp Object Object Object}
+}
+
+// MOD
+
+bun #mod(x, y) : Object {
+	${x} ${y} ${INDY mod bsmBinaryOp Object Object Object}
+}
+
+// EQ
+bun #eq(x, y) : Boolean {
+	${x} ${y} ${INDY eq bsmCompOp Boolean Object Object}
+}
+
+// NOTEQ
+bun #noteq(x, y) : Boolean {
+	${x} ${y} ${INDY noteq bsmCompOp Boolean Object Object}
+}
+
+// LT
+bun #lt(x, y) : Boolean {
+	${x} ${y} ${INDY lt bsmCompOp Boolean Object Object}
+}
+
+// LTE
+bun #lte(x, y) : Boolean {
+	${x} ${y} ${INDY lte bsmCompOp Boolean Object Object}
+}
+
+// GT
+bun #gt(x, y) : Boolean {
+	${x} ${y} ${INDY gt bsmCompOp Boolean Object Object}
+}
+
+// GTE
+
+bun #gte(x, y) : Boolean {
+	${x} ${y} ${INDY gte bsmCompOp Boolean Object Object}
+}
+
+// unary op definition
+// NOT
+bun #not(x) : Object {
+	${x} ${INDY not bsmUnaryOp Object Object}
+}
+
+// PLUS
+bun #plus(x) : Object {
+	${x} ${INDY plus bsmUnaryOp Object Object}
+}
+
+// MINUS
+bun #minus(x) : Object {
+	${x} ${INDY minus bsmUnaryOp Object Object}
+}
+
+// COMPL
+bun #compl(x) : Object {
+	${x} ${INDY compl bsmUnaryOp Object Object}
+}
+
+// conditional operator
+// And
+bun #and(x, y) : Boolean {
+	${AND}
+}
+
+// Or
+bun #or(x, y) : Boolean {
+	${OR}
+}
+
+// LET
+bun #let(name, type, value): void && letvar() {
+	${LET}
+}
+

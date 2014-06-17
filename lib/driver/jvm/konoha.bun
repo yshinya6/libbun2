@@ -2,48 +2,50 @@ typedef boolean
 typedef long
 typedef double
 typedef String
+typedef void
+typedef Object
 
 
 bun #block(*): void {
 	${statement this}
 }
 
-bun #integer(): LONG {
-	${PUSH_INT this}
+bun #integer(): long {
+	${PUSH_AS_LONG this}
 }
 
-bun #double() : double {
-	${PUSH_DOUBLE this}
+bun #float() : double {
+	${PUSH_AS_DOUBLE this}
 }
 
 bun #true() :boolean {
-	${PUSH_BOOL true}
+	${PUSH_AS_BOOL true}
 }
 
 bun #false() :boolean {
-	${PUSH_BOOL false}
+	${PUSH_AS_BOOL false}
 }
 
 bun #string() : String {
-	${PUSH_STRING}
+	${PUSH_AS_STRING}
 }
 
-// binary op defiention
+// binary op definition
 // ADD
 bun #add(x : long, y : long) : long {
-	${x} ${y} ${OP}
+	${x} ${y} ${LADD}
 }
 
 bun #add(x : long, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${L2D} ${y} ${DADD}
 }
 
 bun #add(x : double, y : long) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${L2D} ${DADD}
 }
 
 bun #add(x : double, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${DADD}
 }
 // string concat
 bun #add(x : String, y : long) : String {
@@ -58,7 +60,7 @@ bun #add(x : String, y : boolean) : String {
 	${x} ${y} ${OP}
 }
 
-bun #add(x : String, y : any) : String {
+bun #add(x : String, y : Object) : String {
 	${x} ${y} ${OP}
 }
 
@@ -74,59 +76,59 @@ bun #add(x : boolean, y : String) : String {
 	${x} ${y} ${OP}
 }
 
-bun #add(x : any, y : String) : String {
+bun #add(x : Object, y : String) : String {
 	${x} ${y} ${OP}
 }
 
 //SUB
 bun #sub(x : long, y : long) : long {
-	${x} ${y} ${OP}
+	${x} ${y} ${LSUB}
 }
 
 bun #sub(x : long, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${L2D} ${y} ${DSUB}
 }
 
 bun #sub(x : double, y : long) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${L2D} ${DSUB}
 }
 
 bun #sub(x : double, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${DSUB}
 }
 
 // MUL
 bun #mul(x : long, y : long) : long {
-	${x} ${y} ${OP}
+	${x} ${y} ${LMUL}
 }
 
 bun #mul(x : long, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${L2D} ${y} ${DMUL}
 }
 
 bun #mul(x : double, y : long) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${L2D} ${DMUL}
 }
 
 bun #mul(x : double, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${DMUL}
 }
 
 // DIV
 bun #div(x : long, y : long) : long {
-	${x} ${y} ${OP}
+	${x} ${y} ${LDIV}
 }
 
 bun #div(x : long, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${DDIV}
 }
 
 bun #div(x : double, y : long) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${L2D} ${DDIV}
 }
 
 bun #div(x : double, y : double) : double {
-	${x} ${y} ${OP}
+	${x} ${y} ${DDIV}
 }
 
 // MOD
@@ -171,7 +173,7 @@ bun #eq(x : String, y : String) : boolean {
 	${x} ${y} ${OP}
 }
 
-bun #eq(x : any, y : any) : boolean {
+bun #eq(x : Object, y : Object) : boolean {
 	${x} ${y} ${OP}
 }
 
@@ -200,7 +202,7 @@ bun #noteq(x : String, y : String) : boolean {
 	${x} ${y} ${OP}
 }
 
-bun #noteq(x : any, y : any) : boolean {
+bun #noteq(x : Object, y : Object) : boolean {
 	${x} ${y} ${OP}
 }
 
@@ -280,7 +282,7 @@ bun #not(x : boolean) : boolean {
 
 // PLUS
 bun #plus(x : long) : long {
-	${x} ${OP}
+	${x} ${INDY plus bsm_UnaryOp Object Object}
 }
 
 bun #plus(x : double) : double {

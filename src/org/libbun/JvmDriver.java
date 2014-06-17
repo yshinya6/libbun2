@@ -22,45 +22,57 @@ import org.objectweb.asm.commons.Method;
  * @author skgchxngsxyz-osx
  *
  */
-public class JvmDriver extends BunDriver {
+public class JvmDriver extends BunDriver implements Opcodes {
 	public final static String letHolderSuffix = "_LetVarHolder";
 	public final static String letHolderFieldName = "letValue";
+	public static int JAVA_VERSION = V1_6;
+	protected final String bunModel;
 
 	/**
 	 * used for byte code loading.
 	 */
-	private final JvmByteCodeLoader loader;
+	protected final JvmByteCodeLoader loader;
 
 	/**
 	 * represent jvm operand stack map.
 	 */
-	private final Stack<BunType> typeStack;
+	protected final Stack<BunType> typeStack;
 
 	/**
 	 * used for bun type to java class translation.
 	 */
-	private final UniMap<Class<?>> classMap;
+	protected final UniMap<Class<?>> classMap;
 
 	/**
 	 * used for java class generation.
 	 */
-	private ClassBuilder classBuilder;
+	protected ClassBuilder classBuilder;
 
 	/**
 	 * used for java method (includes constructor, static initializer) generation.
 	 */
-	private final Stack<MethodBuilder> mBuilders;
-	private Namespace gamma;
+	protected final Stack<MethodBuilder> mBuilders;
+	protected Namespace gamma;
+
+	/**
+	 * represents current command name,
+	 */
+	protected String currentCommand;
 
 	public JvmDriver() {
+		this("lib/driver/jvm/konoha.bun");
+	}
+
+	protected JvmDriver(String bunModel) {
+		this.bunModel = bunModel;
 		this.loader = new JvmByteCodeLoader();
 		this.typeStack = new Stack<BunType>();
 		this.classMap = new UniMap<Class<?>>();
 		this.mBuilders = new Stack<MethodBuilder>();
-		this.addCommand("PUSH_LONG", new PushInt());
-		this.addCommand("PUSH_DOUBLE", new PushFloat());
-		this.addCommand("PUSH_BOOL", new PushBool());
-		this.addCommand("PUSH_STRING", new PushString());
+		this.addCommand("PUSH_AS_LONG", new PushAsLong());
+		this.addCommand("PUSH_AS_DOUBLE", new PushAsDouble());
+		this.addCommand("PUSH_AS_BOOL", new PushAsBoolean());
+		this.addCommand("PUSH_AS_STRING", new PushAsString());
 		this.addCommand("OP", new CallOperator());
 
 		this.addCommand("AND", new CondAnd());
@@ -68,28 +80,34 @@ public class JvmDriver extends BunDriver {
 		this.addCommand("LET", new LetDecl());
 		this.addCommand("IF", new IfStatement());
 		this.addCommand("BLOCK", new Block());
-		this.addCommand("ins", new InsCommand());
-
 		this.addCommand("statement", new StatementCommand());
+
+		this.addCommand("LABEL", new LabelCommand());
+		/**
+		 * add jvm opcode command
+		 */
+		new ZeroOperandInsCommand().addToDriver(this);
+		new SingleIntOperandInsCommand().addToDriver(this);
+		new VarInsCommand().addToDriver(this);
+		new TypeInsCommand().addToDriver(this);
+		new FieldInsCommand().addToDriver(this);
+		new MethodInsCommand().addToDriver(this);
+		new JumpInsCommand().addToDriver(this);
 	}
 
 	@Override
 	public void initTable(Namespace gamma) {
-//		gamma.setType(BunType.newValueType("int", long.class));
-//		this.classMap.put("int", long.class);
-//		gamma.setType(BunType.newValueType("float", double.class));
-//		this.classMap.put("float", double.class);
-//		gamma.setType(BunType.newValueType("bool", boolean.class));
-//		this.classMap.put("bool", boolean.class);
-//		gamma.setType(BunType.newValueType("String", String.class));
-//		this.classMap.put("String", String.class);
-//		gamma.setType(BunType.newVoidType("void", Void.class));
-//		this.classMap.put("void", Void.class);
-//		gamma.setType(BunType.newAnyType("any", Object.class));
-//		this.classMap.put("any", Object.class);
+		this.classMap.put("long", long.class);
+		this.classMap.put("int", int.class);
+		this.classMap.put("float", float.class);
+		this.classMap.put("double", double.class);
+		this.classMap.put("boolean", boolean.class);
+		this.classMap.put("String", String.class);
+		this.classMap.put("void", Void.class);
+		this.classMap.put("Object", Object.class);
 
 		KonohaTypeChecker.initDriver(this);
-		gamma.loadBunModel("lib/driver/jvm/konoha.bun", this);
+		gamma.loadBunModel(this.bunModel, this);
 	}
 
 	@Override
@@ -127,7 +145,7 @@ public class JvmDriver extends BunDriver {
 	 * - if not void type, push it to stack.
 	 * throw exception, if illeagal type.
 	 */
-	private void pushTypeToTypeStack(BunType type) {
+	protected void pushTypeToTypeStack(BunType type) {
 		Class<?> javaClass = this.classMap.get(type.getName());
 		if(javaClass == null) {
 			throw new RuntimeException("illegal type: " + type);
@@ -142,7 +160,7 @@ public class JvmDriver extends BunDriver {
 	 * @return
 	 * - return null, if typeStack is empty.
 	 */
-	private BunType popTypeFromTypeStack() {
+	protected BunType popTypeFromTypeStack() {
 		if(this.typeStack.isEmpty()) {
 			return null;
 		}
@@ -153,15 +171,17 @@ public class JvmDriver extends BunDriver {
 	 * insert print instruction after top level expression.
 	 * it is interactive mode only.
 	 */
-	private void insertPrintIns() {
+	protected void insertPrintIns() {
 		BunType type = this.popTypeFromTypeStack();
 		if(type == null) {
 			return;
 		}
 		Class<?> javaClass = this.classMap.get(type.getName());
+		if(!javaClass.isPrimitive()) {
+			javaClass = Object.class;
+		}
 		try {
-			java.lang.reflect.Method method = JvmOperator.class.getMethod("printValue", javaClass, String.class);
-			this.mBuilders.peek().push(type.getName());
+			java.lang.reflect.Method method = JvmOperator.class.getMethod("printValue", javaClass);
 			this.mBuilders.peek().invokeStatic(Type.getType(JvmOperator.class), Method.getMethod(method));
 		}
 		catch(Throwable t) {
@@ -175,7 +195,7 @@ public class JvmDriver extends BunDriver {
 	 * @return
 	 * - throw exception if has no java class.
 	 */
-	private Class<?> toJavaClass(BunType type) {
+	protected Class<?> toJavaClass(BunType type) {
 		String typeName = type.getName();
 		Class<?> javaClass = this.classMap.get(typeName);
 		if(javaClass == null) {
@@ -184,7 +204,7 @@ public class JvmDriver extends BunDriver {
 		return javaClass;
 	}
 
-	private BunType toType(PegObject pObject) {
+	protected BunType toType(PegObject pObject) {
 		String name = pObject.name;
 		String typeName = name.substring(2);
 		BunType type = this.gamma.getType(typeName, null);
@@ -192,6 +212,17 @@ public class JvmDriver extends BunDriver {
 			throw new RuntimeException("undefined type: " + typeName);
 		}
 		return type;
+	}
+
+	public String getCommandSymbol() {
+		return this.currentCommand;
+	}
+
+	@Override
+	public void pushCommand(String cmd, PegObject node, String[] params) {
+		DriverCommand command = this.commandMap.get(cmd);
+		this.currentCommand = cmd;
+		command.invoke(this, node, params);
 	}
 
 	@Override
@@ -230,7 +261,7 @@ public class JvmDriver extends BunDriver {
 		
 	}
 
-	private class StatementCommand extends DriverCommand {
+	protected class StatementCommand extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			if(node.is("#block")) {
@@ -247,7 +278,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class PushInt extends DriverCommand {
+	protected class PushAsLong extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			mBuilders.peek().push(Long.parseLong(node.getText()));
@@ -260,7 +291,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class PushFloat extends DriverCommand {
+	protected class PushAsDouble extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			mBuilders.peek().push(Double.parseDouble(node.getText()));
@@ -273,7 +304,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class PushBool extends DriverCommand {
+	protected class PushAsBoolean extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			if(param[0].equals("true")) {
@@ -291,7 +322,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class PushString extends DriverCommand {
+	protected class PushAsString extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			mBuilders.peek().push(this.parseTokenText(node.getText()));
@@ -334,7 +365,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class CallOperator extends DriverCommand {
+	protected class CallOperator extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			String opName = node.name.substring(1);
@@ -356,7 +387,7 @@ public class JvmDriver extends BunDriver {
 	 * @param paramClasses
 	 * - operator parameter classes.
 	 */
-	private void callOperator(String opName, Class<?>[] paramClasses) {
+	protected void callOperator(String opName, Class<?>[] paramClasses) {
 		try {
 			java.lang.reflect.Method method = JvmOperator.class.getMethod(opName, paramClasses);
 			Method methodDesc = Method.getMethod(method);
@@ -375,7 +406,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class CondAnd extends DriverCommand {
+	protected class CondAnd extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			GeneratorAdapter adapter = mBuilders.peek();
@@ -403,7 +434,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class CondOr extends DriverCommand {
+	protected class CondOr extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			GeneratorAdapter adapter = mBuilders.peek();
@@ -431,7 +462,7 @@ public class JvmDriver extends BunDriver {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	private class LetDecl extends DriverCommand {
+	protected class LetDecl extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			MethodBuilder currentBuilder = mBuilders.peek();
@@ -472,7 +503,7 @@ public class JvmDriver extends BunDriver {
 		}
 	}
 
-	private class IfStatement extends DriverCommand {
+	protected class IfStatement extends DriverCommand {
 
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
@@ -482,8 +513,7 @@ public class JvmDriver extends BunDriver {
 		
 	}
 
-	private class Block extends DriverCommand {
-
+	protected class Block extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			// TODO Auto-generated method stub
@@ -491,27 +521,140 @@ public class JvmDriver extends BunDriver {
 		}
 	}
 
-	private class InsCommand extends DriverCommand {
+	protected abstract class JvmOpcodeCommand extends DriverCommand {
+		public abstract void addToDriver(JvmDriver driver);
+	}
+
+	protected class ZeroOperandInsCommand extends JvmOpcodeCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			JvmOpCode code = toOpcode(param[0]);
-			if(code instanceof ZeroOperandIns) {
-				mBuilders.peek().visitInsn(code.getOpCode());
+			String ins = ((JvmDriver) driver).getCommandSymbol();
+			JvmOpCode code = ZeroOperandIns.toCode(ins);
+			mBuilders.peek().visitInsn(code.getOpCode());
+		}
+
+		@Override
+		public void addToDriver(JvmDriver driver) {
+			ZeroOperandIns[] codes = ZeroOperandIns.values();
+			for(ZeroOperandIns code : codes) {
+				driver.addCommand(code.name(), this);
 			}
 		}
 	}
 
-	private JvmOpCode toOpcode(String codeString, int operandSize) {
-		switch(operandSize) {
-		case 0:
-			return ZeroOperandIns.toCode(codeString);
-		case 1:
-			
+	protected class SingleIntOperandInsCommand extends JvmOpcodeCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String ins = ((JvmDriver) driver).getCommandSymbol();
+			JvmOpCode code = SingleIntOperandIns.toCode(ins);
+			mBuilders.peek().visitIntInsn(code.getOpCode(), Integer.parseInt(param[0]));
 		}
-		
-		
-		JvmOpCode code = ZeroOperandIns.valueOf(codeString);
-		return code;
+
+		@Override
+		public void addToDriver(JvmDriver driver) {
+			SingleIntOperandIns[] codes = SingleIntOperandIns.values();
+			for(SingleIntOperandIns code : codes) {
+				driver.addCommand(code.name(), this);
+			}
+		}
+	}
+
+	protected class VarInsCommand extends JvmOpcodeCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String ins = ((JvmDriver) driver).getCommandSymbol();
+			JvmOpCode code = VarIns.toCode(ins);
+			mBuilders.peek().visitVarInsn(code.getOpCode(), Integer.parseInt(param[0]));
+		}
+
+		@Override
+		public void addToDriver(JvmDriver driver) {
+			VarIns[] codes = VarIns.values();
+			for(VarIns code : codes) {
+				driver.addCommand(code.name(), this);
+			}
+		}
+	}
+
+	protected class TypeInsCommand extends JvmOpcodeCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String ins = ((JvmDriver) driver).getCommandSymbol();
+			JvmOpCode code = TypeIns.toCode(ins);
+			mBuilders.peek().visitTypeInsn(code.getOpCode(), param[0]);
+		}
+
+		@Override
+		public void addToDriver(JvmDriver driver) {
+			TypeIns[] codes = TypeIns.values();
+			for(TypeIns code : codes) {
+				driver.addCommand(code.name(), this);
+			}
+		}
+	}
+
+	protected class FieldInsCommand extends JvmOpcodeCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String ins = ((JvmDriver) driver).getCommandSymbol();
+			JvmOpCode code = FieldIns.toCode(ins);
+			mBuilders.peek().visitFieldInsn(code.getOpCode(), param[0], param[1], param[2]);
+		}
+
+		@Override
+		public void addToDriver(JvmDriver driver) {
+			FieldIns[] codes = FieldIns.values();
+			for(FieldIns code : codes) {
+				driver.addCommand(code.name(), this);
+			}
+		}
+	}
+
+	protected class MethodInsCommand extends JvmOpcodeCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String ins = ((JvmDriver) driver).getCommandSymbol();
+			JvmOpCode code = MethodIns.toCode(ins);
+			mBuilders.peek().visitMethodInsn(code.getOpCode(), param[0], param[1], param[2]);
+		}
+
+		@Override
+		public void addToDriver(JvmDriver driver) {
+			MethodIns[] codes = MethodIns.values();
+			for(MethodIns code : codes) {
+				driver.addCommand(code.name(), this);
+			}
+		}
+	}
+
+	protected class JumpInsCommand extends JvmOpcodeCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String ins = ((JvmDriver) driver).getCommandSymbol();
+			JvmOpCode code = JumpIns.toCode(ins);
+			MethodBuilder mBuilder = mBuilders.peek();
+			mBuilder.visitJumpInsn(code.getOpCode(), mBuilder.getLabelMap().get(param[0]));
+		}
+
+		@Override
+		public void addToDriver(JvmDriver driver) {
+			JumpIns[] codes = JumpIns.values();
+			for(JumpIns code : codes) {
+				driver.addCommand(code.name(), this);
+			}
+		}
+	}
+
+	protected class LabelCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String labelName = param[0];
+			Map<String, Label> labelMap = mBuilders.peek().getLabelMap();
+			if(labelMap.containsKey(labelName)) {
+				throw new RuntimeException("areadly defined label: " + labelName);
+			}
+			labelMap.put(labelName, mBuilders.peek().newLabel());
+		}
 	}
 
 	/**
@@ -620,11 +763,11 @@ public class JvmDriver extends BunDriver {
 		public static long compl(long right) { return ~right; }
 
 		// specific op
-		public static void printValue(long value, String typeName)    { System.out.println("(" + typeName + ") " + value); }
-		public static void printValue(double value, String typeName)  { System.out.println("(" + typeName + ") " + value); }
-		public static void printValue(boolean value, String typeName) { System.out.println("(" + typeName + ") " + value); }
-		public static void printValue(String value, String typeName)  { System.out.println("(" + typeName + ") " + value); }
-		public static void printValue(Object value, String typeName)  { System.out.println("(" + typeName + ") " + value); }
+		public static void printValue(long value)    { System.out.println("(" + long.class.getSimpleName() + ") " + value); }
+		public static void printValue(double value)  { System.out.println("(" + double.class.getSimpleName() + ") " + value); }
+		public static void printValue(boolean value) { System.out.println("(" + boolean.class.getSimpleName() + ") " + value); }
+		public static void printValue(String value)  { if(value != null) System.out.println("(" + value.getClass().getSimpleName() + ") " + value); }
+		public static void printValue(Object value)  { if(value != null) System.out.println("(" + value.getClass().getSimpleName() + ") " + value); }
 	}
 
 	public static class DebugableJvmDriver extends JvmDriver {
@@ -640,7 +783,7 @@ public class JvmDriver extends BunDriver {
  * @author skgchxngsxyz-osx
  *
  */
-class ClassBuilder extends ClassWriter {
+class ClassBuilder extends ClassWriter implements Opcodes {
 	/**
 	 * name suffix for top level wrapper class
 	 */
@@ -657,7 +800,7 @@ class ClassBuilder extends ClassWriter {
 	public ClassBuilder() {
 		super(ClassWriter.COMPUTE_FRAMES);
 		this.fullyQualifiedName = "TopLevel" + ++classNameSiffix;
-		this.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, this.fullyQualifiedName, null, "java/lang/Object", null);
+		this.visit(JvmDriver.JAVA_VERSION, ACC_PUBLIC | ACC_FINAL, this.fullyQualifiedName, null, "java/lang/Object", null);
 	}
 
 	/**
@@ -668,7 +811,7 @@ class ClassBuilder extends ClassWriter {
 	public ClassBuilder(String className) {
 		super(ClassWriter.COMPUTE_FRAMES);
 		this.fullyQualifiedName = className;
-		this.visit(Opcodes.V1_6, Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, this.fullyQualifiedName, null, "java/lang/Object", null);
+		this.visit(JvmDriver.JAVA_VERSION, ACC_PUBLIC | ACC_FINAL, this.fullyQualifiedName, null, "java/lang/Object", null);
 	}
 
 	/**
@@ -677,7 +820,7 @@ class ClassBuilder extends ClassWriter {
 	 */
 	public MethodBuilder createMethodBuilder() {
 		Method methodDesc = Method.getMethod("void invoke()");
-		return new MethodBuilder(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC, methodDesc, null, null, this);
+		return new MethodBuilder(ACC_PUBLIC | ACC_FINAL |ACC_STATIC, methodDesc, null, null, this);
 	}
 
 	public String getClassName() {
@@ -685,16 +828,18 @@ class ClassBuilder extends ClassWriter {
 	}
 }
 
-class MethodBuilder extends GeneratorAdapter {
+class MethodBuilder extends GeneratorAdapter implements Opcodes {
 	private final VarScopes scopes;
+	private final Map<String, Label> labelMap;
 
 	public MethodBuilder(int arg0, Method arg1, String arg2, Type[] arg3, ClassVisitor arg4) {
 		super(arg0, arg1, arg2, arg3, arg4);
 		int startIndex = 0;
-		if((arg0 & Opcodes.ACC_STATIC) != Opcodes.ACC_STATIC) {
+		if((arg0 & ACC_STATIC) != ACC_STATIC) {
 			startIndex = 1;
 		}
 		this.scopes = new VarScopes(startIndex);
+		this.labelMap = new HashMap<String, Label>();
 	}
 
 	public VarScopes getScopes() {
@@ -709,6 +854,10 @@ class MethodBuilder extends GeneratorAdapter {
 		else if(size == 2) {
 			this.pop2();
 		}
+	}
+
+	public Map<String, Label> getLabelMap() {
+		return this.labelMap;
 	}
 }
 
