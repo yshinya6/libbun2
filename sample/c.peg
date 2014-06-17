@@ -313,8 +313,8 @@ TypedefName
     ;
 
 Initializer
-    = << AssignmentExpression
-    / LWING InitializerList@ COMMA? RWING #initializer>>
+    = << (AssignmentExpression@
+    / LWING InitializerList@ COMMA? RWING) #initializer>>
     ;
 
 InitializerList
@@ -473,11 +473,11 @@ ConditionalExpression
 
 AssignmentExpression
     = << (UnaryExpression@ AssignmentOperator@ AssignmentExpression@
-    /  ConditionalExpression) #assignmentexpression >>
+    /  ConditionalExpression@) #assignmentexpression >>
     ;
 
 AssignmentOperator
-    = EQU
+    = << (EQU
     / STAREQU
     / DIVEQU
     / MODEQU
@@ -487,7 +487,7 @@ AssignmentOperator
     / RIGHTEQU
     / ANDEQU
     / HATEQU
-    / OREQU
+    / OREQU)@ #assignmentoperator >>
     ;
 
 Expression
