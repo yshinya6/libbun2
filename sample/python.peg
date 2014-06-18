@@ -55,7 +55,7 @@ ImportStmt
     ;
 
 DefineFunction
-    = <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":" NL+ Block@ #function>>
+    = <<"def" WS+ Symbol@ "(" Params@ ")" WS* ":"  Block@ #function>>
     ;
 
 DefineClass
