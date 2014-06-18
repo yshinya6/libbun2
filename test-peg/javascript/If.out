@@ -1,0 +1,43 @@
+parsed:
+#block {            ## by peg : null
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: n   ## by peg : null
+         #number: 10   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #stmt.expression {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: a   ## by peg : null
+               #number: 1   ## by peg : null
+            }
+         }
+      }
+      #block {            ## by peg : null
+         #if {            ## by peg : null
+            #eq {            ## by peg : null
+               #identifier: n   ## by peg : null
+               #number: 10   ## by peg : null
+            }
+            #block {            ## by peg : null
+               #stmt.expression {            ## by peg : null
+                  #assign {            ## by peg : null
+                     #identifier: a   ## by peg : null
+                     #number: 0   ## by peg : null
+                  }
+               }
+            }
+            #block {            ## by peg : null
+               #stmt.expression {            ## by peg : null
+                  #assign {            ## by peg : null
+                     #identifier: a   ## by peg : null
+                     #minus {            ## by peg : null
+                        #number: 1   ## by peg : null
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }
+}

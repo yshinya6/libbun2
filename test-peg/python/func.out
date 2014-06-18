@@ -21,7 +21,25 @@ parsed:
                }
             }
          }
+         #return {            ## by peg : null
+            #sub {            ## by peg : null
+               #name: a   ## by peg : null
+               #name: b   ## by peg : null
+            }
+         }
       }
    }
-   #error:    ## by peg : EOS+ defined in Stmt
+   #function {            ## by peg : null
+      #name: f   ## by peg : null
+      #params {            ## by peg : null
+         #name: b   ## by peg : null
+         #name: c   ## by peg : null
+         #name: f   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #return {            ## by peg : null
+            #integer: 1   ## by peg : null
+         }
+      }
+   }
 }
