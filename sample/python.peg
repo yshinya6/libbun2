@@ -42,7 +42,7 @@ WhileStmt
     ;
 
 ForStmt
-    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" Block@ #for>>
+    = <<"for" WS+ Symbol@ WS+ "in" WS+ Expr@ ":" Block@ #foreach>>
     ;
 
 ReturnStmt
