@@ -1,4 +1,4 @@
-﻿parsed:
+parsed:
 #block {            ## by peg : null
    #stmt.expression {            ## by peg : null
       #add {            ## by peg : null
