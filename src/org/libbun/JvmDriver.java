@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Stack;
 
 import org.objectweb.asm.ClassVisitor;
@@ -89,6 +91,8 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		this.addCommand("LABEL", new LabelCommand());
 		this.addCommand("BOX", new BoxCommand());
 
+		this.addCommand("NEW_ARRAY",  new NewArrayCommand());
+		this.addCommand("NEW_MAP", new NewMapCommand());
 		/**
 		 * add jvm opcode command
 		 */
@@ -144,34 +148,6 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		}
 	}
 
-//	/**
-//	 * push bun type to type stack
-//	 * @param type
-//	 * - if not void type, push it to stack.
-//	 * throw exception, if illeagal type.
-//	 */
-//	protected void pushTypeToTypeStack(BunType type) {
-//		Class<?> javaClass = this.classMap.get(type.getName());
-//		if(javaClass == null) {
-//			throw new RuntimeException("illegal type: " + type);
-//		}
-//		if(!javaClass.equals(Void.class)) {
-//			this.typeStack.push(type);
-//		}
-//	}
-
-//	/**
-//	 * pop and get type from stack top
-//	 * @return
-//	 * - return null, if typeStack is empty.
-//	 */
-//	protected BunType popTypeFromTypeStack() {
-//		if(this.typeStack.isEmpty()) {
-//			return null;
-//		}
-//		return this.typeStack.pop();
-//	}
-
 	/**
 	 * insert print instruction after top level expression.
 	 * it is interactive mode only.
@@ -197,13 +173,14 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	 * BunType to Java class
 	 * @param type
 	 * @return
-	 * - throw exception if has no java class.
+	 * - if has no class, return Object.class
 	 */
 	protected Class<?> toJavaClass(BunType type) {
 		String typeName = type.getName();
 		Class<?> javaClass = this.classMap.get(typeName);
 		if(javaClass == null) {
-			throw new RuntimeException("has no java class: " + typeName);
+			//throw new RuntimeException("has no java class: " + typeName);
+			return Object.class;
 		}
 		return javaClass;
 	}
@@ -415,10 +392,6 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			e.printStackTrace();
 		}
 	}
-//
-//	protected void unbox(Class<?> stacktopClass) {
-//		mBuilders.peek().unbox(Type.getType(stacktopClass));
-//	}
 
 	/**
 	 * generate conditional and. after evaluation, push boolean.
@@ -433,7 +406,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			Label mergeLabel = mBuilder.newLabel();
 			// and left
 			driver.pushNode(node.get(0));
-			mBuilder.unbox(boolean.class);
+			mBuilder.unbox(toJavaClass(node.get(0).getType(null)), boolean.class);
 			mBuilder.push(true);
 			mBuilder.ifCmp(org.objectweb.asm.Type.BOOLEAN_TYPE, GeneratorAdapter.EQ, rightLabel);
 			mBuilder.push(false);
@@ -441,7 +414,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			// and right
 			mBuilder.mark(rightLabel);
 			driver.pushNode(node.get(1));
-			mBuilder.unbox(boolean.class);
+			mBuilder.unbox(toJavaClass(node.get(1).getType(null)), boolean.class);
 			mBuilder.mark(mergeLabel);
 		}
 	}
@@ -459,7 +432,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			Label mergeLabel = mBuilder.newLabel();
 			// or left
 			driver.pushNode(node.get(0));
-			mBuilder.unbox(boolean.class);
+			mBuilder.unbox(toJavaClass(node.get(0).getType(null)), boolean.class);
 			mBuilder.push(true);
 			mBuilder.ifCmp(org.objectweb.asm.Type.BOOLEAN_TYPE, GeneratorAdapter.NE, rightLabel);
 			mBuilder.push(true);
@@ -467,7 +440,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			// or right
 			mBuilder.mark(rightLabel);
 			driver.pushNode(node.get(1));
-			mBuilder.unbox(boolean.class);
+			mBuilder.unbox(toJavaClass(node.get(1).getType(null)), boolean.class);
 			mBuilder.mark(mergeLabel);
 		}
 	}
@@ -696,6 +669,83 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	/**
+	 * generate array. acutauly call constructor of ArrayImpl.ArrayImpl(Object[])
+	 * not support primitive value.
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
+	protected class NewArrayCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			int size = node.size();
+			Type elementTypeDesc = Type.getType(Object.class);
+			Type arrayClassDesc = Type.getType(ArrayImpl.class);
+			Method arrayInitDesc = this.createArrayInitDesc(elementTypeDesc);
+
+			GeneratorAdapter adapter = mBuilders.peek();
+			adapter.newInstance(arrayClassDesc);
+			adapter.dup();
+			adapter.push(size);
+			adapter.newArray(elementTypeDesc);
+			for(int i = 0; i < size; i++) {
+				adapter.dup();
+				adapter.push(i);
+				driver.pushNode(node.get(i));
+				adapter.arrayStore(elementTypeDesc);
+			}
+			adapter.invokeConstructor(arrayClassDesc, arrayInitDesc);
+		}
+
+		private Method createArrayInitDesc(Type elementTypeDesc) {
+			Type paramTypeDesc = Type.getType("[" + elementTypeDesc.getDescriptor());
+			Type returnTypeDesc = Type.VOID_TYPE;
+			return new Method("<init>", returnTypeDesc, new Type[]{paramTypeDesc});
+		}
+	}
+
+	protected class NewMapCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			int size = node.size();
+			Type keyTypeDesc = Type.getType(String.class);
+			Type valueTypeDesc = Type.getType(Object.class);
+			Type mapClassDesc = Type.getType(MapImpl.class);
+			Method mapInitDesc = this.createMapInitDesc(valueTypeDesc);
+
+			GeneratorAdapter adapter = mBuilders.peek();
+			adapter.newInstance(mapClassDesc);
+			adapter.dup();
+			// create key array
+			adapter.push(size);
+			adapter.newArray(keyTypeDesc);
+			for(int i = 0; i < size; i++) {
+				adapter.dup();
+				adapter.push(i);
+				driver.pushNode(node.get(i).get(0));
+				adapter.checkCast(keyTypeDesc);
+				adapter.arrayStore(keyTypeDesc);
+			}
+			// create value array
+			adapter.push(size);
+			adapter.newArray(valueTypeDesc);
+			for(int i = 0; i < size; i++) {
+				adapter.dup();
+				adapter.push(i);
+				driver.pushNode(node.get(i).get(1));
+				adapter.arrayStore(valueTypeDesc);
+			}
+			adapter.invokeConstructor(mapClassDesc, mapInitDesc);
+		}
+
+		private Method createMapInitDesc(Type valueTypeDesc) {
+			Type paramTypeDesc1 = Type.getType("[" + Type.getType(String.class).getDescriptor());
+			Type paramTypeDesc2 = Type.getType("[" + valueTypeDesc.getDescriptor());
+			Type returnTypeDesc = Type.VOID_TYPE;
+			return new Method("<init>", returnTypeDesc, new Type[]{paramTypeDesc1, paramTypeDesc2});
+		}
+	}
+	
+	/**
 	 * definition of builtin function.
 	 * @author skgchxngsxyz-osx
 	 *
@@ -809,6 +859,103 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		}
 	}
 
+	protected static void appendStringifiedValue(StringBuilder sBuilder, Object value) {
+		if(value == null) {
+			sBuilder.append("$null$");
+		}
+		else if(value instanceof String) {
+			sBuilder.append("\"");
+			sBuilder.append(value);
+			sBuilder.append("\"");
+		}
+		else {
+			sBuilder.append(value);
+		}
+	}
+
+	public static class ArrayImpl {
+		private final ArrayList<Object> valueList;
+		public ArrayImpl(Object[] values) {
+			this.valueList = new ArrayList<Object>();
+			for(Object value : values) {
+				this.valueList.add(value);
+			}
+		}
+
+		public void add(Object value) {
+			this.valueList.add(value);
+		}
+
+		public Object get(Long index) {
+			int actualIndex = index.intValue();
+			return this.valueList.get(actualIndex);
+		}
+
+		public Object set(Long index, Object value) {
+			int actualIndex = index.intValue();
+			this.valueList.add(actualIndex, value);
+			return value;
+		}
+
+		public Object size() {
+			long size = this.valueList.size();
+			return size;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder sBuilder = new StringBuilder();
+			int size = this.valueList.size();
+			sBuilder.append("[");
+			for(int i = 0; i < size; i++) {
+				if(i > 0) {
+					sBuilder.append(", ");
+				}
+				appendStringifiedValue(sBuilder, this.valueList.get(i));
+			}
+			sBuilder.append("]");
+			return sBuilder.toString();
+		}
+	}
+
+	public static class MapImpl {
+		private final Map<String, Object> valueMap;
+		public MapImpl(String[] keys, Object[] values) {
+			this.valueMap = new LinkedHashMap<>();
+			int size = keys.length;
+			for(int i = 0; i < size; i++) {
+				this.valueMap.put(keys[i], values[i]);
+			}
+		}
+
+		public Object get(String key) {
+			return this.valueMap.get(key);
+		}
+
+		public Object set(String key, Object value) {
+			this.valueMap.put(key, value);
+			return value;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder sBuilder = new StringBuilder();
+			Set<Entry<String, Object>> entrySet = this.valueMap.entrySet();
+			int count = 0;
+			sBuilder.append("{");
+			for(Entry<String, Object> entry : entrySet) {
+				if(count++ > 0) {
+					sBuilder.append(", ");
+				}
+				appendStringifiedValue(sBuilder, entry.getKey());
+				sBuilder.append(":");
+				appendStringifiedValue(sBuilder, entry.getValue());
+			}
+			sBuilder.append("}");
+			return sBuilder.toString();
+		}
+	}
+
 	public static class DebuggableJvmDriver extends JvmDriver {
 		public DebuggableJvmDriver() {
 			JvmByteCodeLoader.setDebugMode(true);
@@ -895,12 +1042,15 @@ class MethodBuilder extends GeneratorAdapter implements Opcodes {
 	}
 
 	/**
-	 * unbox stack top
+	 * unbox stacktop
+	 * @param stacktopClass
 	 * @param unboxedClass
 	 * - unboxed class, must not stack top class
 	 */
-	public void unbox(Class<?> unboxedClass) {
-		this.unbox(Type.getType(unboxedClass));
+	public void unbox(Class<?> stacktopClass, Class<?> unboxedClass) {
+		if(!stacktopClass.isPrimitive()) {
+			this.unbox(Type.getType(unboxedClass));
+		}
 	}
 
 	public Map<String, Label> getLabelMap() {

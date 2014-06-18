@@ -10,6 +10,9 @@ bun #toplevel(*)  {
 	${TOP_LEVEL this}
 }
 
+bun #group(x : Object) : Object {
+	${x}
+}
 
 bun #block(*): void {
 	${statement this}
@@ -128,4 +131,12 @@ bun #let(name, type, value): void && letvar() {
 	${LET}
 }
 
+// collection
+bun #array(*) : Object {
+	${NEW_ARRAY}
+}
+
+bun #map(*) : Object {
+	${NEW_MAP}
+}
 

@@ -12,23 +12,7 @@ parsed:
                   #parameterlist {            ## by peg : null
                      #parameterdeclaration {            ## by peg : null
                         #declarationspecifiers {            ## by peg : null
-                           #typespecifier: int    ## by peg : null
-                        }
-                        #declarator {            ## by peg : null
-                           #directdeclarator {            ## by peg : null
-                              #identifier: argc   ## by peg : null
-                           }
-                        }
-                     }
-                     #parameterdeclaration {            ## by peg : null
-                        #declarationspecifiers {            ## by peg : null
-                           #typespecifier: char    ## by peg : null
-                        }
-                        #declarator {            ## by peg : null
-                           #pointer: **   ## by peg : null
-                           #directdeclarator {            ## by peg : null
-                              #identifier: argv   ## by peg : null
-                           }
+                           #typespecifier: void   ## by peg : null
                         }
                      }
                   }
@@ -36,6 +20,20 @@ parsed:
             }
          }
          #compoundstatement {            ## by peg : null
+            #declaration {            ## by peg : null
+               #declarationspecifiers {            ## by peg : null
+                  #typespecifier: int    ## by peg : null
+               }
+               #initdeclaratorlist {            ## by peg : null
+                  #initdeclarator {            ## by peg : null
+                     #declarator {            ## by peg : null
+                        #directdeclarator {            ## by peg : null
+                           #identifier: a   ## by peg : null
+                        }
+                     }
+                  }
+               }
+            }
             #statement {            ## by peg : null
                #returnstatement {            ## by peg : null
                   #expression {            ## by peg : null
