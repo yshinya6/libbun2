@@ -1,4 +1,3 @@
-
 //===========================================================================
 //
 //  Parsing Expression Grammar of C for Mouse 1.1 - 1.5.
@@ -104,8 +103,8 @@ TranslationUnit
     ;
 
 ExternalDeclaration
-    = << (FunctionDefinition
-    / Declaration)@ #externaldeclaration >>
+    = FunctionDefinition
+    / Declaration
     ;
 
 FunctionDefinition
@@ -137,20 +136,20 @@ DeclarationSpecifiers
        / Attribute
        )@*
       ) #declarationspecifiers >>
-    / << ( StorageClassSpecifier
+    / (StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
       / Attribute
-      )@+ #declarationspecifiers >>
+      )+
     ;
 
 InitDeclaratorList
-    = << InitDeclarator@ (COMMA InitDeclarator@)* #initdeclaratorlist >>
+    = InitDeclarator <<@ (COMMA InitDeclarator@) #initdeclaratorlist >>*
     ;
 
 InitDeclarator
-    = << Declarator@ (EQU Initializer@)? #initdeclarator >>
+    = Declarator <<@ (EQU Initializer@) #initdeclarator >>?
     ;
 
 StorageClassSpecifier
@@ -254,16 +253,16 @@ Declarator
     ;
 
 DirectDeclarator
-    = << ( Identifier@
+    = ( Identifier@
       / LPAR Declarator@ RPAR
       )
-      ( LBRK@ TypeQualifier@* AssignmentExpression@? RBRK@
+      ( LBRK TypeQualifier@* AssignmentExpression@? RBRK
       / LBRK STATIC@ TypeQualifier@* AssignmentExpression@ RBRK
       / LBRK TypeQualifier@+ STATIC@ AssignmentExpression@ RBRK
       / LBRK TypeQualifier@* STAR@ RBRK
-      / LPAR@ ParameterTypeList@ RPAR@
+      / LPAR ParameterTypeList@ RPAR
       / LPAR IdentifierList@? RPAR
-      )* #directdeclarator >>
+      )*
     ;
 
 Pointer
@@ -271,18 +270,15 @@ Pointer
     ;
 
 ParameterTypeList
-    = << ParameterList@ (COMMA ELLIPSIS)? #parametertypelist >>
+    = ParameterList@ (COMMA ELLIPSIS)?
     ;
 
 ParameterList
-    = << ParameterDeclaration@ (COMMA ParameterDeclaration@)* #parameterlist>>
+    = ParameterDeclaration <<@ (COMMA ParameterDeclaration@) #parameterlist>>*
     ;
 
 ParameterDeclaration
-    = << DeclarationSpecifiers@
-      ( Declarator@
-      / AbstractDeclarator@
-      )? #parameterdeclaration >>
+    = DeclarationSpecifiers <<@ ( Declarator / AbstractDeclarator )@ #parameterdeclaration >>?
     ;
 
 IdentifierList
@@ -336,18 +332,18 @@ Designator
 //-------------------------------------------------------------------------
 
 Statement
-    = << (LabeledStatement
+    = LabeledStatement
     / CompoundStatement
     / ExpressionStatement
     / SelectionStatement
     / IterationStatement
-    / JumpStatement )@ #statement >>
+    / JumpStatement
     ;
 
 LabeledStatement
     = Identifier COLON Statement
-    / CASE ConstantExpression COLON Statement
-    / DEFAULT COLON Statement
+    / << CASE ConstantExpression@ COLON Statement@ #case >>
+    / << DEFAULT COLON Statement@ #default >>
     ;
 
 CompoundStatement
@@ -359,21 +355,21 @@ ExpressionStatement
     ;
 
 SelectionStatement
-    = IF LPAR Expression RPAR Statement (ELSE Statement)?
-    / SWITCH LPAR Expression RPAR Statement
+    = << IF LPAR Expression@ RPAR Statement@ (ELSE Statement@)? #ifstatement >>
+    / << SWITCH LPAR Expression@ RPAR Statement@ #switchstatement >>
     ;
 
 IterationStatement
-    = WHILE LPAR Expression RPAR Statement
-    / DO Statement WHILE LPAR Expression RPAR SEMI
-    / FOR LPAR Expression? SEMI Expression? SEMI Expression? RPAR Statement
-    / FOR LPAR Declaration Expression? SEMI Expression? RPAR Statement
+    = << WHILE LPAR Expression@ RPAR Statement@ #whilestatement >>
+    / << DO Statement@ WHILE LPAR Expression@ RPAR SEMI #dowhilestatement >>
+    / << FOR LPAR Expression@? SEMI Expression@? SEMI Expression@? RPAR Statement@ #forstatement >>
+    / << FOR LPAR Declaration@ Expression@? SEMI Expression@? RPAR Statement@ #forstatement >>
     ;
 
 JumpStatement
     = GOTO Identifier SEMI
-    / CONTINUE SEMI
-    / BREAK SEMI
+    / << CONTINUE@ SEMI #continue>>
+    / << BREAK@ SEMI #break >>
     / << RETURN@ Expression@? SEMI #returnstatement >>
     ;
 
@@ -383,35 +379,36 @@ JumpStatement
 //-------------------------------------------------------------------------
 
 PrimaryExpression
-    = << (Identifier
+    = Identifier
     / Constant
     / StringLiteral
-    / LPAR Expression RPAR)@ #primaryexpression >>
+    / LPAR Expression RPAR
     ;
 
 PostfixExpression
-    = << ( PrimaryExpression@
+    = ( PrimaryExpression
       / LPAR TypeName RPAR LWING InitializerList COMMA? RWING
       )
+      <<@
       ( LBRK Expression RBRK
-      / << LPAR ArgumentExpressionList? RPAR #arg >>
+      / LPAR ArgumentExpressionList? RPAR
       / DOT Identifier
       / PTR Identifier
       / INC
       / DEC
-      )* #postfixexpression >>
+      )@ #postfixexpression >>*
     ;
 
 ArgumentExpressionList
-    = AssignmentExpression (COMMA AssignmentExpression)*
+    = AssignmentExpression <<@ (COMMA AssignmentExpression@) #argumentexpressionlist >>*
     ;
 
 UnaryExpression
-    = << (PostfixExpression@
+    = PostfixExpression
     / INC UnaryExpression
     / DEC UnaryExpression
     / UnaryOperator CastExpression
-    / SIZEOF (UnaryExpression / LPAR TypeName RPAR )) #unaryexpression>>
+    / SIZEOF (UnaryExpression / LPAR TypeName RPAR )
     ;
 
 UnaryOperator
@@ -424,56 +421,57 @@ UnaryOperator
     ;
 
 CastExpression
-    = (LPAR TypeName RPAR)* UnaryExpression
+    = <<(LPAR TypeName RPAR)@+ UnaryExpression@ #castexpression >>
+    / UnaryExpression
     ;
 
 MultiplicativeExpression
-    = CastExpression ((STAR / DIV / MOD) CastExpression)*
+    = CastExpression <<@ (STAR #star / DIV #div / MOD #mod ) CastExpression@ >>*
     ;
 
 AdditiveExpression
-    = MultiplicativeExpression ((PLUS / MINUS) MultiplicativeExpression)*
+    = MultiplicativeExpression <<@ (PLUS #plus / MINUS #minus) MultiplicativeExpression@ >>*
     ;
 
 ShiftExpression
-    = AdditiveExpression ((LEFT / RIGHT) AdditiveExpression)*
+    = AdditiveExpression <<@ (LEFT #left / RIGHT #right) AdditiveExpression@ >>*
     ;
 
 RelationalExpression
-    = ShiftExpression ((LE / GE / LT / GT) ShiftExpression)*
+    = ShiftExpression <<@  (LE #le / GE #ge / LT #lt / GT #gt) ShiftExpression@ >>*
     ;
 
 EqualityExpression
-    = RelationalExpression ((EQUEQU / BANGEQU) RelationalExpression)*
+    = RelationalExpression <<@ (EQUEQU #equequ /BANGEQU #bangequ) RelationalExpression@ >>*
     ;
 
 ANDExpression
-    = EqualityExpression (AND EqualityExpression)*
+    = EqualityExpression <<@ (AND #and) EqualityExpression@ >>*
     ;
 
 ExclusiveORExpression
-    = ANDExpression (HAT ANDExpression)*
+    = ANDExpression <<@ (HAT #hat) ANDExpression@ >>*
     ;
 
 InclusiveORExpression
-    = ExclusiveORExpression (OR ExclusiveORExpression)*
+    = ExclusiveORExpression <<@ (OR #or) ExclusiveORExpression@ >>*
     ;
 
 LogicalANDExpression
-    = InclusiveORExpression (ANDAND InclusiveORExpression)*
+    = InclusiveORExpression <<@ (ANDAND #andand) InclusiveORExpression@ >>*
     ;
 
 LogicalORExpression
-    = LogicalANDExpression (OROR LogicalANDExpression)*
+    = LogicalANDExpression <<@ (OROR #oror) LogicalANDExpression@ >>*
     ;
 
 ConditionalExpression
-    = LogicalORExpression (QUERY Expression COLON LogicalORExpression)*
+    = LogicalORExpression <<@ (QUERY #query) Expression@ COLON LogicalORExpression@ >>*
     ;
 
 AssignmentExpression
-    = << (UnaryExpression@ AssignmentOperator@ AssignmentExpression@
-    /  ConditionalExpression@) #assignmentexpression >>
+    = << UnaryExpression@ AssignmentOperator@ AssignmentExpression@ #assignmentexpression >>
+    / ConditionalExpression
     ;
 
 AssignmentOperator
@@ -491,7 +489,7 @@ AssignmentOperator
     ;
 
 Expression
-    = << AssignmentExpression@ (COMMA AssignmentExpression@)* #expression >>
+    = AssignmentExpression <<@ (COMMA AssignmentExpression@) #expression >>*
     ;
 
 ConstantExpression
@@ -649,10 +647,10 @@ HexQuad = HexDigit HexDigit HexDigit HexDigit ;
 //-------------------------------------------------------------------------
 
 Constant
-    = << (FloatConstant
+    = FloatConstant
     / IntegerConstant       // Note: can be a prefix of Float Constant!
     / EnumerationConstant
-    / CharacterConstant)@ #constant >>
+    / CharacterConstant
     ;
 
 IntegerConstant
@@ -796,6 +794,7 @@ OREQU      =  "|="        Spacing ;
 COMMA      =  ","         Spacing ;
 
 EOT        = !. ;
+
 TopLevel
     = TranslationUnit
     ;
