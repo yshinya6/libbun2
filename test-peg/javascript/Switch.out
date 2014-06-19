@@ -1,0 +1,34 @@
+parsed:
+#block {            ## by peg : null
+   #switch {            ## by peg : null
+      #identifier: a   ## by peg : null
+      #caseblock {            ## by peg : null
+         #cases {            ## by peg : null
+            #case {            ## by peg : null
+               #number: 0   ## by peg : null
+               #block {            ## by peg : null
+                  #stmt.expression {            ## by peg : null
+                     #assign {            ## by peg : null
+                        #identifier: b   ## by peg : null
+                        #number: 0   ## by peg : null
+                     }
+                  }
+               }
+            }
+            #case {            ## by peg : null
+               #number: 1   ## by peg : null
+            }
+         }
+         #case.default {            ## by peg : null
+            #block {            ## by peg : null
+               #stmt.expression {            ## by peg : null
+                  #assign {            ## by peg : null
+                     #identifier: d   ## by peg : null
+                     #number: 0   ## by peg : null
+                  }
+               }
+            }
+         }
+      }
+   }
+}

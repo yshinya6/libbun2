@@ -886,7 +886,7 @@ CaseClauses
   ;
 
 CaseClause
-  = << CaseToken __ Expression@ __ ":" (__ StatementList@)? #case >>// test // consequent
+  = << CaseToken __ Expression@ __ ":" (__ StatementList@ / __) #case >>// test // consequent
   ;
 
 DefaultClause
