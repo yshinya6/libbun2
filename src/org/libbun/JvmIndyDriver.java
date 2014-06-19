@@ -1,5 +1,6 @@
 package org.libbun;
 
+import java.lang.annotation.Inherited;
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -23,6 +24,11 @@ public class JvmIndyDriver extends JvmDriver {
 
 	private final static MethodHandle fbCompHandle = initFallBackHandle("CompOp", Boolean.class);
 
+	private final static MethodHandle fbIndexerHandle = initFallBackHandle("Indexer");
+
+	private final static MethodHandle fbMethodHandle = initFallBackHandle("Method");
+	private final static MethodHandle testMethodHandle = initTestHandleForVarg("Method");
+
 	public JvmIndyDriver() {
 		super("lib/driver/jvm/jvm4python.bun");
 		JvmDriver.JAVA_VERSION = V1_7;
@@ -30,11 +36,14 @@ public class JvmIndyDriver extends JvmDriver {
 		this.addCommand("PUSH_AS_DOUBLE_WRAP", new PushAsDoubleWrap());
 		this.addCommand("PUSH_AS_BOOLEAN_WRAP", new PushAsBooleanWrap());
 		this.addCommand("INDY", new DynamicInvokeCommand());
+		this.addCommand("APPLY", new ApplyCommand());
 
 		this.handleMap = new HashMap<String, Handle>();
 		this.initBsmHandle("UnaryOp");
 		this.initBsmHandle("BinaryOp");
 		this.initBsmHandle("CompOp");
+		this.initBsmHandle("Indexer");
+		this.initBsmHandle("Method");
 	}
 
 	public static class DebuggableJvmIndyDriver extends JvmIndyDriver {
@@ -83,6 +92,19 @@ public class JvmIndyDriver extends JvmDriver {
 			paramClasses[i] = Class.class;
 			paramClasses[i + paramSize] = Object.class;
 		}
+		MethodType type = MethodType.methodType(boolean.class, paramClasses);
+		try {
+			return MethodHandles.lookup().findStatic(JvmIndyDriver.class, "testFor" + name, type);
+		}
+		catch(Throwable e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return null;
+	}
+
+	protected static MethodHandle initTestHandleForVarg(String name) {
+		Class<?>[] paramClasses = new Class<?>[] {Class[].class, Object[].class};
 		MethodType type = MethodType.methodType(boolean.class, paramClasses);
 		try {
 			return MethodHandles.lookup().findStatic(JvmIndyDriver.class, "testFor" + name, type);
@@ -152,6 +174,38 @@ public class JvmIndyDriver extends JvmDriver {
 			}
 			Type typeDesc = Type.getMethodType(returnType, paramTypes);
 			mBuilder.invokeDynamic(methodName, typeDesc.getDescriptor(), handleMap.get(param[1]));
+		}
+	}
+
+	protected class ApplyCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			PegObject targetNode = node.get(0);
+			PegObject argsNode = node.get(1);
+			String recvName = targetNode.name;
+			if(recvName.equals("#field")) {	// method call
+				PegObject recvNode = targetNode.get(0);
+				String methodName = targetNode.get(1).getText();
+				int paramSize = argsNode.size();
+				driver.pushNode(recvNode);
+				for(int i = 0 ; i < paramSize; i++) {
+					driver.pushNode(argsNode.get(i));
+				}
+				String typeDesc = this.createDescriptor(paramSize + 1).getDescriptor();
+				mBuilders.peek().invokeDynamic(methodName, typeDesc, handleMap.get("bsmMethod"));
+			}
+			else {	// func call
+				
+			}
+		}
+
+		private Type createDescriptor(int paramSize) {
+			Type[] paramTypeDescs = new Type[paramSize];
+			Type returnTypeDesc = Type.getType(Object.class);
+			for(int i = 0; i < paramSize; i++) {
+				paramTypeDescs[i] = Type.getType(Object.class);
+			}
+			return Type.getMethodType(returnTypeDesc, paramTypeDescs);
 		}
 	}
 
@@ -263,7 +317,7 @@ public class JvmIndyDriver extends JvmDriver {
 		targetHandle = targetHandle.asType(type);
 		// test  handle
 		MethodHandle testHandle = testBinaryHandle.bindTo(leftClass).bindTo(rightClass);
-		testHandle = targetHandle.asType(testHandle.type());
+		testHandle = testHandle.asType(testHandle.type());
 		// guard method handle
 		MethodHandle guard = MethodHandles.guardWithTest(testHandle, targetHandle, callSite.getTarget());
 		callSite.setTarget(guard);
@@ -318,10 +372,115 @@ public class JvmIndyDriver extends JvmDriver {
 		targetHandle = targetHandle.asType(type);
 		// test handle
 		MethodHandle testHandle = testBinaryHandle.bindTo(leftClass).bindTo(rightClass);
-		testHandle = targetHandle.asType(testHandle.type());
+		testHandle = testHandle.asType(testHandle.type());
 		// guard method handle
 		MethodHandle guard = MethodHandles.guardWithTest(testHandle, targetHandle, callSite.getTarget());
 		callSite.setTarget(guard);
 		return (Boolean) targetHandle.invokeWithArguments(args);
+	}
+
+	// indexer call
+	/**
+	 * boot strap method for indexer call. used for indy.
+	 * @param lookup
+	 * @param methodName
+	 * @param type
+	 * @return
+	 * @throws Throwable
+	 */
+	public static CallSite bsmIndexer(MethodHandles.Lookup lookup, String methodName, MethodType type) throws Throwable {
+		CachedCallSite callSite = new CachedCallSite(methodName, lookup, type);
+		MethodHandle fallback = fbIndexerHandle.bindTo(callSite);
+		fallback = fallback.asCollector(Object[].class, type.parameterCount()).asType(type);
+		callSite.setTarget(fallback);
+		return callSite;
+	}
+
+	/**
+	 * fallback handle for indexer call. used for indy.
+	 * @param callSite
+	 * @param args
+	 * @return
+	 * @throws Throwable
+	 */
+	public static Object fallBackForIndexer(CachedCallSite callSite, Object[] args) throws Throwable {
+		MethodType type = callSite.type();
+		Class<?> recvClass = args[0].getClass();
+		Class<?> indexClass = args[1].getClass();
+		// target handle
+		MethodType methodType = type.dropParameterTypes(0, 1).changeParameterType(0, indexClass);
+		MethodHandle targetHandle = callSite.lookup.findVirtual(recvClass, callSite.methodName, methodType);
+		targetHandle = targetHandle.asType(type);
+		// test handle
+		MethodHandle testHandle = testBinaryHandle.bindTo(recvClass).bindTo(indexClass);
+		testHandle = testHandle.asType(testHandle.type());
+		// guard method handle
+		MethodHandle guard = MethodHandles.guardWithTest(testHandle, targetHandle, callSite.getTarget());
+		callSite.setTarget(guard);
+		return targetHandle.invokeWithArguments(args);
+	}
+
+	// method call
+	/**
+	 * boot strap method for method call. used for indy.
+	 * @param lookup
+	 * @param methodName
+	 * @param type
+	 * @return
+	 * @throws Throwable
+	 */
+	public static CallSite bsmMethod(MethodHandles.Lookup lookup, String methodName, MethodType type) throws Throwable {
+		CachedCallSite callSite = new CachedCallSite(methodName, lookup, type);
+		MethodHandle fallback = fbMethodHandle.bindTo(callSite);
+		fallback = fallback.asCollector(Object[].class, type.parameterCount()).asType(type);
+		callSite.setTarget(fallback);
+		return callSite;
+	}
+
+	/**
+	 * fallback handle for method call. used for indy.
+	 * @param callSite
+	 * @param args
+	 * @return
+	 * @throws Throwable
+	 */
+	public static Object fallBackForMethod(CachedCallSite callSite, Object[] args) throws Throwable {
+		MethodType type = callSite.type();
+		int paramSize = args.length;
+		Class<?>[] paramClasses = new Class<?>[paramSize];
+		for(int i = 0; i < paramSize; i++) {
+			paramClasses[i] = args[i].getClass();
+		}
+		// target handle
+		MethodType methodType = type.dropParameterTypes(0, 1);
+		for(int i = 0; i < paramSize - 1; i++) {
+			methodType = methodType.changeParameterType(i, paramClasses[i + 1]);
+		}
+		MethodHandle targetHandle = callSite.lookup.findVirtual(paramClasses[0], callSite.methodName, methodType);
+		targetHandle = targetHandle.asType(type);
+		// test handle
+		MethodHandle testHandle = testMethodHandle.bindTo(paramClasses).asCollector(Object[].class, paramSize);
+		// guard handle
+		MethodHandle guard = MethodHandles.guardWithTest(testHandle, targetHandle, callSite.getTarget());
+		callSite.setTarget(guard);
+		return targetHandle.invokeWithArguments(args);
+	}
+
+	/**
+	 * test handle for method call. used for indy.
+	 * @param paramClasses
+	 * - include recv class
+	 * @param paramas
+	 * - include recv object
+	 * @return
+	 */
+	public static boolean testForMethod(Class<?>[] paramClasses, Object[] paramas) {
+		int size = paramClasses.length;
+		for(int i = 0; i < size; i++) {
+			if(!paramClasses[i].equals(paramas[i].getClass())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
