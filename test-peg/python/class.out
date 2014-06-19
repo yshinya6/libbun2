@@ -16,9 +16,27 @@ parsed:
                   }
                   #integer: 1   ## by peg : null
                }
+               #apply {            ## by peg : null
+                  #field {            ## by peg : null
+                     #name: self   ## by peg : null
+                     #name: b   ## by peg : null
+                  }
+                  #args:    ## by peg : null
+               }
             }
          }
       }
    }
-   #error:    ## by peg : EOS+ defined in Stmt
+   #class {            ## by peg : null
+      #name: B   ## by peg : null
+      #extend {            ## by peg : null
+         #name: A   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #assign {            ## by peg : null
+            #name: b   ## by peg : null
+            #integer: 1   ## by peg : null
+         }
+      }
+   }
 }

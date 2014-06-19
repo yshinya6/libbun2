@@ -1,6 +1,6 @@
 parsed:
 #toplevel {            ## by peg : null
-   #for {            ## by peg : null
+   #foreach {            ## by peg : null
       #name: x   ## by peg : null
       #array {            ## by peg : null
          #integer: 1   ## by peg : null
