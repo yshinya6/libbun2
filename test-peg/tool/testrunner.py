@@ -72,6 +72,7 @@ class TestRunner:
     def run(self):
         executed = 0
         passed   = 0
+        failed_file_names = []
         if len(self.testcases) == 0:
             return
 
@@ -88,6 +89,8 @@ class TestRunner:
             expected = open(output_file, "r").read()
             if status == 0 and expected == output:
                 passed += 1
+            else:
+                failed_file_names.append(input_file)
             if self.verbose:
                 print '-----------------------'
                 print 'result:\n%s' % (output)
@@ -96,6 +99,10 @@ class TestRunner:
                 print '-----------------------'
         print "# of testcases: %d, # of OK: %d, # of FAILED: %d" % (
                 executed, passed, executed - passed)
+        if executed - passed > 0:
+            print '\nFAILED File:'
+            for name in failed_file_names:
+                print "    %s" % (name)
         return
 
 if __name__ == '__main__':
