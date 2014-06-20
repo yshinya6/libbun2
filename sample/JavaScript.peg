@@ -151,7 +151,7 @@ NullLiteral
   ;
 
 BooleanLiteral
-  = TrueToken / FalseToken
+  = << ( TrueToken / FalseToken ) #bool >> 
   ;
 
 //
@@ -599,10 +599,10 @@ RelationalOperator
   ;
 
 RelationalOperatorNoIn
-  = $("<" !"<") #lt
-  / $(">" !">") #gt
-  / "<=" #lte
+  = "<=" #lte
   / ">=" #gte
+  / $("<" !"<") #lt
+  / $(">" !">") #gt
   / InstanceofToken #instanceof
   ;
 
@@ -663,7 +663,7 @@ BitwiseORExpressionNoIn
 BitwiseOROperator
   = $("|" ![|=])
   ;
-
+  
 LogicalANDExpression
   = BitwiseORExpression // first
     <<@ __ LogicalANDOperator #and __ BitwiseORExpression@ >>*// rest
@@ -763,6 +763,12 @@ Block
   = "{" __ << (Statement@ __)* #block >> "}" // body
   ;
 
+SingleStatement
+  = __ ( VariableStatement / EmptyStatement / IfStatement /
+    ContinueStatement / BreakStatement / ReturnStatement /
+	WithStatement )  __
+  ;
+
 StatementList
   = << Statement@ __ (Statement@ __)* #block >>
   ;
@@ -805,18 +811,18 @@ ExpressionStatement
 
 IfStatement
   = << IfToken __ "(" __ Expression@ __ ")" __ // test
-    Statement@ __ // consequent
+    ( SingleStatement@ / Statement@ ) __ // consequent
     ElseToken __
-    Statement@  #if >> // alternate
+    ( SingleStatement@ / Statement@ )  #if >> // alternate
   / << IfToken __ "(" __ Expression@ __ ")" __ // test
-    Statement@  #if>> // consequent
+    ( SingleStatement@ / Statement@ )  #if>> // consequent
   ;
 
 IterationStatement
   = << DoToken __
     Statement@ __ // body
-    WhileToken __ "(" __ Expression@ __ ")" EOS #dowhile >>// test
-  / << WhileToken __ "(" __ Expression@ __ ")" __ // test
+    WhileToken __ "(" __ ( BooleanLiteral@ / Expression@ ) __ ")" EOS #dowhile >>// test
+  / << WhileToken __ "(" __ ( BooleanLiteral@ / Expression@ ) __ ")" __ // test
     Statement@ #while >>// body
   / << ForToken __
     "(" __
