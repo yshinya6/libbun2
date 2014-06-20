@@ -1,89 +1,35 @@
 parsed:
 #translationunit {            ## by peg : null
-   #externaldeclaration {            ## by peg : null
-      #functiondefinition {            ## by peg : null
-         #declarationspecifiers {            ## by peg : null
+   #functiondefinition {            ## by peg : null
+      #typespecifier: int    ## by peg : null
+      #declarator {            ## by peg : null
+         #identifier: main   ## by peg : null
+         #typespecifier: void   ## by peg : null
+      }
+      #compoundstatement {            ## by peg : null
+         #declaration {            ## by peg : null
             #typespecifier: int    ## by peg : null
-         }
-         #declarator {            ## by peg : null
-            #directdeclarator {            ## by peg : null
-               #identifier: main   ## by peg : null
-               #parametertypelist {            ## by peg : null
-                  #parameterlist {            ## by peg : null
-                     #parameterdeclaration {            ## by peg : null
-                        #declarationspecifiers {            ## by peg : null
-                           #typespecifier: void   ## by peg : null
-                        }
-                     }
+            #initdeclaratorlist {            ## by peg : null
+               #initdeclarator {            ## by peg : null
+                  #declarator {            ## by peg : null
+                     #identifier: a    ## by peg : null
+                  }
+                  #initializer {            ## by peg : null
+                     #integerconstant: 1   ## by peg : null
+                  }
+               }
+               #initdeclarator {            ## by peg : null
+                  #declarator {            ## by peg : null
+                     #identifier: b    ## by peg : null
+                  }
+                  #initializer {            ## by peg : null
+                     #integerconstant: 2   ## by peg : null
                   }
                }
             }
          }
-         #compoundstatement {            ## by peg : null
-            #declaration {            ## by peg : null
-               #declarationspecifiers {            ## by peg : null
-                  #typespecifier: int    ## by peg : null
-               }
-               #initdeclaratorlist {            ## by peg : null
-                  #initdeclarator {            ## by peg : null
-                     #declarator {            ## by peg : null
-                        #directdeclarator {            ## by peg : null
-                           #identifier: a    ## by peg : null
-                        }
-                     }
-                     #initializer {            ## by peg : null
-                        #assignmentexpression {            ## by peg : null
-                           #unaryexpression {            ## by peg : null
-                              #postfixexpression {            ## by peg : null
-                                 #primaryexpression {            ## by peg : null
-                                    #constant {            ## by peg : null
-                                       #integerconstant: 1   ## by peg : null
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     }
-                  }
-                  #initdeclarator {            ## by peg : null
-                     #declarator {            ## by peg : null
-                        #directdeclarator {            ## by peg : null
-                           #identifier: b    ## by peg : null
-                        }
-                     }
-                     #initializer {            ## by peg : null
-                        #assignmentexpression {            ## by peg : null
-                           #unaryexpression {            ## by peg : null
-                              #postfixexpression {            ## by peg : null
-                                 #primaryexpression {            ## by peg : null
-                                    #constant {            ## by peg : null
-                                       #integerconstant: 2   ## by peg : null
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-            #statement {            ## by peg : null
-               #returnstatement {            ## by peg : null
-                  #expression {            ## by peg : null
-                     #assignmentexpression {            ## by peg : null
-                        #unaryexpression {            ## by peg : null
-                           #postfixexpression {            ## by peg : null
-                              #primaryexpression {            ## by peg : null
-                                 #constant {            ## by peg : null
-                                    #integerconstant: 0   ## by peg : null
-                                 }
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-            }
+         #returnstatement {            ## by peg : null
+            #integerconstant: 0   ## by peg : null
          }
       }
    }

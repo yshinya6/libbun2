@@ -1,0 +1,65 @@
+parsed:
+#translationunit {            ## by peg : null
+   #functiondefinition {            ## by peg : null
+      #typespecifier: int    ## by peg : null
+      #declarator {            ## by peg : null
+         #identifier: main   ## by peg : null
+         #typespecifier: void   ## by peg : null
+      }
+      #compoundstatement {            ## by peg : null
+         #declaration {            ## by peg : null
+            #typespecifier: int    ## by peg : null
+            #initdeclaratorlist {            ## by peg : null
+               #initdeclarator {            ## by peg : null
+                  #declarator {            ## by peg : null
+                     #identifier: i    ## by peg : null
+                  }
+                  #initializer {            ## by peg : null
+                     #integerconstant: 0   ## by peg : null
+                  }
+               }
+               #initdeclarator {            ## by peg : null
+                  #declarator {            ## by peg : null
+                     #identifier: c    ## by peg : null
+                  }
+                  #initializer {            ## by peg : null
+                     #integerconstant: 0   ## by peg : null
+                  }
+               }
+            }
+         }
+         #whilestatement {            ## by peg : null
+            #lt {            ## by peg : null
+               #identifier: i    ## by peg : null
+               #integerconstant: 10   ## by peg : null
+            }
+            #compoundstatement {            ## by peg : null
+               #expressionstatement {            ## by peg : null
+                  #postfixexpression {            ## by peg : null
+                     #identifier: i   ## by peg : null
+                  }
+               }
+               #ifstatement {            ## by peg : null
+                  #equequ {            ## by peg : null
+                     #mod {            ## by peg : null
+                        #identifier: i    ## by peg : null
+                        #integerconstant: 2    ## by peg : null
+                     }
+                     #integerconstant: 0   ## by peg : null
+                  }
+                  #continue: continue;
+		   ## by peg : null
+               }
+               #expressionstatement {            ## by peg : null
+                  #postfixexpression {            ## by peg : null
+                     #identifier: c   ## by peg : null
+                  }
+               }
+            }
+         }
+         #returnstatement {            ## by peg : null
+            #integerconstant: 0   ## by peg : null
+         }
+      }
+   }
+}
