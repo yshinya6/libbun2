@@ -1,0 +1,73 @@
+parsed:
+#block {            ## by peg : null
+   #for {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: i   ## by peg : null
+         #number: 0   ## by peg : null
+      }
+      #lt {            ## by peg : null
+         #identifier: i   ## by peg : null
+         #number: 10   ## by peg : null
+      }
+      #postincl: i++   ## by peg : null
+      #block {            ## by peg : null
+         #stmt.expression {            ## by peg : null
+            #postincl: hoge++   ## by peg : null
+         }
+      }
+   }
+   #for {            ## by peg : null
+      #varlist {            ## by peg : null
+         #var {            ## by peg : null
+            #identifier: i   ## by peg : null
+            #expr {            ## by peg : null
+               #number: 0   ## by peg : null
+            }
+         }
+      }
+      #lt {            ## by peg : null
+         #identifier: i   ## by peg : null
+         #number: 10   ## by peg : null
+      }
+      #postincl: i++   ## by peg : null
+      #block {            ## by peg : null
+         #stmt.expression {            ## by peg : null
+            #postincl: hoge++   ## by peg : null
+         }
+      }
+   }
+   #forin {            ## by peg : null
+      #identifier: i   ## by peg : null
+      #identifier: arr   ## by peg : null
+      #block {            ## by peg : null
+         #stmt.expression {            ## by peg : null
+            #assign {            ## by peg : null
+               #index {            ## by peg : null
+                  #identifier: arr   ## by peg : null
+                  #identifier: i   ## by peg : null
+               }
+               #number: 1   ## by peg : null
+            }
+         }
+      }
+   }
+   #forin {            ## by peg : null
+      #varlist {            ## by peg : null
+         #var {            ## by peg : null
+            #identifier: i   ## by peg : null
+         }
+      }
+      #identifier: arr   ## by peg : null
+      #block {            ## by peg : null
+         #stmt.expression {            ## by peg : null
+            #assign {            ## by peg : null
+               #index {            ## by peg : null
+                  #identifier: arr   ## by peg : null
+                  #identifier: i   ## by peg : null
+               }
+               #number: 1   ## by peg : null
+            }
+         }
+      }
+   }
+}

@@ -18,6 +18,24 @@ parsed:
             #case {            ## by peg : null
                #number: 1   ## by peg : null
             }
+            #case {            ## by peg : null
+               #number: 2   ## by peg : null
+               #block {            ## by peg : null
+                  #stmt.expression {            ## by peg : null
+                     #assign {            ## by peg : null
+                        #identifier: c   ## by peg : null
+                        #number: 0   ## by peg : null
+                     }
+                  }
+                  #break: break;   ## by peg : null
+               }
+            }
+            #case {            ## by peg : null
+               #number: 3   ## by peg : null
+               #block {            ## by peg : null
+                  #break: break;   ## by peg : null
+               }
+            }
          }
          #case.default {            ## by peg : null
             #block {            ## by peg : null

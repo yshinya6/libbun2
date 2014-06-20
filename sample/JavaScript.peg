@@ -813,39 +813,39 @@ IfStatement
   ;
 
 IterationStatement
-  = DoToken __
+  = << DoToken __
     Statement@ __ // body
-    WhileToken __ "(" __ Expression@ __ ")" EOS // test
-  / WhileToken __ "(" __ Expression@ __ ")" __ // test
-    Statement@ // body
-  / ForToken __
+    WhileToken __ "(" __ Expression@ __ ")" EOS #dowhile >>// test
+  / << WhileToken __ "(" __ Expression@ __ ")" __ // test
+    Statement@ #while >>// body
+  / << ForToken __
     "(" __
     (ExpressionNoIn __)@? ";" __ // init
     (Expression __)@? ";" __ // test
     (Expression __)@? // update
     ")" __
-    Statement@ // body
-  / ForToken __
+    Statement@ #for >>// body
+  / << ForToken __
     "(" __
     VarToken __ VariableDeclarationListNoIn@ __ ";" __ // declarations
     (Expression __)@? ";" __ // test
     (Expression __)@? // update
     ")" __
-    Statement@ // body
-  / ForToken __
+    Statement@ #for >>// body
+  / << ForToken __
     "(" __
     LeftHandSideExpression@ __ // left
     InToken __
     Expression@ __ // right
     ")" __
-    Statement@ // body
-  / ForToken __
+    Statement@ #forin >>// body
+  / << ForToken __
     "(" __
     VarToken __ VariableDeclarationListNoIn@ __ // declarations
     InToken __
     Expression@ __ // right
     ")" __
-    Statement@ // body
+    Statement@ #forin >>// body
   ;
 
 ContinueStatement
