@@ -316,6 +316,6 @@ bun #or(x : boolean, y : boolean) : boolean {
 
 // LET
 bun #let(name, type, value): void && letvar() {
-	${LET}
+	${VAR_DECL}
 }
 

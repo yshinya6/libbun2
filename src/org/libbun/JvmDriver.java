@@ -21,7 +21,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
-import org.objectweb.asm.tree.IntInsnNode;
 
 /**
  * generate java byte code and invoke.
@@ -29,8 +28,8 @@ import org.objectweb.asm.tree.IntInsnNode;
  *
  */
 public class JvmDriver extends BunDriver implements Opcodes {
-	public final static String letHolderSuffix = "_LetVarHolder";
-	public final static String letHolderFieldName = "letValue";
+	public final static String globalVarHolderSuffix = "_LetVarHolder";
+	public final static String globalVarHolderFieldName = "letVarValue";
 	public static int JAVA_VERSION = V1_6;
 	protected final String bunModel;
 	protected boolean allowPrinting = false;
@@ -84,8 +83,9 @@ public class JvmDriver extends BunDriver implements Opcodes {
 
 		this.addCommand("AND", new CondAnd());
 		this.addCommand("OR", new CondOr());
-		this.addCommand("LET", new LetDecl());
+		this.addCommand("VAR_DECL", new VarDecl());
 		this.addCommand("IF", new IfStatement());
+		this.addCommand("WHILE", new WhileStatement());
 		this.addCommand("BLOCK", new Block());
 		this.addCommand("statement", new StatementCommand());
 		this.addCommand("TOP_LEVEL", new TopLevelCommand());
@@ -459,43 +459,77 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	 * @author skgchxngsxyz-osx
 	 *
 	 */
-	protected class LetDecl extends DriverCommand {
+	protected class VarDecl extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			MethodBuilder currentBuilder = mBuilders.peek();
+			defineVariable(driver, node, param);
+		}
+	}
+
+	protected void defineVariable(BunDriver driver, PegObject node, String[] param) {
+		MethodBuilder currentBuilder = mBuilders.peek();
+		// add var entry to scope
+		String varName = node.get(0).getText();
+		Class<?> varClass = toJavaClass(node.get(2).getType(null));
+		VarEntry entry = currentBuilder.getScopes().addEntry(varName, varClass, true);
+
+		int scopeDepth = currentBuilder.getScopes().depth();
+		if(scopeDepth > 1) {	// define as local variable.
+			driver.pushNode(node.get(2));
+			currentBuilder.storeLocal(entry.getVarIndex(), Type.getType(varClass));
+		}
+		else {	// define as global variable.
+			ClassBuilder cBuilder = new ClassBuilder(varName + JvmDriver.globalVarHolderSuffix);
+			// create static initializer
+			Method methodDesc = Method.getMethod("void <clinit> ()");
+			MethodBuilder mBuilder = new MethodBuilder(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, methodDesc, null, null, cBuilder);
+			mBuilders.push(mBuilder);
+			driver.pushNode(node.get(2));
+			Type ownerTypeDesc = Type.getType(cBuilder.getClassName());
+			Type fieldTypeDesc = Type.getType(varClass);
+			mBuilder.putStatic(ownerTypeDesc, globalVarHolderFieldName, fieldTypeDesc);
+			mBuilder.returnValue();
+			mBuilder.endMethod();
+			mBuilders.pop();
+
+			// create var field
+			cBuilder.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, globalVarHolderFieldName, fieldTypeDesc.getDescriptor(), null, null);
+
+			// finalize
+			cBuilder.visitEnd();
+			loader.generateClassFromByteCode(cBuilder.getClassName(), cBuilder.toByteArray());
+
+			// initialized let var.
+			currentBuilder.getStatic(ownerTypeDesc, globalVarHolderFieldName, fieldTypeDesc);
+			currentBuilder.pop(varClass);
+		}
+	}
+
+	protected class AssignCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			assignToLeft(driver, node, param);
+		}
+	}
+
+	protected void assignToLeft(BunDriver driver, PegObject node, String[] param) {
+		
+	}
+
+	protected class SymbolCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			MethodBuilder mBuilder = mBuilders.peek();
 			String varName = node.get(0).getText();
-			int scopeDepth = currentBuilder.getScopes().depth();
-			if(scopeDepth > 1) {	// define as local variable.
-				driver.pushNode(node.get(2));
-				Class<?> varClass = toJavaClass(node.get(2).getType(null));
-				VarEntry entry = currentBuilder.getScopes().addEntry(varName, varClass, true);
-				currentBuilder.storeLocal(entry.getVarIndex(), Type.getType(varClass));
+			VarEntry entry = mBuilder.getScopes().getEntry(varName);
+			Type varTypeDesc = Type.getType(toJavaClass(node.get(0).getType(null)));
+			if(!entry.isGlobal()) {	// get local variable
+				int varIndex = entry.getVarIndex();
+				mBuilder.loadLocal(varIndex, varTypeDesc);
 			}
-			else {	// define as global variable.
-				ClassBuilder cBuilder = new ClassBuilder(varName + JvmDriver.letHolderSuffix);
-				// create static initializer
-				Method methodDesc = Method.getMethod("void <clinit> ()");
-				MethodBuilder mBuilder = new MethodBuilder(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, methodDesc, null, null, cBuilder);
-				mBuilders.push(mBuilder);
-				driver.pushNode(node.get(2));
-				Class<?> varClass = toJavaClass(node.get(2).getType(null));
-				Type ownerTypeDesc = Type.getType(cBuilder.getClassName());
-				Type fieldTypeDesc = Type.getType(varClass);
-				mBuilder.putStatic(ownerTypeDesc, letHolderFieldName, fieldTypeDesc);
-				mBuilder.returnValue();
-				mBuilder.endMethod();
-				mBuilders.pop();
-
-				// create var field
-				cBuilder.visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, letHolderFieldName, fieldTypeDesc.getDescriptor(), null, null);
-
-				// finalize
-				cBuilder.visitEnd();
-				loader.generateClassFromByteCode(cBuilder.getClassName(), cBuilder.toByteArray());
-
-				// initialized let var.
-				currentBuilder.getStatic(ownerTypeDesc, letHolderFieldName, fieldTypeDesc);
-				currentBuilder.pop(varClass);
+			else {	// get global variable
+				Type varHolderDesc = Type.getType(varName + globalVarHolderSuffix);
+				mBuilder.getStatic(varHolderDesc, globalVarHolderFieldName, varTypeDesc);
 			}
 		}
 	}
@@ -535,6 +569,29 @@ public class JvmDriver extends BunDriver implements Opcodes {
 				generateBlockWithNewScope(driver, node.get(2));
 			}
 			mBuilder.mark(mergeLabel);
+		}
+	}
+
+	protected class WhileStatement extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			MethodBuilder mBuilder = mBuilders.peek();
+			Label breakLabel = mBuilder.newLabel();
+			Label continueLabel = mBuilder.newLabel();
+			mBuilder.getBreackLabels().push(breakLabel);
+			mBuilder.getContinueLabels().push(continueLabel);
+
+			mBuilder.mark(continueLabel);
+			mBuilder.push(true);
+			driver.pushNode(node.get(0));
+			mBuilder.unbox(toJavaClass(node.get(0).getType(null)), boolean.class);
+			mBuilder.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, breakLabel);
+			generateBlockWithNewScope(driver, node.get(1));
+			mBuilder.goTo(continueLabel);
+			mBuilder.mark(breakLabel);
+
+			mBuilder.getBreackLabels().pop();
+			mBuilder.getContinueLabels().pop();
 		}
 	}
 
@@ -623,7 +680,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			return new Method("<init>", returnTypeDesc, new Type[]{paramTypeDesc1, paramTypeDesc2});
 		}
 	}
-	
+
 	protected abstract class JvmOpcodeCommand extends DriverCommand {
 		public abstract void addToDriver(JvmDriver driver);
 	}
@@ -1069,6 +1126,8 @@ class ClassBuilder extends ClassWriter implements Opcodes {
 class MethodBuilder extends GeneratorAdapter implements Opcodes {
 	private final VarScopes scopes;
 	private final Map<String, Label> labelMap;
+	private final Stack<Label> breakLabels;
+	private final Stack<Label> continueLabels;
 
 	public MethodBuilder(int arg0, Method arg1, String arg2, Type[] arg3, ClassVisitor arg4) {
 		super(arg0, arg1, arg2, arg3, arg4);
@@ -1078,10 +1137,20 @@ class MethodBuilder extends GeneratorAdapter implements Opcodes {
 		}
 		this.scopes = new VarScopes(startIndex);
 		this.labelMap = new HashMap<String, Label>();
+		this.breakLabels = new Stack<Label>();
+		this.continueLabels = new Stack<Label>();
 	}
 
 	public VarScopes getScopes() {
 		return this.scopes;
+	}
+
+	public Stack<Label> getBreackLabels() {
+		return this.breakLabels;
+	}
+
+	public Stack<Label> getContinueLabels() {
+		return this.continueLabels;
 	}
 
 	public void pop(Class<?> stackTopClass) {
@@ -1098,7 +1167,7 @@ class MethodBuilder extends GeneratorAdapter implements Opcodes {
 	 * unbox stacktop
 	 * @param stacktopClass
 	 * @param unboxedClass
-	 * - unboxed class, must not stack top class
+	 * - must not be stack top class
 	 */
 	public void unbox(Class<?> stacktopClass, Class<?> unboxedClass) {
 		if(!stacktopClass.isPrimitive()) {

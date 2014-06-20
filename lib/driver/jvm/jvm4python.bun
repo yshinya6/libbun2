@@ -24,6 +24,10 @@ bun #if(cond : untyped, then : void, else) : void {
 	${IF}
 }
 
+bun #while(cond : untyped, block : void) : void {
+	${WHILE}
+}
+
 // expression definition.
 bun #group(x : untyped) : untyped {
 	${x}
@@ -139,7 +143,7 @@ bun #or(x : untyped, y : untyped) : untyped {
 
 // LET
 bun #let(name, type, value): void && letvar() {
-	${LET}
+	${VAR_DECL}
 }
 
 // collection

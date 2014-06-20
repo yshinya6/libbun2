@@ -1,9 +1,9 @@
 package org.libbun;
 
-import java.lang.annotation.Inherited;
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.MutableCallSite;
 import java.util.HashMap;
@@ -219,6 +219,26 @@ public class JvmIndyDriver extends JvmDriver {
 			this.lookup = lookup;
 		}
 	}
+
+//	private static void reportInvocationError(CachedCallSite callSite, Object[] args, Throwable cause) {
+//		StringBuilder sBuilder = new StringBuilder();
+//		sBuilder.append("not found method: ");
+//		sBuilder.append(callSite.methodName);
+//		sBuilder.append('(');
+//		for(int i = 0; i < args.length; i++) {
+//			if(i > 0) {
+//				sBuilder.append(", ");
+//			}
+//			sBuilder.append(args[i].getClass().getSimpleName());
+//		}
+//		sBuilder.append('(');
+//		sBuilder.append("\n\t");
+//		sBuilder.append("caused by -> ");
+//		sBuilder.append(cause.getClass().getName());
+//		sBuilder.append(": ");
+//		sBuilder.append(cause.getMessage());
+//		System.err.println(sBuilder.toString());
+//	}
 
 	// unary op
 	/**
@@ -452,12 +472,9 @@ public class JvmIndyDriver extends JvmDriver {
 			paramClasses[i] = args[i].getClass();
 		}
 		// target handle
-		MethodType methodType = type.dropParameterTypes(0, 1);
-		for(int i = 0; i < paramSize - 1; i++) {
-			methodType = methodType.changeParameterType(i, paramClasses[i + 1]);
-		}
-		MethodHandle targetHandle = callSite.lookup.findVirtual(paramClasses[0], callSite.methodName, methodType);
+		MethodHandle targetHandle = lookupMethodHandle(paramClasses[0], callSite.methodName);
 		targetHandle = targetHandle.asType(type);
+
 		// test handle
 		MethodHandle testHandle = testMethodHandle.bindTo(paramClasses).asCollector(Object[].class, paramSize);
 		// guard handle
@@ -482,5 +499,60 @@ public class JvmIndyDriver extends JvmDriver {
 			}
 		}
 		return true;
+	}
+
+	private final static Map<Class<?>, vTable> vTableMap = new HashMap<>();
+
+	private static MethodHandle lookupMethodHandle(Class<?> recvClass, String methodName) throws Throwable {
+		if(recvClass == null || recvClass.equals(Object.class)) {
+			throw new NoSuchFieldException();
+		}
+		vTable table = vTableMap.get(recvClass);
+		if(table == null) {
+			table = new vTable(recvClass);
+			vTableMap.put(recvClass, table);
+		}
+		return table.lookup(methodName);
+	}
+
+	/**
+	 * contains method handle of public instance method.
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
+	private static class vTable {
+		private final Map<String, MethodHandle> mhMap;
+
+		/**
+		 * lookup and set all public methods of recv class.
+		 * if found overloaded method, set the last method.
+		 * @param recvClass
+		 * @throws Throwable 
+		 */
+		private vTable(Class<?> recvClass) throws Throwable {
+			this.mhMap = new HashMap<>();
+			Lookup lookup = MethodHandles.lookup();
+			java.lang.reflect.Method[] methods = recvClass.getMethods();
+			for(java.lang.reflect.Method method : methods) {
+				MethodHandle handle = lookup.unreflect(method);
+				String methodName = method.getName();
+				this.mhMap.put(methodName, handle);
+			}
+		}
+
+		/**
+		 * look up method handle.
+		 * @param methodName
+		 * - method name, do not support method overload.
+		 * @return
+		 * - if has no method handle, throw exception
+		 */
+		private MethodHandle lookup(String methodName) throws NoSuchFieldException {
+			MethodHandle handle = this.mhMap.get(methodName);
+			if(handle == null) {
+				throw new NoSuchFieldException(methodName);
+			}
+			return handle;
+		}
 	}
 }
