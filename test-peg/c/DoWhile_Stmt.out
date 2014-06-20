@@ -11,11 +11,24 @@ parsed:
             #typespecifier: int    ## by peg : null
             #initdeclarator {            ## by peg : null
                #declarator {            ## by peg : null
-                  #identifier: a    ## by peg : null
+                  #identifier: i    ## by peg : null
                }
                #initializer {            ## by peg : null
-                  #integerconstant: 1   ## by peg : null
+                  #integerconstant: 0   ## by peg : null
                }
+            }
+         }
+         #dowhilestatement {            ## by peg : null
+            #compoundstatement {            ## by peg : null
+               #expressionstatement {            ## by peg : null
+                  #postfixexpression {            ## by peg : null
+                     #identifier: i   ## by peg : null
+                  }
+               }
+            }
+            #lt {            ## by peg : null
+               #identifier: i    ## by peg : null
+               #integerconstant: 10   ## by peg : null
             }
          }
          #returnstatement {            ## by peg : null
