@@ -8,15 +8,8 @@ parsed:
                #identifier: i   ## by peg : null
                #number: 4   ## by peg : null
             }
-            #continue: continue;   ## by peg : null
-         }
-         #if {            ## by peg : null
-            #assign {            ## by peg : null
-               #identifier: i   ## by peg : null
-               #number: 8   ## by peg : null
-            }
             #block {            ## by peg : null
-               #break: break;   ## by peg : null
+               #continue: continue;   ## by peg : null
             }
          }
       }

@@ -158,8 +158,10 @@ BooleanLiteral
 // The "!(IdentifierStart / DecimalDigit)" predicate is not part of the official
 // grammar, it comes from text in section 7.8.3.
 //
+
 NumericLiteral
   = << HexIntegerLiteral !(IdentifierStart / DecimalDigit)
+  / OctIntegerLiteral !(IdentifierStart / DecimalDigit)
   / DecimalLiteral !(IdentifierStart / DecimalDigit) #number >>
   ;
 
@@ -195,11 +197,19 @@ SignedInteger
   ;
 
 HexIntegerLiteral
-  = "0" [xX] $HexDigit+
+  = "0" [xX] HexDigit+
   ;
 
 HexDigit
   = [0-9a-fA-F]
+  ;
+
+OctIntegerLiteral
+  = "0" OctDigit+
+  ;
+
+OctDigit
+  = [0-7]
   ;
 
 StringLiteral
@@ -663,7 +673,7 @@ BitwiseORExpressionNoIn
 BitwiseOROperator
   = $("|" ![|=])
   ;
-  
+
 LogicalANDExpression
   = BitwiseORExpression // first
     <<@ __ LogicalANDOperator #and __ BitwiseORExpression@ >>*// rest
@@ -759,15 +769,18 @@ Statement
   / ThrowStatement / TryStatement / DebuggerStatement
   ;
 
+SingleStatement
+  = VariableStatement / EmptyStatement / IfStatement / WithStatement
+  ;
+
 Block
   = "{" __ << (Statement@ __)* #block >> "}" // body
   ;
 
-SingleStatement
-  = __ ( VariableStatement / EmptyStatement / IfStatement /
-    ContinueStatement / BreakStatement / ReturnStatement /
-	WithStatement )  __
+StatementBlock
+  = __ ( << SingleStatement@  #block >> / Block / << Statement@ #block >> )  __
   ;
+
 
 StatementList
   = << Statement@ __ (Statement@ __)* #block >>
@@ -811,11 +824,11 @@ ExpressionStatement
 
 IfStatement
   = << IfToken __ "(" __ Expression@ __ ")" __ // test
-    ( SingleStatement@ / Statement@ ) __ // consequent
+    StatementBlock@ __ // consequent
     ElseToken __
-    ( SingleStatement@ / Statement@ )  #if >> // alternate
+    StatementBlock@  #if >> // alternate
   / << IfToken __ "(" __ Expression@ __ ")" __ // test
-    ( SingleStatement@ / Statement@ )  #if>> // consequent
+    StatementBlock@  #if>> // consequent
   ;
 
 IterationStatement
