@@ -1,4 +1,3 @@
-
 //===========================================================================
 //
 //  Parsing Expression Grammar of C for Mouse 1.1 - 1.5.
@@ -100,20 +99,20 @@
 //-------------------------------------------------------------------------
 
 TranslationUnit
-    = Spacing ExternalDeclaration+ EOT
+    = << Spacing ExternalDeclaration@+ EOT #translationunit >>
     ;
 
 ExternalDeclaration
-    = <<FunctionDefinition #funcdecl>>
-    / <<Declaration        #vardecl>>
+    = FunctionDefinition
+    / Declaration
     ;
 
 FunctionDefinition
-    = DeclarationSpecifiers Declarator DeclarationList? CompoundStatement
+    = << DeclarationSpecifiers@ Declarator@ DeclarationList@? CompoundStatement@ #functiondefinition>>
     ;
 
 DeclarationList
-    = Declaration+
+    = << Declaration@+ #declarationlist>>
     ;
 
 
@@ -122,22 +121,22 @@ DeclarationList
 //-------------------------------------------------------------------------
 
 Declaration
-    = DeclarationSpecifiers InitDeclaratorList? (Attribute / Assembler)? SEMI ;
+    = << DeclarationSpecifiers@ InitDeclaratorList@? (Attribute / Assembler)@? SEMI #declaration>>;
 
 DeclarationSpecifiers
-    = (( StorageClassSpecifier
+    = << (( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
-       TypedefName
+       )@*
+       TypedefName@
        ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
-      )
-    / ( StorageClassSpecifier
+       )@*
+      ) #declarationspecifiers >>
+    / (StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
@@ -146,23 +145,23 @@ DeclarationSpecifiers
     ;
 
 InitDeclaratorList
-    = InitDeclarator (COMMA InitDeclarator)*
+    = InitDeclarator <<@ (COMMA InitDeclarator@) #initdeclaratorlist >>*
     ;
 
 InitDeclarator
-    = Declarator (EQU Initializer)?
+    = Declarator <<@ (EQU Initializer@) #initdeclarator >>?
     ;
 
 StorageClassSpecifier
-    = TYPEDEF
+    = << (TYPEDEF
     / EXTERN
     / STATIC
     / AUTO
-    / REGISTER
+    / REGISTER)@ #storageclassspecifier >>
     ;
 
 TypeSpecifier
-    = VOID
+    = << (VOID
     / CHAR
     / SHORT
     / INT
@@ -174,7 +173,7 @@ TypeSpecifier
     / BOOL
     / COMPLEX
     / StructOrUnionSpecifier
-    / EnumSpecifier
+    / EnumSpecifier)@ #typespecifier >>
     ;
 
 StructOrUnionSpecifier
@@ -250,47 +249,44 @@ AttributeParamList = LPAR (AttributeParam (COMMA AttributeParam)*)? RPAR;
 Assembler = ASM LPAR (StringLiteral (COMMA StringLiteral)*)? RPAR;
 
 Declarator
-    = Pointer? DirectDeclarator
+    = << Pointer@? DirectDeclarator@ #declarator >>
     ;
 
 DirectDeclarator
-    = ( Identifier
-      / LPAR Declarator RPAR
+    = ( Identifier@
+      / LPAR Declarator@ RPAR
       )
-      ( LBRK TypeQualifier* AssignmentExpression? RBRK
-      / LBRK STATIC TypeQualifier* AssignmentExpression RBRK
-      / LBRK TypeQualifier+ STATIC AssignmentExpression RBRK
-      / LBRK TypeQualifier* STAR RBRK
-      / LPAR ParameterTypeList RPAR
-      / LPAR IdentifierList? RPAR
+      ( LBRK TypeQualifier@* AssignmentExpression@? RBRK
+      / LBRK STATIC@ TypeQualifier@* AssignmentExpression@ RBRK
+      / LBRK TypeQualifier@+ STATIC@ AssignmentExpression@ RBRK
+      / LBRK TypeQualifier@* STAR@ RBRK
+      / LPAR ParameterTypeList@ RPAR
+      / LPAR IdentifierList@? RPAR
       )*
     ;
 
 Pointer
-    = ( STAR TypeQualifier* )+
+    = << ( STAR@ TypeQualifier@* )+ #pointer >>
     ;
 
 ParameterTypeList
-    = ParameterList (COMMA ELLIPSIS)?
+    = ParameterList@ (COMMA ELLIPSIS)?
     ;
 
 ParameterList
-    = ParameterDeclaration (COMMA ParameterDeclaration)*
+    = ParameterDeclaration <<@ (COMMA ParameterDeclaration@) #parameterlist>>*
     ;
 
 ParameterDeclaration
-    = DeclarationSpecifiers
-      ( Declarator
-      / AbstractDeclarator
-      )?
+    = DeclarationSpecifiers <<@ ( Declarator / AbstractDeclarator )@ #parameterdeclaration >>?
     ;
 
 IdentifierList
-    = Identifier (COMMA Identifier)*
+    = << Identifier@ (COMMA Identifier@)* #identifierlist >>
     ;
 
 TypeName
-    = SpecifierQualifierList AbstractDeclarator?
+    = << SpecifierQualifierList@ AbstractDeclarator@? #typename >>
     ;
 
 AbstractDeclarator
@@ -309,20 +305,20 @@ DirectAbstractDeclarator
     ;
 
 TypedefName
-    = Identifier
+    = << Identifier@ #typedefname >>
     ;
 
 Initializer
-    = AssignmentExpression
-    / LWING InitializerList COMMA? RWING
+    = << (AssignmentExpression@
+    / LWING InitializerList@ COMMA? RWING) #initializer>>
     ;
 
 InitializerList
-    = Designation? Initializer (COMMA Designation? Initializer)*
+    = << Designation@? Initializer@ (COMMA Designation@? Initializer@)* #initializerlist >>
     ;
 
 Designation
-    = Designator+ EQU
+    = << Designator@+ EQU #designation>>
     ;
 
 Designator
@@ -346,35 +342,35 @@ Statement
 
 LabeledStatement
     = Identifier COLON Statement
-    / CASE ConstantExpression COLON Statement
-    / DEFAULT COLON Statement
+    / << CASE ConstantExpression@ COLON Statement@ #case >>
+    / << DEFAULT COLON Statement@ #default >>
     ;
 
 CompoundStatement
-    = LWING ( Declaration / Statement )* RWING
+    = << LWING ( Declaration / Statement )@* RWING #compoundstatement >>
     ;
 
 ExpressionStatement
-    = Expression? SEMI
+    = << Expression@? SEMI #expressionstatement >>
     ;
 
 SelectionStatement
-    = IF LPAR Expression RPAR Statement (ELSE Statement)?
-    / SWITCH LPAR Expression RPAR Statement
+    = << IF LPAR Expression@ RPAR Statement@ (ELSE Statement@)? #ifstatement >>
+    / << SWITCH LPAR Expression@ RPAR Statement@ #switchstatement >>
     ;
 
 IterationStatement
-    = WHILE LPAR Expression RPAR Statement
-    / DO Statement WHILE LPAR Expression RPAR SEMI
-    / FOR LPAR Expression? SEMI Expression? SEMI Expression? RPAR Statement
-    / FOR LPAR Declaration Expression? SEMI Expression? RPAR Statement
+    = << WHILE LPAR Expression@ RPAR Statement@ #whilestatement >>
+    / << DO Statement@ WHILE LPAR Expression@ RPAR SEMI #dowhilestatement >>
+    / << FOR LPAR Expression@? SEMI Expression@? SEMI Expression@? RPAR Statement@ #forstatement >>
+    / << FOR LPAR Declaration@ Expression@? SEMI Expression@? RPAR Statement@ #forstatement >>
     ;
 
 JumpStatement
     = GOTO Identifier SEMI
-    / CONTINUE SEMI
-    / BREAK SEMI
-    / RETURN Expression? SEMI
+    / << CONTINUE@ SEMI #continue>>
+    / << BREAK@ SEMI #break >>
+    / << RETURN@ Expression@? SEMI #returnstatement >>
     ;
 
 
@@ -393,17 +389,18 @@ PostfixExpression
     = ( PrimaryExpression
       / LPAR TypeName RPAR LWING InitializerList COMMA? RWING
       )
+      <<@
       ( LBRK Expression RBRK
-      / << LPAR ArgumentExpressionList? RPAR #arg >>
+      / LPAR ArgumentExpressionList? RPAR
       / DOT Identifier
       / PTR Identifier
       / INC
       / DEC
-      )*
+      )@ #postfixexpression >>*
     ;
 
 ArgumentExpressionList
-    = AssignmentExpression (COMMA AssignmentExpression)*
+    = AssignmentExpression <<@ (COMMA AssignmentExpression@) #argumentexpressionlist >>*
     ;
 
 UnaryExpression
@@ -424,60 +421,61 @@ UnaryOperator
     ;
 
 CastExpression
-    = (LPAR TypeName RPAR)* UnaryExpression
+    = <<(LPAR TypeName RPAR)@+ UnaryExpression@ #castexpression >>
+    / UnaryExpression
     ;
 
 MultiplicativeExpression
-    = CastExpression ((STAR / DIV / MOD) CastExpression)*
+    = CastExpression <<@ (STAR #star / DIV #div / MOD #mod ) CastExpression@ >>*
     ;
 
 AdditiveExpression
-    = MultiplicativeExpression ((PLUS / MINUS) MultiplicativeExpression)*
+    = MultiplicativeExpression <<@ (PLUS #plus / MINUS #minus) MultiplicativeExpression@ >>*
     ;
 
 ShiftExpression
-    = AdditiveExpression ((LEFT / RIGHT) AdditiveExpression)*
+    = AdditiveExpression <<@ (LEFT #left / RIGHT #right) AdditiveExpression@ >>*
     ;
 
 RelationalExpression
-    = ShiftExpression ((LE / GE / LT / GT) ShiftExpression)*
+    = ShiftExpression <<@  (LE #le / GE #ge / LT #lt / GT #gt) ShiftExpression@ >>*
     ;
 
 EqualityExpression
-    = RelationalExpression ((EQUEQU / BANGEQU) RelationalExpression)*
+    = RelationalExpression <<@ (EQUEQU #equequ /BANGEQU #bangequ) RelationalExpression@ >>*
     ;
 
 ANDExpression
-    = EqualityExpression (AND EqualityExpression)*
+    = EqualityExpression <<@ (AND #and) EqualityExpression@ >>*
     ;
 
 ExclusiveORExpression
-    = ANDExpression (HAT ANDExpression)*
+    = ANDExpression <<@ (HAT #hat) ANDExpression@ >>*
     ;
 
 InclusiveORExpression
-    = ExclusiveORExpression (OR ExclusiveORExpression)*
+    = ExclusiveORExpression <<@ (OR #or) ExclusiveORExpression@ >>*
     ;
 
 LogicalANDExpression
-    = InclusiveORExpression (ANDAND InclusiveORExpression)*
+    = InclusiveORExpression <<@ (ANDAND #andand) InclusiveORExpression@ >>*
     ;
 
 LogicalORExpression
-    = LogicalANDExpression (OROR LogicalANDExpression)*
+    = LogicalANDExpression <<@ (OROR #oror) LogicalANDExpression@ >>*
     ;
 
 ConditionalExpression
-    = LogicalORExpression (QUERY Expression COLON LogicalORExpression)*
+    = LogicalORExpression <<@ (QUERY #query) Expression@ COLON LogicalORExpression@ >>*
     ;
 
 AssignmentExpression
-    = << UnaryExpression AssignmentOperator AssignmentExpression #expr1 >>
-    / << ConditionalExpression #expr2 >>
+    = << UnaryExpression@ AssignmentOperator@ AssignmentExpression@ #assignmentexpression >>
+    / ConditionalExpression
     ;
 
 AssignmentOperator
-    = EQU
+    = << (EQU
     / STAREQU
     / DIVEQU
     / MODEQU
@@ -487,11 +485,11 @@ AssignmentOperator
     / RIGHTEQU
     / ANDEQU
     / HATEQU
-    / OREQU
+    / OREQU)@ #assignmentoperator >>
     ;
 
 Expression
-    = AssignmentExpression (COMMA AssignmentExpression)*
+    = AssignmentExpression <<@ (COMMA AssignmentExpression@) #expression >>*
     ;
 
 ConstantExpression
@@ -619,7 +617,7 @@ Keyword
 //  distinct from keywords, but it seems so.
 //-------------------------------------------------------------------------
 
-Identifier = !Keyword IdNondigit IdChar* Spacing ;
+Identifier = << !Keyword IdNondigit@ IdChar@* Spacing #identifier >>;
 
 IdNondigit
     = [a-z] / [A-Z] / [_]
@@ -656,11 +654,11 @@ Constant
     ;
 
 IntegerConstant
-    = ( DecimalConstant
+    = << ( DecimalConstant
       / HexConstant
       / OctalConstant
-      )
-    IntegerSuffix? Spacing
+      )@
+    IntegerSuffix@? Spacing #integerconstant >>
     ;
 
 DecimalConstant = [1-9][0-9]* ;
@@ -796,4 +794,7 @@ OREQU      =  "|="        Spacing ;
 COMMA      =  ","         Spacing ;
 
 EOT        = !. ;
-TopLevel   = TranslationUnit;
+
+TopLevel
+    = TranslationUnit
+    ;

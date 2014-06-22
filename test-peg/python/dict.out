@@ -1,0 +1,20 @@
+parsed:
+#toplevel {            ## by peg : null
+   #assign {            ## by peg : null
+      #name: a   ## by peg : null
+      #map {            ## by peg : null
+         #keyvalue {            ## by peg : null
+            #string: a   ## by peg : null
+            #integer: - 1   ## by peg : null
+         }
+         #keyvalue {            ## by peg : null
+            #string: b   ## by peg : null
+            #integer: 2   ## by peg : null
+         }
+      }
+   }
+   #index {            ## by peg : null
+      #name: a   ## by peg : null
+      #string: a   ## by peg : null
+   }
+}

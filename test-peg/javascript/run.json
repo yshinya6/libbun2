@@ -1,0 +1,5 @@
+{
+    "peg" : "#{SOURCE_ROOT}/sample/JavaScript.peg",
+    "input.ext" : "js",
+    "output.ext" : "out"
+}

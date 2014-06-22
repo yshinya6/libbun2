@@ -2,6 +2,7 @@ package org.libbun;
 
 public class PegParserParser extends SourceContext {
 	PegParser parser;
+	boolean   isfirstSingleExpr = true;
 	public PegParserParser(PegParser parser, PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 		this.parser = parser;
@@ -146,7 +147,7 @@ public class PegParserParser extends SourceContext {
 			int endIndex = this.matchZeroMore(UniCharset.NameSymbol);
 			String s = this.source.substring(startIndex, endIndex);
 			right = new PegLabel(leftLabel, s);
-			if(leftLabel.equals(s)) {
+			if(leftLabel.equals(s) && isfirstSingleExpr) {
 				right.setLeftRecursion(true);
 			}
 			right.setSource(this.source, startIndex);
@@ -272,6 +273,7 @@ public class PegParserParser extends SourceContext {
 
 	private final Peg parseSequenceExpr(String leftLabel) {
 		Peg left = this.parseSingleExpr(leftLabel);
+		isfirstSingleExpr = false;
 		if(left == null) {
 			return left;
 		}
@@ -299,6 +301,7 @@ public class PegParserParser extends SourceContext {
 
 	public final Peg parsePegExpr(String leftLabel) {
 		Peg left = this.parseSequenceExpr(leftLabel);
+		isfirstSingleExpr = true;
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
 		if(this.match(';')) {
 			return left;

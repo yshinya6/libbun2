@@ -9,18 +9,29 @@ public final class PegParser {
 	public PegParser() {
 		this.initParser();
 	}
-	
+
 	public void initParser() {
 		this.pegMap = new UniMap<Peg>();
 	}
 
 	public ParserContext newContext(PegSource source, int startIndex, int endIndex) {
-		return new PegParserContext(this, source, startIndex, endIndex);
+		if (Main.NonMemoPegMode) {
+			return new DisableMemoPegParserContext(this, source, startIndex, endIndex);
+		}
+		else{
+			return new PegParserContext(this, source, startIndex, endIndex);
+		}
 	}
 
 	public ParserContext newContext(PegSource source) {
-		return new PegParserContext(this, source, 0, source.sourceText.length());
+		if (Main.NonMemoPegMode) {
+			return new DisableMemoPegParserContext(this, source, 0, source.sourceText.length());
+		}
+		else {
+			return new PegParserContext(this, source, 0, source.sourceText.length());
+		}
 	}
+
 
 	public final boolean loadPegFile(String fileName) {
 		PegSource source = Main.loadSource(fileName);
@@ -31,7 +42,7 @@ public final class PegParser {
 		this.resetCache();
 		return true;
 	}
-	
+
 	void importPeg(String label, String fileName) {
 		if(Main.PegDebuggerMode) {
 			System.out.println("importing " + fileName);
@@ -52,7 +63,7 @@ public final class PegParser {
 			this.pegMap.put(prefix + l, e.clone(prefix));
 		}
 	}
-	
+
 	public void setPegRule(String name, Peg e) {
 		Peg checked = this.checkPegRule(name, e);
 		if(checked != null) {
@@ -138,7 +149,7 @@ public final class PegParser {
 		//			//System.out.println("" + key + " <- " + e);
 		//		}
 	}
-	
+
 	private void initCache() {
 		this.pegCache = new UniMap<Peg>();
 		this.objectLabelMap = new UniMap<String>();
@@ -204,7 +215,7 @@ public final class PegParser {
 		}
 		return false;
 	}
-	
+
 	private void appendPegCache(String name, Peg e) {
 		Peg defined = this.pegCache.get(name, null);
 		if(defined != null) {
@@ -220,7 +231,7 @@ public final class PegParser {
 	public Peg getDefinedPeg(String name) {
 		return this.pegMap.get(name, null);
 	}
-	
+
 	public final Peg getPattern(String name) {
 		if(this.pegCache == null) {
 			this.resetCache();
@@ -234,7 +245,7 @@ public final class PegParser {
 		}
 		return this.getPattern(this.nameRightJoinName(name));
 	}
-	
+
 	public final UniArray<String> makeList(String startPoint) {
 		UniArray<String> list = new UniArray<String>(new String[100]);
 		UniMap<String> set = new UniMap<String>();
@@ -246,7 +257,7 @@ public final class PegParser {
 		}
 		return list;
 	}
-	
+
 	public final void show(String startPoint) {
 		UniArray<String> list = makeList(startPoint);
 		for(int i = 0; i < list.size(); i++) {
@@ -256,7 +267,7 @@ public final class PegParser {
 			System.out.println(rule);
 		}
 	}
-	
+
 
 }
 
