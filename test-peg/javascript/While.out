@@ -3,17 +3,19 @@ parsed:
    #while {            ## by peg : null
       #lt {            ## by peg : null
          #identifier: n   ## by peg : null
-         #number: 10   ## by peg : null
+         #intNumber: 10   ## by peg : null
       }
       #block {            ## by peg : null
-         #stmt.expression {            ## by peg : null
-            #postincl: n++   ## by peg : null
+         #exprstmt {            ## by peg : null
+            #postincl {            ## by peg : null
+               #identifier: n   ## by peg : null
+            }
          }
       }
    }
    #dowhile {            ## by peg : null
       #block {            ## by peg : null
-         #stmt.expression {            ## by peg : null
+         #exprstmt {            ## by peg : null
             #predecl {            ## by peg : null
                #identifier: n   ## by peg : null
             }
@@ -21,7 +23,7 @@ parsed:
       }
       #lt {            ## by peg : null
          #identifier: n   ## by peg : null
-         #number: 10   ## by peg : null
+         #intNumber: 10   ## by peg : null
       }
    }
 }

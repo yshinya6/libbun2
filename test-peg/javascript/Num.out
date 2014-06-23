@@ -1,0 +1,82 @@
+parsed:
+#block {            ## by peg : null
+   #exprstmt {            ## by peg : null
+      #intNumber: 1234   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #minus {            ## by peg : null
+         #intNumber: 1234   ## by peg : null
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #floatNumber: 1234.   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #minus {            ## by peg : null
+         #floatNumber: 1234.   ## by peg : null
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #floatNumber: 1.234   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #minus {            ## by peg : null
+         #floatNumber: 1.234   ## by peg : null
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #intNumber: 123e4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #intNumber: 123E4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #intNumber: 123e+4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #intNumber: 123E+4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #intNumber: 123e-4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #intNumber: 123E-4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #floatNumber: 1.23e4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #minus {            ## by peg : null
+         #floatNumber: 1.23E4   ## by peg : null
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #floatNumber: 1.23E+4   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #minus {            ## by peg : null
+         #floatNumber: 1.23e-4   ## by peg : null
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #binNumber: 0b10   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #binNumber: 0B10   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #octNumber: 0123   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #octNumber: 0o123   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #octNumber: 0O123   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #hexNumber: 0x123   ## by peg : null
+   }
+   #exprstmt {            ## by peg : null
+      #hexNumber: 0X123   ## by peg : null
+   }
+}

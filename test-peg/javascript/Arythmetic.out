@@ -1,17 +1,17 @@
 parsed:
 #block {            ## by peg : null
-   #stmt.expression {            ## by peg : null
+   #exprstmt {            ## by peg : null
       #add {            ## by peg : null
-         #number: 1   ## by peg : null
-         #number: 2   ## by peg : null
+         #intNumber: 1   ## by peg : null
+         #intNumber: 2   ## by peg : null
       }
    }
-   #stmt.expression {            ## by peg : null
+   #exprstmt {            ## by peg : null
       #add {            ## by peg : null
-         #number: 1   ## by peg : null
+         #intNumber: 1   ## by peg : null
          #mul {            ## by peg : null
-            #number: 2   ## by peg : null
-            #number: 3   ## by peg : null
+            #intNumber: 2   ## by peg : null
+            #intNumber: 3   ## by peg : null
          }
       }
    }

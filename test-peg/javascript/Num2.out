@@ -1,0 +1,87 @@
+parsed:
+#block {            ## by peg : null
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: n   ## by peg : null
+         #new {            ## by peg : null
+            #identifier: Number   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #intNumber: 123   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: str   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: toString   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #intNumber: 123   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: n   ## by peg : null
+         #field {            ## by peg : null
+            #identifier: Number   ## by peg : null
+            #identifier: NaN   ## by peg : null
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: b   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: isNaN   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #identifier: n   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: max   ## by peg : null
+         #field {            ## by peg : null
+            #identifier: Number   ## by peg : null
+            #identifier: MAX_VALUE   ## by peg : null
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: min   ## by peg : null
+         #field {            ## by peg : null
+            #identifier: Number   ## by peg : null
+            #identifier: MIN_VALUE   ## by peg : null
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: pos   ## by peg : null
+         #field {            ## by peg : null
+            #identifier: Number   ## by peg : null
+            #identifier: POSITIVE_INFINITY   ## by peg : null
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: neg   ## by peg : null
+         #field {            ## by peg : null
+            #identifier: Number   ## by peg : null
+            #identifier: NEGATIVE_INFINITY   ## by peg : null
+         }
+      }
+   }
+}

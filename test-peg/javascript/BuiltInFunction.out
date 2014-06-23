@@ -1,0 +1,107 @@
+parsed:
+#block {            ## by peg : null
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: s   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: escape   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: ほげ   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: n   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: eval   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: 1+1   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: b   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: isFinite   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: 1   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: b   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: isNaN   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: 1   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: n   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: Number   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: 1234   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: n   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: parseFloat   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: 123.4   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: n   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: parseInt   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: 123.4   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: s   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: String   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #intNumber: 1234   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+}

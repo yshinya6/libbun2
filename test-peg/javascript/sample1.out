@@ -1,0 +1,608 @@
+parsed:
+#block {            ## by peg : null
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: times   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: getCookie   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: Times   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #eq {            ## by peg : null
+         #identifier: times   ## by peg : null
+         #string:    ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: times   ## by peg : null
+               #intNumber: 1   ## by peg : null
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: date   ## by peg : null
+         #call {            ## by peg : null
+            #identifier: getCookie   ## by peg : null
+            #arguments {            ## by peg : null
+               #argument {            ## by peg : null
+                  #string: Date   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #eq {            ## by peg : null
+         #identifier: date   ## by peg : null
+         #string:    ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: date   ## by peg : null
+               #string: ????   ## by peg : null
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #call {            ## by peg : null
+         #field {            ## by peg : null
+            #identifier: document   ## by peg : null
+            #identifier: write   ## by peg : null
+         }
+         #arguments {            ## by peg : null
+            #argument {            ## by peg : null
+               #add {            ## by peg : null
+                  #add {            ## by peg : null
+                     #string: これまでの訪問回数：   ## by peg : null
+                     #identifier: times   ## by peg : null
+                  }
+                  #string: <br>   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #call {            ## by peg : null
+         #field {            ## by peg : null
+            #identifier: document   ## by peg : null
+            #identifier: write   ## by peg : null
+         }
+         #arguments {            ## by peg : null
+            #argument {            ## by peg : null
+               #add {            ## by peg : null
+                  #add {            ## by peg : null
+                     #string: 前回の訪問日：   ## by peg : null
+                     #identifier: date   ## by peg : null
+                  }
+                  #string: <br>   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #postincl {            ## by peg : null
+         #identifier: times   ## by peg : null
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: dd   ## by peg : null
+         #new {            ## by peg : null
+            #identifier: Date   ## by peg : null
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: ye   ## by peg : null
+         #call {            ## by peg : null
+            #field {            ## by peg : null
+               #identifier: dd   ## by peg : null
+               #identifier: getYear   ## by peg : null
+            }
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: ye   ## by peg : null
+         #intNumber: 1900   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign.add {            ## by peg : null
+               #identifier: ye   ## by peg : null
+               #intNumber: 1900   ## by peg : null
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: mo   ## by peg : null
+         #add {            ## by peg : null
+            #call {            ## by peg : null
+               #field {            ## by peg : null
+                  #identifier: dd   ## by peg : null
+                  #identifier: getMonth   ## by peg : null
+               }
+            }
+            #intNumber: 1   ## by peg : null
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: mo   ## by peg : null
+         #intNumber: 10   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: mo   ## by peg : null
+               #add {            ## by peg : null
+                  #string: 0   ## by peg : null
+                  #identifier: mo   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: da   ## by peg : null
+         #call {            ## by peg : null
+            #field {            ## by peg : null
+               #identifier: dd   ## by peg : null
+               #identifier: getDate   ## by peg : null
+            }
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: da   ## by peg : null
+         #intNumber: 10   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: da   ## by peg : null
+               #add {            ## by peg : null
+                  #string: 0   ## by peg : null
+                  #identifier: da   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: ho   ## by peg : null
+         #call {            ## by peg : null
+            #field {            ## by peg : null
+               #identifier: dd   ## by peg : null
+               #identifier: getHours   ## by peg : null
+            }
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: ho   ## by peg : null
+         #intNumber: 10   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: ho   ## by peg : null
+               #add {            ## by peg : null
+                  #string: 0   ## by peg : null
+                  #identifier: ho   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: mi   ## by peg : null
+         #call {            ## by peg : null
+            #field {            ## by peg : null
+               #identifier: dd   ## by peg : null
+               #identifier: getMinutes   ## by peg : null
+            }
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: mi   ## by peg : null
+         #intNumber: 10   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: mi   ## by peg : null
+               #add {            ## by peg : null
+                  #string: 0   ## by peg : null
+                  #identifier: mi   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: se   ## by peg : null
+         #call {            ## by peg : null
+            #field {            ## by peg : null
+               #identifier: dd   ## by peg : null
+               #identifier: getSeconds   ## by peg : null
+            }
+         }
+      }
+   }
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: se   ## by peg : null
+         #intNumber: 10   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: se   ## by peg : null
+               #add {            ## by peg : null
+                  #string: 0   ## by peg : null
+                  #identifier: se   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: date   ## by peg : null
+         #add {            ## by peg : null
+            #add {            ## by peg : null
+               #add {            ## by peg : null
+                  #add {            ## by peg : null
+                     #add {            ## by peg : null
+                        #add {            ## by peg : null
+                           #add {            ## by peg : null
+                              #add {            ## by peg : null
+                                 #add {            ## by peg : null
+                                    #add {            ## by peg : null
+                                       #identifier: ye   ## by peg : null
+                                       #string: /   ## by peg : null
+                                    }
+                                    #identifier: mo   ## by peg : null
+                                 }
+                                 #string: /   ## by peg : null
+                              }
+                              #identifier: da   ## by peg : null
+                           }
+                           #string:     ## by peg : null
+                        }
+                        #identifier: ho   ## by peg : null
+                     }
+                     #string: :   ## by peg : null
+                  }
+                  #identifier: mi   ## by peg : null
+               }
+               #string: :   ## by peg : null
+            }
+            #identifier: se   ## by peg : null
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #call {            ## by peg : null
+         #identifier: setCookie   ## by peg : null
+         #arguments {            ## by peg : null
+            #argument {            ## by peg : null
+               #string: Times   ## by peg : null
+            }
+            #argument {            ## by peg : null
+               #identifier: times   ## by peg : null
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #call {            ## by peg : null
+         #identifier: setCookie   ## by peg : null
+         #arguments {            ## by peg : null
+            #argument {            ## by peg : null
+               #string: Date   ## by peg : null
+            }
+            #argument {            ## by peg : null
+               #identifier: date   ## by peg : null
+            }
+         }
+      }
+   }
+   #function {            ## by peg : null
+      #identifier: getCookie   ## by peg : null
+      #params {            ## by peg : null
+         #param {            ## by peg : null
+            #identifier: key   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: tmp1   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: tmp2   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: xx1   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: xx2   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: xx3   ## by peg : null
+         }
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: tmp1   ## by peg : null
+               #add {            ## by peg : null
+                  #add {            ## by peg : null
+                     #string:     ## by peg : null
+                     #field {            ## by peg : null
+                        #identifier: document   ## by peg : null
+                        #identifier: cookie   ## by peg : null
+                     }
+                  }
+                  #string: ;   ## by peg : null
+               }
+            }
+         }
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: xx1   ## by peg : null
+               #assign {            ## by peg : null
+                  #identifier: xx2   ## by peg : null
+                  #intNumber: 0   ## by peg : null
+               }
+            }
+         }
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: len   ## by peg : null
+               #field {            ## by peg : null
+                  #identifier: tmp1   ## by peg : null
+                  #identifier: length   ## by peg : null
+               }
+            }
+         }
+         #while {            ## by peg : null
+            #lt {            ## by peg : null
+               #identifier: xx1   ## by peg : null
+               #identifier: len   ## by peg : null
+            }
+            #block {            ## by peg : null
+               #exprstmt {            ## by peg : null
+                  #assign {            ## by peg : null
+                     #identifier: xx2   ## by peg : null
+                     #call {            ## by peg : null
+                        #field {            ## by peg : null
+                           #identifier: tmp1   ## by peg : null
+                           #identifier: indexOf   ## by peg : null
+                        }
+                        #arguments {            ## by peg : null
+                           #argument {            ## by peg : null
+                              #string: ;   ## by peg : null
+                           }
+                           #argument {            ## by peg : null
+                              #identifier: xx1   ## by peg : null
+                           }
+                        }
+                     }
+                  }
+               }
+               #exprstmt {            ## by peg : null
+                  #assign {            ## by peg : null
+                     #identifier: tmp2   ## by peg : null
+                     #call {            ## by peg : null
+                        #field {            ## by peg : null
+                           #identifier: tmp1   ## by peg : null
+                           #identifier: substring   ## by peg : null
+                        }
+                        #arguments {            ## by peg : null
+                           #argument {            ## by peg : null
+                              #add {            ## by peg : null
+                                 #identifier: xx1   ## by peg : null
+                                 #intNumber: 1   ## by peg : null
+                              }
+                           }
+                           #argument {            ## by peg : null
+                              #identifier: xx2   ## by peg : null
+                           }
+                        }
+                     }
+                  }
+               }
+               #exprstmt {            ## by peg : null
+                  #assign {            ## by peg : null
+                     #identifier: xx3   ## by peg : null
+                     #call {            ## by peg : null
+                        #field {            ## by peg : null
+                           #identifier: tmp2   ## by peg : null
+                           #identifier: indexOf   ## by peg : null
+                        }
+                        #arguments {            ## by peg : null
+                           #argument {            ## by peg : null
+                              #string: =   ## by peg : null
+                           }
+                        }
+                     }
+                  }
+               }
+               #if {            ## by peg : null
+                  #eq {            ## by peg : null
+                     #call {            ## by peg : null
+                        #field {            ## by peg : null
+                           #identifier: tmp2   ## by peg : null
+                           #identifier: substring   ## by peg : null
+                        }
+                        #arguments {            ## by peg : null
+                           #argument {            ## by peg : null
+                              #intNumber: 0   ## by peg : null
+                           }
+                           #argument {            ## by peg : null
+                              #identifier: xx3   ## by peg : null
+                           }
+                        }
+                     }
+                     #identifier: key   ## by peg : null
+                  }
+                  #block {            ## by peg : null
+                     #return {            ## by peg : null
+                        #group {            ## by peg : null
+                           #call {            ## by peg : null
+                              #identifier: unescape   ## by peg : null
+                              #arguments {            ## by peg : null
+                                 #argument {            ## by peg : null
+                                    #call {            ## by peg : null
+                                       #field {            ## by peg : null
+                                          #identifier: tmp2   ## by peg : null
+                                          #identifier: substring   ## by peg : null
+                                       }
+                                       #arguments {            ## by peg : null
+                                          #argument {            ## by peg : null
+                                             #add {            ## by peg : null
+                                                #identifier: xx3   ## by peg : null
+                                                #intNumber: 1   ## by peg : null
+                                             }
+                                          }
+                                          #argument {            ## by peg : null
+                                             #sub {            ## by peg : null
+                                                #sub {            ## by peg : null
+                                                   #identifier: xx2   ## by peg : null
+                                                   #identifier: xx1   ## by peg : null
+                                                }
+                                                #intNumber: 1   ## by peg : null
+                                             }
+                                          }
+                                       }
+                                    }
+                                 }
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+               #exprstmt {            ## by peg : null
+                  #assign {            ## by peg : null
+                     #identifier: xx1   ## by peg : null
+                     #add {            ## by peg : null
+                        #identifier: xx2   ## by peg : null
+                        #intNumber: 1   ## by peg : null
+                     }
+                  }
+               }
+            }
+         }
+         #return {            ## by peg : null
+            #group {            ## by peg : null
+               #string:    ## by peg : null
+            }
+         }
+      }
+   }
+   #function {            ## by peg : null
+      #identifier: setCookie   ## by peg : null
+      #params {            ## by peg : null
+         #param {            ## by peg : null
+            #identifier: key   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: val   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: tmp   ## by peg : null
+         }
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #identifier: tmp   ## by peg : null
+               #add {            ## by peg : null
+                  #add {            ## by peg : null
+                     #add {            ## by peg : null
+                        #identifier: key   ## by peg : null
+                        #string: =   ## by peg : null
+                     }
+                     #call {            ## by peg : null
+                        #identifier: escape   ## by peg : null
+                        #arguments {            ## by peg : null
+                           #argument {            ## by peg : null
+                              #identifier: val   ## by peg : null
+                           }
+                        }
+                     }
+                  }
+                  #string: ;    ## by peg : null
+               }
+            }
+         }
+         #exprstmt {            ## by peg : null
+            #assign.add {            ## by peg : null
+               #identifier: tmp   ## by peg : null
+               #string: expires=Tue, 31-Dec-2030 23:59:59;    ## by peg : null
+            }
+         }
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #field {            ## by peg : null
+                  #identifier: document   ## by peg : null
+                  #identifier: cookie   ## by peg : null
+               }
+               #identifier: tmp   ## by peg : null
+            }
+         }
+      }
+   }
+   #function {            ## by peg : null
+      #identifier: clearCookie   ## by peg : null
+      #params {            ## by peg : null
+         #param {            ## by peg : null
+            #identifier: key   ## by peg : null
+         }
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #assign {            ## by peg : null
+               #field {            ## by peg : null
+                  #identifier: document   ## by peg : null
+                  #identifier: cookie   ## by peg : null
+               }
+               #add {            ## by peg : null
+                  #add {            ## by peg : null
+                     #identifier: key   ## by peg : null
+                     #string: =   ## by peg : null
+                  }
+                  #string: xx; expires=Tue, 1-Jan-1980 00:00:00;   ## by peg : null
+               }
+            }
+         }
+      }
+   }
+}

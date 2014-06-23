@@ -1,0 +1,95 @@
+parsed:
+#block {            ## by peg : null
+   #function {            ## by peg : null
+      #identifier: hoge   ## by peg : null
+      #params {            ## by peg : null
+         #param {            ## by peg : null
+            #identifier: a   ## by peg : null
+         }
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #postincl {            ## by peg : null
+               #identifier: a   ## by peg : null
+            }
+         }
+      }
+   }
+   #function {            ## by peg : null
+      #identifier: hogehoge   ## by peg : null
+      #params {            ## by peg : null
+         #param {            ## by peg : null
+            #identifier: num   ## by peg : null
+         }
+         #param {            ## by peg : null
+            #identifier: str   ## by peg : null
+         }
+      }
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #postincl {            ## by peg : null
+               #identifier: num   ## by peg : null
+            }
+         }
+         #exprstmt {            ## by peg : null
+            #call {            ## by peg : null
+               #field {            ## by peg : null
+                  #identifier: document   ## by peg : null
+                  #identifier: write   ## by peg : null
+               }
+               #arguments {            ## by peg : null
+                  #argument {            ## by peg : null
+                     #identifier: str   ## by peg : null
+                  }
+               }
+            }
+         }
+      }
+   }
+   #function {            ## by peg : null
+      #identifier: foo   ## by peg : null
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #call {            ## by peg : null
+               #field {            ## by peg : null
+                  #identifier: document   ## by peg : null
+                  #identifier: write   ## by peg : null
+               }
+               #arguments {            ## by peg : null
+                  #argument {            ## by peg : null
+                     #string: Foo!!   ## by peg : null
+                  }
+               }
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #call {            ## by peg : null
+         #identifier: foo   ## by peg : null
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #call {            ## by peg : null
+         #identifier: hogehoge   ## by peg : null
+         #arguments {            ## by peg : null
+            #argument {            ## by peg : null
+               #intNumber: 2   ## by peg : null
+            }
+            #argument {            ## by peg : null
+               #string: hoge   ## by peg : null
+            }
+         }
+      }
+   }
+   #exprstmt {            ## by peg : null
+      #call {            ## by peg : null
+         #identifier: hoge   ## by peg : null
+         #arguments {            ## by peg : null
+            #argument {            ## by peg : null
+               #intNumber: 3   ## by peg : null
+            }
+         }
+      }
+   }
+}

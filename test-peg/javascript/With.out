@@ -1,0 +1,18 @@
+parsed:
+#block {            ## by peg : null
+   #with {            ## by peg : null
+      #identifier: document   ## by peg : null
+      #block {            ## by peg : null
+         #exprstmt {            ## by peg : null
+            #call {            ## by peg : null
+               #identifier: write   ## by peg : null
+               #arguments {            ## by peg : null
+                  #argument {            ## by peg : null
+                     #string: hoge   ## by peg : null
+                  }
+               }
+            }
+         }
+      }
+   }
+}

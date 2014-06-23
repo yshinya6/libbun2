@@ -3,16 +3,20 @@ parsed:
    #for {            ## by peg : null
       #assign {            ## by peg : null
          #identifier: i   ## by peg : null
-         #number: 0   ## by peg : null
+         #intNumber: 0   ## by peg : null
       }
       #lt {            ## by peg : null
          #identifier: i   ## by peg : null
-         #number: 10   ## by peg : null
+         #intNumber: 10   ## by peg : null
       }
-      #postincl: i++   ## by peg : null
+      #postincl {            ## by peg : null
+         #identifier: i   ## by peg : null
+      }
       #block {            ## by peg : null
-         #stmt.expression {            ## by peg : null
-            #postincl: hoge++   ## by peg : null
+         #exprstmt {            ## by peg : null
+            #postincl {            ## by peg : null
+               #identifier: hoge   ## by peg : null
+            }
          }
       }
    }
@@ -21,18 +25,22 @@ parsed:
          #var {            ## by peg : null
             #identifier: i   ## by peg : null
             #expr {            ## by peg : null
-               #number: 0   ## by peg : null
+               #intNumber: 0   ## by peg : null
             }
          }
       }
       #lt {            ## by peg : null
          #identifier: i   ## by peg : null
-         #number: 10   ## by peg : null
+         #intNumber: 10   ## by peg : null
       }
-      #postincl: i++   ## by peg : null
+      #postincl {            ## by peg : null
+         #identifier: i   ## by peg : null
+      }
       #block {            ## by peg : null
-         #stmt.expression {            ## by peg : null
-            #postincl: hoge++   ## by peg : null
+         #exprstmt {            ## by peg : null
+            #postincl {            ## by peg : null
+               #identifier: hoge   ## by peg : null
+            }
          }
       }
    }
@@ -40,13 +48,13 @@ parsed:
       #identifier: i   ## by peg : null
       #identifier: arr   ## by peg : null
       #block {            ## by peg : null
-         #stmt.expression {            ## by peg : null
+         #exprstmt {            ## by peg : null
             #assign {            ## by peg : null
                #index {            ## by peg : null
                   #identifier: arr   ## by peg : null
                   #identifier: i   ## by peg : null
                }
-               #number: 1   ## by peg : null
+               #intNumber: 1   ## by peg : null
             }
          }
       }
@@ -59,13 +67,13 @@ parsed:
       }
       #identifier: arr   ## by peg : null
       #block {            ## by peg : null
-         #stmt.expression {            ## by peg : null
+         #exprstmt {            ## by peg : null
             #assign {            ## by peg : null
                #index {            ## by peg : null
                   #identifier: arr   ## by peg : null
                   #identifier: i   ## by peg : null
                }
-               #number: 1   ## by peg : null
+               #intNumber: 1   ## by peg : null
             }
          }
       }

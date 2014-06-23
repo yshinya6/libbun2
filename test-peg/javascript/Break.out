@@ -6,7 +6,7 @@ parsed:
          #if {            ## by peg : null
             #assign {            ## by peg : null
                #identifier: i   ## by peg : null
-               #number: 8   ## by peg : null
+               #intNumber: 8   ## by peg : null
             }
             #block {            ## by peg : null
                #break: break;   ## by peg : null

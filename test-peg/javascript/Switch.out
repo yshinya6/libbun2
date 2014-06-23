@@ -5,33 +5,33 @@ parsed:
       #caseblock {            ## by peg : null
          #cases {            ## by peg : null
             #case {            ## by peg : null
-               #number: 0   ## by peg : null
+               #intNumber: 0   ## by peg : null
                #block {            ## by peg : null
-                  #stmt.expression {            ## by peg : null
+                  #exprstmt {            ## by peg : null
                      #assign {            ## by peg : null
                         #identifier: b   ## by peg : null
-                        #number: 0   ## by peg : null
+                        #intNumber: 0   ## by peg : null
                      }
                   }
                }
             }
             #case {            ## by peg : null
-               #number: 1   ## by peg : null
+               #intNumber: 1   ## by peg : null
             }
             #case {            ## by peg : null
-               #number: 2   ## by peg : null
+               #intNumber: 2   ## by peg : null
                #block {            ## by peg : null
-                  #stmt.expression {            ## by peg : null
+                  #exprstmt {            ## by peg : null
                      #assign {            ## by peg : null
                         #identifier: c   ## by peg : null
-                        #number: 0   ## by peg : null
+                        #intNumber: 0   ## by peg : null
                      }
                   }
                   #break: break;   ## by peg : null
                }
             }
             #case {            ## by peg : null
-               #number: 3   ## by peg : null
+               #intNumber: 3   ## by peg : null
                #block {            ## by peg : null
                   #break: break;   ## by peg : null
                }
@@ -39,10 +39,10 @@ parsed:
          }
          #case.default {            ## by peg : null
             #block {            ## by peg : null
-               #stmt.expression {            ## by peg : null
+               #exprstmt {            ## by peg : null
                   #assign {            ## by peg : null
                      #identifier: d   ## by peg : null
-                     #number: 0   ## by peg : null
+                     #intNumber: 0   ## by peg : null
                   }
                }
             }
