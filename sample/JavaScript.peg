@@ -151,15 +151,17 @@ NullLiteral
   ;
 
 BooleanLiteral
-  = TrueToken / FalseToken
+  = << ( TrueToken / FalseToken ) #bool >> 
   ;
 
 //
 // The "!(IdentifierStart / DecimalDigit)" predicate is not part of the official
 // grammar, it comes from text in section 7.8.3.
 //
+
 NumericLiteral
   = << HexIntegerLiteral !(IdentifierStart / DecimalDigit)
+  / OctIntegerLiteral !(IdentifierStart / DecimalDigit)
   / DecimalLiteral !(IdentifierStart / DecimalDigit) #number >>
   ;
 
@@ -195,11 +197,19 @@ SignedInteger
   ;
 
 HexIntegerLiteral
-  = "0" [xX] $HexDigit+
+  = "0" [xX] HexDigit+
   ;
 
 HexDigit
   = [0-9a-fA-F]
+  ;
+
+OctIntegerLiteral
+  = "0" OctDigit+
+  ;
+
+OctDigit
+  = [0-7]
   ;
 
 StringLiteral
@@ -599,10 +609,10 @@ RelationalOperator
   ;
 
 RelationalOperatorNoIn
-  = $("<" !"<") #lt
-  / $(">" !">") #gt
-  / "<=" #lte
+  = "<=" #lte
   / ">=" #gte
+  / $("<" !"<") #lt
+  / $(">" !">") #gt
   / InstanceofToken #instanceof
   ;
 
@@ -759,9 +769,18 @@ Statement
   / ThrowStatement / TryStatement / DebuggerStatement
   ;
 
+SingleStatement
+  = VariableStatement / EmptyStatement / IfStatement / WithStatement
+  ;
+
 Block
   = "{" __ << (Statement@ __)* #block >> "}" // body
   ;
+
+StatementBlock
+  = __ ( << SingleStatement@  #block >> / Block / << Statement@ #block >> )  __
+  ;
+
 
 StatementList
   = << Statement@ __ (Statement@ __)* #block >>
@@ -805,47 +824,47 @@ ExpressionStatement
 
 IfStatement
   = << IfToken __ "(" __ Expression@ __ ")" __ // test
-    Statement@ __ // consequent
+    StatementBlock@ __ // consequent
     ElseToken __
-    Statement@  #if >> // alternate
+    StatementBlock@  #if >> // alternate
   / << IfToken __ "(" __ Expression@ __ ")" __ // test
-    Statement@  #if>> // consequent
+    StatementBlock@  #if>> // consequent
   ;
 
 IterationStatement
-  = DoToken __
+  = << DoToken __
     Statement@ __ // body
-    WhileToken __ "(" __ Expression@ __ ")" EOS // test
-  / WhileToken __ "(" __ Expression@ __ ")" __ // test
-    Statement@ // body
-  / ForToken __
+    WhileToken __ "(" __ ( BooleanLiteral@ / Expression@ ) __ ")" EOS #dowhile >>// test
+  / << WhileToken __ "(" __ ( BooleanLiteral@ / Expression@ ) __ ")" __ // test
+    Statement@ #while >>// body
+  / << ForToken __
     "(" __
     (ExpressionNoIn __)@? ";" __ // init
     (Expression __)@? ";" __ // test
     (Expression __)@? // update
     ")" __
-    Statement@ // body
-  / ForToken __
+    Statement@ #for >>// body
+  / << ForToken __
     "(" __
     VarToken __ VariableDeclarationListNoIn@ __ ";" __ // declarations
     (Expression __)@? ";" __ // test
     (Expression __)@? // update
     ")" __
-    Statement@ // body
-  / ForToken __
+    Statement@ #for >>// body
+  / << ForToken __
     "(" __
     LeftHandSideExpression@ __ // left
     InToken __
     Expression@ __ // right
     ")" __
-    Statement@ // body
-  / ForToken __
+    Statement@ #forin >>// body
+  / << ForToken __
     "(" __
     VarToken __ VariableDeclarationListNoIn@ __ // declarations
     InToken __
     Expression@ __ // right
     ")" __
-    Statement@ // body
+    Statement@ #forin >>// body
   ;
 
 ContinueStatement
@@ -886,7 +905,7 @@ CaseClauses
   ;
 
 CaseClause
-  = << CaseToken __ Expression@ __ ":" (__ StatementList@)? #case >>// test // consequent
+  = << CaseToken __ Expression@ __ ":" (__ StatementList@ / __) #case >>// test // consequent
   ;
 
 DefaultClause

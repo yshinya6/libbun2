@@ -1,0 +1,192 @@
+parsed:
+#block {            ## by peg : null
+   #stmt.expression {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #number: 10   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: b   ## by peg : null
+         #number: 2   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: c   ## by peg : null
+         #string: 10   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: d   ## by peg : null
+         #bool: true   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: e   ## by peg : null
+         #identifier: bool   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #add {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #sub {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #mul {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #div {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #mod {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #postincl: a++   ## by peg : null
+   }
+   #stmt.expression {            ## by peg : null
+      #preincl {            ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #postdecl: a--   ## by peg : null
+   }
+   #stmt.expression {            ## by peg : null
+      #predecl {            ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #eq {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #noteq {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #lt {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #lte {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #gt {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #gte {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #eq {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: c   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #noteq {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: c   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #and {            ## by peg : null
+         #identifier: d   ## by peg : null
+         #identifier: e   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #or {            ## by peg : null
+         #identifier: d   ## by peg : null
+         #identifier: e   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #not {            ## by peg : null
+         #identifier: e   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #trinary {            ## by peg : null
+         #identifier: d   ## by peg : null
+         #string: hoge   ## by peg : null
+         #string: hogehoge   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #and {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #bitor {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #bitxor {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #compl {            ## by peg : null
+         #identifier: a   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #lshift {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #number: 2   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #rshift {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #number: 2   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #rshift {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #number: 2   ## by peg : null
+      }
+   }
+}

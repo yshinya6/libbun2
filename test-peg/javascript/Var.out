@@ -1,0 +1,28 @@
+parsed:
+#block {            ## by peg : null
+   #varstmt {            ## by peg : null
+      #varlist {            ## by peg : null
+         #var {            ## by peg : null
+            #identifier: a   ## by peg : null
+         }
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #number: 10   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #assign {            ## by peg : null
+         #identifier: b   ## by peg : null
+         #number: 5   ## by peg : null
+      }
+   }
+   #stmt.expression {            ## by peg : null
+      #add {            ## by peg : null
+         #identifier: a   ## by peg : null
+         #identifier: b   ## by peg : null
+      }
+   }
+}
