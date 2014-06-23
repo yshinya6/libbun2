@@ -24,17 +24,12 @@ public class JvmIndyDriver extends JvmDriver {
 
 	private final static MethodHandle fbCompHandle = initFallBackHandle("CompOp", Boolean.class);
 
-	private final static MethodHandle fbIndexerHandle = initFallBackHandle("Indexer");
-
 	private final static MethodHandle fbMethodHandle = initFallBackHandle("Method");
 	private final static MethodHandle testMethodHandle = initTestHandleForVarg("Method");
 
 	public JvmIndyDriver() {
 		super("lib/driver/jvm/jvm4python.bun");
 		JvmDriver.JAVA_VERSION = V1_7;
-		this.addCommand("PUSH_AS_LONG_WRAP", new PushAsLongWrap());
-		this.addCommand("PUSH_AS_DOUBLE_WRAP", new PushAsDoubleWrap());
-		this.addCommand("PUSH_AS_BOOLEAN_WRAP", new PushAsBooleanWrap());
 		this.addCommand("INDY", new DynamicInvokeCommand());
 		this.addCommand("APPLY", new ApplyCommand());
 
@@ -42,7 +37,6 @@ public class JvmIndyDriver extends JvmDriver {
 		this.initBsmHandle("UnaryOp");
 		this.initBsmHandle("BinaryOp");
 		this.initBsmHandle("CompOp");
-		this.initBsmHandle("Indexer");
 		this.initBsmHandle("Method");
 	}
 
@@ -114,45 +108,6 @@ public class JvmIndyDriver extends JvmDriver {
 			System.exit(1);
 		}
 		return null;
-	}
-
-	protected class PushAsLongWrap extends DriverCommand {
-		@Override
-		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			mBuilders.peek().push(Long.parseLong(node.getText()));
-			mBuilders.peek().box(Type.LONG_TYPE);
-		}
-	}
-
-	/**
-	 * push value as java double.
-	 * @author skgchxngsxyz-osx
-	 *
-	 */
-	protected class PushAsDoubleWrap extends DriverCommand {
-		@Override
-		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			mBuilders.peek().push(Double.parseDouble(node.getText()));
-			mBuilders.peek().box(Type.DOUBLE_TYPE);
-		}
-	}
-
-	/**
-	 * push value as java boolean.
-	 * @author skgchxngsxyz-osx
-	 *
-	 */
-	protected class PushAsBooleanWrap extends DriverCommand {
-		@Override
-		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			if(param[0].equals("true")) {
-				mBuilders.peek().push(true);
-			}
-			else {
-				mBuilders.peek().push(false);
-			}
-			mBuilders.peek().box(Type.BOOLEAN_TYPE);
-		}
 	}
 
 	/**
@@ -398,47 +353,6 @@ public class JvmIndyDriver extends JvmDriver {
 		return (Boolean) targetHandle.invokeWithArguments(args);
 	}
 
-	// indexer call
-	/**
-	 * boot strap method for indexer call. used for indy.
-	 * @param lookup
-	 * @param methodName
-	 * @param type
-	 * @return
-	 * @throws Throwable
-	 */
-	public static CallSite bsmIndexer(MethodHandles.Lookup lookup, String methodName, MethodType type) throws Throwable {
-		CachedCallSite callSite = new CachedCallSite(methodName, lookup, type);
-		MethodHandle fallback = fbIndexerHandle.bindTo(callSite);
-		fallback = fallback.asCollector(Object[].class, type.parameterCount()).asType(type);
-		callSite.setTarget(fallback);
-		return callSite;
-	}
-
-	/**
-	 * fallback handle for indexer call. used for indy.
-	 * @param callSite
-	 * @param args
-	 * @return
-	 * @throws Throwable
-	 */
-	public static Object fallBackForIndexer(CachedCallSite callSite, Object[] args) throws Throwable {
-		MethodType type = callSite.type();
-		Class<?> recvClass = args[0].getClass();
-		Class<?> indexClass = args[1].getClass();
-		// target handle
-		MethodType methodType = type.dropParameterTypes(0, 1).changeParameterType(0, indexClass);
-		MethodHandle targetHandle = callSite.lookup.findVirtual(recvClass, callSite.methodName, methodType);
-		targetHandle = targetHandle.asType(type);
-		// test handle
-		MethodHandle testHandle = testBinaryHandle.bindTo(recvClass).bindTo(indexClass);
-		testHandle = testHandle.asType(testHandle.type());
-		// guard method handle
-		MethodHandle guard = MethodHandles.guardWithTest(testHandle, targetHandle, callSite.getTarget());
-		callSite.setTarget(guard);
-		return targetHandle.invokeWithArguments(args);
-	}
-
 	// method call
 	/**
 	 * boot strap method for method call. used for indy.
@@ -504,7 +418,7 @@ public class JvmIndyDriver extends JvmDriver {
 
 	private static MethodHandle lookupMethodHandle(Class<?> recvClass, String methodName) throws Throwable {
 		if(recvClass == null || recvClass.equals(Object.class)) {
-			throw new NoSuchFieldException();
+			throw new NoSuchMethodException();
 		}
 		vTable table = vTableMap.get(recvClass);
 		if(table == null) {
@@ -546,12 +460,33 @@ public class JvmIndyDriver extends JvmDriver {
 		 * @return
 		 * - if has no method handle, throw exception
 		 */
-		private MethodHandle lookup(String methodName) throws NoSuchFieldException {
+		private MethodHandle lookup(String methodName) throws NoSuchMethodException {
 			MethodHandle handle = this.mhMap.get(methodName);
 			if(handle == null) {
-				throw new NoSuchFieldException(methodName);
+				throw new NoSuchMethodException(methodName);
 			}
 			return handle;
 		}
 	}
+
+	private static MethodHandle lookupFunc(Class<?> funcClass) throws Throwable {
+		if(!funcClass.getSuperclass().equals(FuncHolder.class)) {
+			throw new RuntimeException("require func class: " + funcClass.getSimpleName());
+		}
+		MethodHandle handle = funcMap.get(funcClass);
+		if(handle != null) {
+			return handle;
+		}
+		java.lang.reflect.Method[] methods = funcClass.getMethods();
+		for(java.lang.reflect.Method method : methods) {
+			if(method.getName().equals(JvmDriver.funcMethodName)) {
+				handle = MethodHandles.lookup().unreflect(method);
+				funcMap.put(funcClass, handle);
+				return handle;
+			}
+		}
+		throw new NoSuchMethodException();
+	}
+
+	private final static Map<Class<?>, MethodHandle> funcMap = new HashMap<>();
 }

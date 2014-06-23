@@ -30,6 +30,9 @@ import org.objectweb.asm.commons.Method;
 public class JvmDriver extends BunDriver implements Opcodes {
 	public final static String globalVarHolderSuffix = "_LetVarHolder";
 	public final static String globalVarHolderFieldName = "letVarValue";
+	public final static String funcMethodName = "callFunc";
+	public final static String funcFieldName = "funcField";
+
 	public static int JAVA_VERSION = V1_6;
 	protected final String bunModel;
 	protected boolean allowPrinting = false;
@@ -77,7 +80,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		this.mBuilders = new Stack<MethodBuilder>();
 		this.addCommand("PUSH_AS_LONG", new PushAsLong());
 		this.addCommand("PUSH_AS_DOUBLE", new PushAsDouble());
-		this.addCommand("PUSH_AS_BOOL", new PushAsBoolean());
+		this.addCommand("PUSH_AS_BOOLEAN", new PushAsBoolean());
 		this.addCommand("PUSH_AS_STRING", new PushAsString());
 		this.addCommand("OP", new CallOperator());
 
@@ -87,6 +90,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		this.addCommand("IF", new IfStatement());
 		this.addCommand("WHILE", new WhileStatement());
 		this.addCommand("BLOCK", new Block());
+		this.addCommand("PRINT", new PrintCommand());
 		this.addCommand("statement", new StatementCommand());
 		this.addCommand("TOP_LEVEL", new TopLevelCommand());
 
@@ -98,6 +102,8 @@ public class JvmDriver extends BunDriver implements Opcodes {
 
 		this.addCommand("PY_ASSIGN", new PythonAssign());
 		this.addCommand("NAME", new SymbolCommand());
+		this.addCommand("TRINARY", new TrinaryCommand());
+		this.addCommand("DEFUNC", new DefineFunction());
 		/**
 		 * add jvm opcode command
 		 */
@@ -137,6 +143,9 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	 */
 	@Override
 	public void endTransaction() {
+		if(this.mBuilders.empty()) {
+			return;
+		}
 		this.mBuilders.peek().returnValue();
 		this.mBuilders.pop().endMethod();
 		this.classBuilder.visitEnd();
@@ -146,11 +155,12 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		try {
 			generatedClass.getMethod("invoke").invoke(null);
 		}
+		catch(InvocationTargetException e) {
+			e.getCause().printStackTrace();
+		}
 		catch(Throwable t) {
-			if(t instanceof InvocationTargetException) {
-				t = t.getCause();
-			}
 			t.printStackTrace();
+			System.exit(1);
 		}
 	}
 
@@ -179,6 +189,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	/**
+	 * 
 	 * BunType to Java class
 	 * @param type
 	 * @return
@@ -268,6 +279,10 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			for(int i = 0; i < size; i++) {
 				PegObject targetNode = node.get(i);
 				driver.pushNode(targetNode);
+				if(targetNode.is("#error")) {
+					mBuilders.clear();
+					break;
+				}
 				insertPrintIns(toJavaClass(targetNode.getType(null)));
 			}
 		}
@@ -460,6 +475,28 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		}
 	}
 
+	protected class TrinaryCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			MethodBuilder mBuilder = mBuilders.peek();
+			Label elseLabel = mBuilder.newLabel();
+			Label mergeLabel = mBuilder.newLabel();
+			// cond
+			driver.pushNode(node.get(0));
+			mBuilder.unbox(toJavaClass(node.get(0).getType(null)), boolean.class);
+			mBuilder.push(true);
+			mBuilder.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, elseLabel);
+			// then
+			driver.pushNode(node.get(1));
+			mBuilder.goTo(mergeLabel);
+			// else
+			mBuilder.mark(elseLabel);
+			driver.pushNode(node.get(2));
+			// merge
+			mBuilder.mark(mergeLabel);
+		}
+	}
+
 	/**
 	 * generate let.
 	 * @author skgchxngsxyz-osx
@@ -519,7 +556,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		}
 	}
 
-	protected void assignToLeft(BunDriver driver, PegObject node, String[] param) {	//TODO: indexer, field
+	protected void assignToLeft(BunDriver driver, PegObject node, String[] param) {	//TODO: field
 		MethodBuilder mBuilder = mBuilders.peek();
 		PegObject leftNode = node.get(0);
 		PegObject rightNode = node.get(1);
@@ -541,6 +578,17 @@ public class JvmDriver extends BunDriver implements Opcodes {
 				mBuilder.putStatic(varHolderDesc, globalVarHolderFieldName, varTypeDesc);
 			}
 		}
+		else if(leftNode.is("#index")) {
+			PegObject recvNode = leftNode.get(0);
+			driver.pushNode(recvNode);
+			
+		}
+		else if(leftNode.is("#field")) {	//TODO:
+			
+		}
+		else {
+			throw new RuntimeException("unsuppored assing: " + leftNode.name);
+		}
 	}
 
 	protected class PythonAssign extends DriverCommand {
@@ -548,7 +596,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			PegObject leftNode = node.get(0);
 			if(leftNode.is("#name")) {
-				if(!mBuilders.peek().getScopes().hasEntry(leftNode.getText())) {
+				if(!mBuilders.peek().getScopes().hasEntryInCurrentScope(leftNode.getText())) {
 					defineVariable(driver, leftNode.getText(), node.get(1), false);
 					return;
 				}
@@ -720,6 +768,83 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			Type paramTypeDesc2 = Type.getType("[" + valueTypeDesc.getDescriptor());
 			Type returnTypeDesc = Type.VOID_TYPE;
 			return new Method("<init>", returnTypeDesc, new Type[]{paramTypeDesc1, paramTypeDesc2});
+		}
+	}
+
+	protected class PrintCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			Class<?> valueClass = toJavaClass(node.get(0).getType(null));
+			if(!valueClass.isPrimitive()) {
+				valueClass = Object.class;
+			}
+			try {
+				java.lang.reflect.Method method = JvmOperator.class.getMethod("printValue", valueClass);
+				mBuilders.peek().invokeStatic(Type.getType(JvmOperator.class), Method.getMethod(method));
+			} catch (Throwable e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	protected class DefineFunction extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String funcName = node.get(0).getText();
+			String internalName = mBuilders.peek().getScopes().addFuncEntry(funcName, false).getInternalName();
+			ClassBuilder cBuilder = new ClassBuilder(internalName, FuncHolder.class);
+
+			// static field
+			cBuilder.visitField(ACC_PUBLIC | ACC_STATIC, funcFieldName, internalName, null, null);
+
+			// static initializer
+			Method initDesc = org.objectweb.asm.commons.Method.getMethod("void <init> ()");
+			Method clinitDesc = org.objectweb.asm.commons.Method.getMethod("void <clinit> ()");
+			MethodBuilder mBuilder = new MethodBuilder(ACC_PUBLIC | ACC_STATIC, clinitDesc, null, null, cBuilder);
+			Type fieldTypeDesc = Type.getType(internalName);
+			mBuilder.newInstance(fieldTypeDesc);
+			mBuilder.dup();
+			mBuilder.invokeConstructor(fieldTypeDesc, initDesc);
+			mBuilder.putStatic(fieldTypeDesc, funcFieldName, fieldTypeDesc);
+			mBuilder.returnValue();
+			mBuilder.endMethod();
+			
+			// constructor
+			mBuilder = new MethodBuilder(ACC_PUBLIC, initDesc, null, null, cBuilder);
+			mBuilder.loadThis();
+			mBuilder.invokeConstructor(Type.getType(FuncHolder.class), initDesc);
+			mBuilder.returnValue();
+			mBuilder.endMethod();
+
+			// method
+			PegObject paramsNode = node.get(1);
+			Method methodDesc = this.toMethodDesc(funcMethodName, paramsNode);
+			mBuilder = new MethodBuilder(ACC_PUBLIC, methodDesc, null, null, cBuilder);
+			mBuilders.push(mBuilder);
+			// set argument
+			mBuilder.getScopes().createNewScope();
+			int paramSize = paramsNode.size();
+			for(int i = 0; i < paramSize; i++) {
+				PegObject paramNode = paramsNode.get(i);
+				mBuilder.getScopes().addEntry(paramNode.getText(), toJavaClass(paramNode.getType(null)), false);
+			}
+			// generate func body
+			generateBlockWithCurrentScope(driver, node.get(2));
+			mBuilder.getScopes().removeCurrentScope();
+			mBuilders.pop().endMethod();
+
+			loader.generateClassFromByteCode(internalName, cBuilder.toByteArray());
+		}
+
+		// TODO: return type
+		private Method toMethodDesc(String methodName, PegObject paramsNode) {
+			Type returnTypeDesc = Type.getType(Object.class);
+			int paramSize = paramsNode.size();
+			Type[] paramTypeDescs = new Type[paramSize];
+			for(int i = 0; i < paramSize; i++) {
+				paramTypeDescs[i] = Type.getType(toJavaClass(paramsNode.get(i).getType(null)));
+			}
+			return new Method(methodName, returnTypeDesc, paramTypeDescs);
 		}
 	}
 
@@ -1025,7 +1150,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			return value;
 		}
 
-		public Object size() {
+		public Long size() {
 			long size = this.valueList.size();
 			return size;
 		}
@@ -1083,7 +1208,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			return sBuilder.toString();
 		}
 
-		public Object keys() {
+		public ArrayImpl keys() {
 			Set<String> keySet = this.valueMap.keySet();
 			Object[] keys = new Object[keySet.size()];
 			int index = 0;
@@ -1093,7 +1218,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			return new ArrayImpl(keys);
 		}
 
-		public Object values() {
+		public ArrayImpl values() {
 			Collection<Object> valueSet = this.valueMap.values();
 			Object[] values = new Object[valueSet.size()];
 			int index = 0;
@@ -1103,9 +1228,13 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			return new ArrayImpl(values);
 		}
 
-		public Object hashKey(String key) {
+		public boolean hasKey(String key) {
 			return this.valueMap.containsKey(key);
 		}
+	}
+
+	public static class FuncHolder {
+		protected FuncHolder() {}	// do nothing
 	}
 
 	public static class DebuggableJvmDriver extends JvmDriver {
@@ -1146,9 +1275,14 @@ class ClassBuilder extends ClassWriter implements Opcodes {
 	 * - fully qualified name. contains (/)
 	 */
 	public ClassBuilder(String className) {
+		this(className, Object.class);
+	}
+
+	public ClassBuilder(String className, Class<?> superClass) {
 		super(ClassWriter.COMPUTE_FRAMES);
 		this.fullyQualifiedName = className;
-		this.visit(JvmDriver.JAVA_VERSION, ACC_PUBLIC | ACC_FINAL, this.fullyQualifiedName, null, "java/lang/Object", null);
+		String superClassInternalName = Type.getInternalName(superClass);
+		this.visit(JvmDriver.JAVA_VERSION, ACC_PUBLIC | ACC_FINAL, this.fullyQualifiedName, null, superClassInternalName, null);
 	}
 
 	/**
@@ -1350,6 +1484,10 @@ class VarScopes {
 		return this.scopeStack.peek().addEntry(varName, varClass, isReadOnly);
 	}
 
+	public FuncEntry addFuncEntry(String funcName, boolean isReadOnly) {
+		return this.scopeStack.peek().addFuncEntry(funcName, isReadOnly);
+	}
+
 	/**
 	 * 
 	 * @param varName
@@ -1357,7 +1495,7 @@ class VarScopes {
 	 * - throw exception, if had no entry.
 	 */
 	public VarEntry getEntry(String varName) {
-		VarEntry entry = this.scopeStack.peek().getEntry(varName);
+		VarEntry entry = this.scopeStack.peek().getEntry(varName, true);
 		if(entry == null) {
 			throw new RuntimeException("undefined variable: " + varName);
 		}
@@ -1365,13 +1503,17 @@ class VarScopes {
 	}
 
 	/**
-	 * 
+	 * lookup entry from current and parent scope.
 	 * @param varName
 	 * @return
 	 * return true, if has entry.
 	 */
 	public boolean hasEntry(String varName) {
-		return this.scopeStack.peek().getEntry(varName) != null;
+		return this.scopeStack.peek().getEntry(varName, true) != null;
+	}
+
+	public boolean hasEntryInCurrentScope(String varName) {
+		return this.scopeStack.peek().getEntry(varName, false) != null;
 	}
 
 	public int depth() {
@@ -1436,6 +1578,15 @@ class LocalVarScope {
 		return entry;
 	}
 
+	public FuncEntry addFuncEntry(String funcName, boolean isReadOnly) {
+		if(this.entryMap.containsKey(funcName)) {
+			throw new RuntimeException("already defined function: " + funcName);
+		}
+		FuncEntry entry = new FuncEntry(funcName, false, isReadOnly);
+		this.entryMap.put(funcName, entry);
+		return entry;
+	}
+
 	/**
 	 * get VarEntry.
 	 * @param varName
@@ -1443,12 +1594,15 @@ class LocalVarScope {
 	 * @return
 	 * - return null, if has no entry.
 	 */
-	public VarEntry getEntry(String varName) {
+	public VarEntry getEntry(String varName, boolean lookupParent) {
 		VarEntry entry = this.entryMap.get(varName);
 		if(entry != null) {
 			return  entry;
 		}
-		return this.parentScope.getEntry(varName);
+		if(lookupParent) {
+			return this.parentScope.getEntry(varName, lookupParent);
+		}
+		return null;
 	}
 
 	/**
@@ -1484,7 +1638,17 @@ class GlobalVarScope extends LocalVarScope {
 	}
 
 	@Override
-	public VarEntry getEntry(String varName) {
+	public FuncEntry addFuncEntry(String funcName, boolean isReadOnly) {
+		if(this.entryMap.containsKey(funcName)) {
+			throw new RuntimeException("already defined function: " + funcName);
+		}
+		FuncEntry entry = new FuncEntry(funcName, true, isReadOnly);
+		this.entryMap.put(funcName, entry);
+		return entry;
+	}
+
+	@Override
+	public VarEntry getEntry(String varName, boolean lookupParent/*do not use*/) {
 		VarEntry entry = this.entryMap.get(varName);
 		if(entry != null) {
 			return entry;
@@ -1549,6 +1713,22 @@ class VarEntry {
 
 	public Class<?> getVarClass() {
 		return this.variableClass;
+	}
+}
+
+class FuncEntry extends VarEntry {
+	private final static String funcNamePrefix = "FuncHolder_";
+	private static int funcNameSuffix = -1;
+
+	private final String internalFuncName;
+
+	public FuncEntry(String funcName, boolean isGlobal, boolean isReadOnly) {
+		super(-1, null, isGlobal, isReadOnly);
+		this.internalFuncName = funcNamePrefix + funcName + ++funcNameSuffix;
+	}
+
+	public String getInternalName() {
+		return this.internalFuncName;
 	}
 }
 

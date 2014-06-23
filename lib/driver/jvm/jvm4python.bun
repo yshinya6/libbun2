@@ -34,19 +34,19 @@ bun #group(x : untyped) : untyped {
 }
 
 bun #integer(): untyped {
-	${PUSH_AS_LONG_WRAP this}
+	${PUSH_AS_LONG} ${BOX long}
 }
 
 bun #float() : untyped {
-	${PUSH_AS_DOUBLE_WRAP this}
+	${PUSH_AS_DOUBLE} ${BOX double}
 }
 
 bun #true() : untyped {
-	${PUSH_AS_BOOLEAN_WRAP true}
+	${PUSH_AS_BOOLEAN true} ${BOX boolean}
 }
 
 bun #false() : untyped {
-	${PUSH_AS_BOOLEAN_WRAP false}
+	${PUSH_AS_BOOLEAN false} ${BOX boolean}
 }
 
 bun #string() : untyped {
@@ -141,11 +141,6 @@ bun #or(x : untyped, y : untyped) : untyped {
 	${OR} ${BOX boolean}
 }
 
-// LET
-bun #let(name, type, value): void && letvar() {
-	${VAR_DECL}
-}
-
 // collection
 bun #array(*) : untyped {
 	${NEW_ARRAY}
@@ -156,7 +151,7 @@ bun #map(*) : untyped {
 }
 
 bun #index(recv : untyped, index : untyped) :untyped {
-	${recv} ${index} ${INDY get bsmIndexer Object Object Object}
+	${recv} ${index} ${INDY get bsmMethod Object Object Object}
 }
 
 bun #apply(t : untyped, arg : untyped) : untyped {
@@ -169,4 +164,16 @@ bun #name() : untyped {
 
 bun #assign(left : untyped, right : untyped) : void {
 	${PY_ASSIGN}
+}
+
+bun #trinary(cond : untyped, then : untyped, else : untyped) : untyped {
+	${TRINARY}
+}
+
+bun #print(x) : void {
+	${x} ${PRINT}
+}
+
+bun #function(name, params, block : void) : void {
+	${DEFUNC}
 }
