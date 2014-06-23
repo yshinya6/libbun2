@@ -182,8 +182,7 @@ public class JvmIndyDriver extends JvmDriver {
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			PegObject targetNode = node.get(0);
 			PegObject argsNode = node.get(1);
-			String recvName = targetNode.name;
-			if(recvName.equals("#field")) {	// method call
+			if(targetNode.is("#field")) {	// method call
 				PegObject recvNode = targetNode.get(0);
 				String methodName = targetNode.get(1).getText();
 				int paramSize = argsNode.size();

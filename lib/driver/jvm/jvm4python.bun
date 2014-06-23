@@ -162,3 +162,11 @@ bun #index(recv : untyped, index : untyped) :untyped {
 bun #apply(t : untyped, arg : untyped) : untyped {
 	${APPLY}
 }
+
+bun #name() : untyped {
+	${NAME}
+}
+
+bun #assign(left : untyped, right : untyped) : void {
+	${PY_ASSIGN}
+}

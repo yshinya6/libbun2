@@ -95,6 +95,9 @@ public class JvmDriver extends BunDriver implements Opcodes {
 
 		this.addCommand("NEW_ARRAY",  new NewArrayCommand());
 		this.addCommand("NEW_MAP", new NewMapCommand());
+
+		this.addCommand("PY_ASSIGN", new PythonAssign());
+		this.addCommand("NAME", new SymbolCommand());
 		/**
 		 * add jvm opcode command
 		 */
@@ -182,6 +185,9 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	 * - if has no class, return Object.class
 	 */
 	protected Class<?> toJavaClass(BunType type) {
+		if(type == null) {
+			return Object.class;
+		}
 		String typeName = type.getName();
 		Class<?> javaClass = this.classMap.get(typeName);
 		if(javaClass == null) {
@@ -245,7 +251,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	protected void generateBlockWithCurrentScope(BunDriver driver, PegObject node) {
-		if(!node.name.equals("#block")) {
+		if(!node.is("#block")) {
 			throw new RuntimeException("require block");
 		}
 		driver.pushNode(node);
@@ -462,29 +468,30 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	protected class VarDecl extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			defineVariable(driver, node, param);
+			String varName = node.getText();
+			boolean isReadOnly = param[0].equals("LET");
+			defineVariable(driver, varName, node.get(1), isReadOnly);
 		}
 	}
 
-	protected void defineVariable(BunDriver driver, PegObject node, String[] param) {
+	protected void defineVariable(BunDriver driver, String varName, PegObject initValueNode, boolean isReadOnly) {
 		MethodBuilder currentBuilder = mBuilders.peek();
 		// add var entry to scope
-		String varName = node.get(0).getText();
-		Class<?> varClass = toJavaClass(node.get(2).getType(null));
-		VarEntry entry = currentBuilder.getScopes().addEntry(varName, varClass, true);
+		Class<?> varClass = toJavaClass(initValueNode.getType(null));
+		VarEntry entry = currentBuilder.getScopes().addEntry(varName, varClass, isReadOnly);
 
 		int scopeDepth = currentBuilder.getScopes().depth();
 		if(scopeDepth > 1) {	// define as local variable.
-			driver.pushNode(node.get(2));
+			driver.pushNode(initValueNode);
 			currentBuilder.storeLocal(entry.getVarIndex(), Type.getType(varClass));
 		}
 		else {	// define as global variable.
 			ClassBuilder cBuilder = new ClassBuilder(varName + JvmDriver.globalVarHolderSuffix);
 			// create static initializer
 			Method methodDesc = Method.getMethod("void <clinit> ()");
-			MethodBuilder mBuilder = new MethodBuilder(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL, methodDesc, null, null, cBuilder);
+			MethodBuilder mBuilder = new MethodBuilder(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, methodDesc, null, null, cBuilder);
 			mBuilders.push(mBuilder);
-			driver.pushNode(node.get(2));
+			driver.pushNode(initValueNode);
 			Type ownerTypeDesc = Type.getType(cBuilder.getClassName());
 			Type fieldTypeDesc = Type.getType(varClass);
 			mBuilder.putStatic(ownerTypeDesc, globalVarHolderFieldName, fieldTypeDesc);
@@ -512,17 +519,51 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		}
 	}
 
-	protected void assignToLeft(BunDriver driver, PegObject node, String[] param) {
-		
+	protected void assignToLeft(BunDriver driver, PegObject node, String[] param) {	//TODO: indexer, field
+		MethodBuilder mBuilder = mBuilders.peek();
+		PegObject leftNode = node.get(0);
+		PegObject rightNode = node.get(1);
+		if(leftNode.is("#name")) {
+			String varName = leftNode.getText();
+			VarEntry entry = mBuilder.getScopes().getEntry(varName);
+			if(entry.isReadOnly()) {
+				throw new RuntimeException("read only variable: " + varName);
+			}
+			Type varTypeDesc = Type.getType(entry.getVarClass());
+			if(!entry.isGlobal()) {	// local variable
+				int varIndex = entry.getVarIndex();
+				driver.pushNode(rightNode);
+				mBuilder.storeLocal(varIndex, varTypeDesc);
+			}
+			else { // global variable
+				driver.pushNode(rightNode);
+				Type varHolderDesc = Type.getType(varName + globalVarHolderSuffix);
+				mBuilder.putStatic(varHolderDesc, globalVarHolderFieldName, varTypeDesc);
+			}
+		}
+	}
+
+	protected class PythonAssign extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			PegObject leftNode = node.get(0);
+			if(leftNode.is("#name")) {
+				if(!mBuilders.peek().getScopes().hasEntry(leftNode.getText())) {
+					defineVariable(driver, leftNode.getText(), node.get(1), false);
+					return;
+				}
+			}
+			assignToLeft(driver, node, param);
+		}
 	}
 
 	protected class SymbolCommand extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			MethodBuilder mBuilder = mBuilders.peek();
-			String varName = node.get(0).getText();
+			String varName = node.getText();
 			VarEntry entry = mBuilder.getScopes().getEntry(varName);
-			Type varTypeDesc = Type.getType(toJavaClass(node.get(0).getType(null)));
+			Type varTypeDesc = Type.getType(toJavaClass(node.getType(null)));
 			if(!entry.isGlobal()) {	// get local variable
 				int varIndex = entry.getVarIndex();
 				mBuilder.loadLocal(varIndex, varTypeDesc);
@@ -559,6 +600,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			// if cond
 			driver.pushNode(node.get(0));
 			mBuilder.unbox(toJavaClass(node.get(0).getType(null)), boolean.class);
+			mBuilder.push(true);
 			mBuilder.ifCmp(Type.BOOLEAN_TYPE, GeneratorAdapter.NE, elseLabel);
 			// then block
 			generateBlockWithNewScope(driver, node.get(1));
@@ -1296,12 +1338,40 @@ class VarScopes {
 		}
 	}
 
+	/**
+	 * 
+	 * @param varName
+	 * @param varClass
+	 * @param isReadOnly
+	 * @return
+	 * - throw exception, if has already defined.
+	 */
 	public VarEntry addEntry(String varName, Class<?> varClass, boolean isReadOnly) {
 		return this.scopeStack.peek().addEntry(varName, varClass, isReadOnly);
 	}
 
+	/**
+	 * 
+	 * @param varName
+	 * @return
+	 * - throw exception, if had no entry.
+	 */
 	public VarEntry getEntry(String varName) {
-		return this.scopeStack.peek().getEntry(varName);
+		VarEntry entry = this.scopeStack.peek().getEntry(varName);
+		if(entry == null) {
+			throw new RuntimeException("undefined variable: " + varName);
+		}
+		return entry;
+	}
+
+	/**
+	 * 
+	 * @param varName
+	 * @return
+	 * return true, if has entry.
+	 */
+	public boolean hasEntry(String varName) {
+		return this.scopeStack.peek().getEntry(varName) != null;
 	}
 
 	public int depth() {
@@ -1356,11 +1426,11 @@ class LocalVarScope {
 	 */
 	public VarEntry addEntry(String varName, Class<?> varClass, boolean isReadOnly) {
 		if(this.entryMap.containsKey(varName)) {
-			throw new RuntimeException(varName + " is already defined");
+			throw new RuntimeException("already defined variable: " + varName);
 		}
 		int valueSize = Type.getType(varClass).getSize();
 		int varIndex = this.currentIndex;
-		VarEntry entry = new VarEntry(varIndex, false, isReadOnly);
+		VarEntry entry = new VarEntry(varIndex, varClass, false, isReadOnly);
 		this.entryMap.put(varName, entry);
 		this.currentIndex += valueSize;
 		return entry;
@@ -1371,7 +1441,7 @@ class LocalVarScope {
 	 * @param varName
 	 * - variable name.
 	 * @return
-	 * - throw exception if has no entry.
+	 * - return null, if has no entry.
 	 */
 	public VarEntry getEntry(String varName) {
 		VarEntry entry = this.entryMap.get(varName);
@@ -1406,9 +1476,9 @@ class GlobalVarScope extends LocalVarScope {
 	@Override
 	public VarEntry addEntry(String varName, Class<?> varClass, boolean isReadOnly) {
 		if(this.entryMap.containsKey(varName)) {
-			throw new RuntimeException(varName + " is already defined");
+			throw new RuntimeException("already defined variable: " + varName);
 		}
-		VarEntry entry = new VarEntry(-1, true, isReadOnly);
+		VarEntry entry = new VarEntry(-1, varClass, true, isReadOnly);
 		this.entryMap.put(varName, entry);
 		return entry;
 	}
@@ -1419,7 +1489,7 @@ class GlobalVarScope extends LocalVarScope {
 		if(entry != null) {
 			return entry;
 		}
-		throw new RuntimeException("undefined variabel: " + varName);
+		return null;
 	}
 
 	private static class Holder {
@@ -1453,10 +1523,16 @@ class VarEntry {
 	 */
 	private final boolean isReadOnly;
 
-	public VarEntry(int varIndex, boolean isGlobal, boolean isReadOnly) {
+	/**
+	 * represents variable class.
+	 */
+	private final Class<?> variableClass;
+
+	public VarEntry(int varIndex, Class<?> varClass, boolean isGlobal, boolean isReadOnly) {
 		this.varIndex = varIndex;
 		this.isGlobal = isGlobal;
 		this.isReadOnly = isReadOnly;
+		this.variableClass = varClass;
 	}
 
 	public boolean isReadOnly() {
@@ -1469,6 +1545,10 @@ class VarEntry {
 
 	public int getVarIndex() {
 		return this.varIndex;
+	}
+
+	public Class<?> getVarClass() {
+		return this.variableClass;
 	}
 }
 
