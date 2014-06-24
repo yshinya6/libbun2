@@ -951,11 +951,31 @@ class PegCType extends PegAtom {
 	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
 		if(inNode.source != null) {
 			if(AddType) {
-				typedefs.add(inNode.getText());
-				return inNode;
+				if(inNode.name.equals("#DeclarationNoAttribute") && inNode.AST.length >= 2) {
+					// inNode.AST = [typedef struct A, StructA]
+					PegObject first = inNode.AST[0];
+					if(first.AST.length >= 2) {
+						String firstText = first.AST[0].getText().trim();
+						// first is "typedef"
+						if(first.AST[0].name.equals("#storageclassspecifier") && firstText.equals("typedef")) {
+							PegObject second = inNode.AST[1];
+							for (int i = 0; i < second.AST.length; i++) {
+								PegObject decl = second.get(i);
+								if(decl.name.equals("#declarator")) {
+									// "typedef struct A StructA;"
+									// add new typename StructA
+									System.out.println(decl.get(decl.AST.length - 1).getText());
+									typedefs.add(decl.get(decl.AST.length - 1).getText());
+								}
+							}
+							return inNode;
+						}
+					}
+				}
 			}
 			else {
-				if (!typedefs.contains((inNode.getText()))) {
+				String name = inNode.getText().trim();
+				if (!typedefs.contains(name)) {
 					return new PegObject(null); //not match
 				}
 			}

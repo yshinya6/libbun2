@@ -120,27 +120,29 @@ DeclarationList
 //  A.2.2  Declarations
 //-------------------------------------------------------------------------
 
-Declaration
-    = << DeclarationSpecifiers@ InitDeclaratorList@? (Attribute / Assembler)@? SEMI #declaration>>;
+Declaration = DeclarationNoAttribute (Attribute / Assembler)@? SEMI #declaration;
+
+DeclarationNoAttribute
+    = <<DeclarationSpecifiers@ InitDeclaratorList@? ##DeclarationNoAttribute>> addtype;
 
 DeclarationSpecifiers
-    = ( StorageClassSpecifier
+    = << ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
+       )@*
        TypedefName@
        ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )* addtype
-    / ( StorageClassSpecifier
+       )* ##DeclarationSpecifier >>
+    / << ( StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
       / Attribute
-      )+ addtype
+      )@+ ##DeclarationSpecifier >>
     ;
 
 InitDeclaratorList
