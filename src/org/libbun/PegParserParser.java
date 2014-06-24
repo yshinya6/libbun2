@@ -23,10 +23,9 @@ public class PegParserParser extends SourceContext {
 	}
 
 	public void parseRule() {
-		boolean importFile = false;
 		if(this.match("import")) {
-			this.skipComment(UniCharset.WhiteSpaceNewLine);
-			importFile = true;
+			this.parseImportFile();
+			return;
 		}
 		int startIndex = this.getPosition();
 		if(!this.match(UniCharset.Letter)) {
@@ -35,24 +34,30 @@ public class PegParserParser extends SourceContext {
 		this.matchZeroMore(UniCharset.NameSymbol);
 		String label = this.substring(startIndex, this.getPosition());
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
-		if(importFile) {
-			if(!this.match("from")) {
-				this.showErrorMessage("expected from");
-			}
-			this.skipComment(UniCharset.WhiteSpaceNewLine);
-			startIndex = this.getPosition();
-			this.matchZeroMore(UniCharset.NodeLabel);
-			String fileName = this.substring(startIndex, this.getPosition());
-			fileName = this.source.checkFileName(fileName);
-			this.parser.importPeg(label, fileName);
+		if(!this.match('=') && !this.match('<', '-')) {
+			this.showErrorMessage("Is forgotten ; ?");
 		}
-		else {
-			if(!this.match('=') && !this.match('<', '-')) {
-				this.showErrorMessage("Is forgotten ; ?");
-			}
-			Peg parsed = this.parsePegExpr(label);
-			this.parser.setPegRule(label, parsed);
+		Peg parsed = this.parsePegExpr(label);
+		this.parser.setPegRule(label, parsed);
+	}
+
+	public void parseImportFile() {
+		int startIndex = this.getPosition();
+		if(!this.match(UniCharset.Letter)) {
+			this.showErrorMessage("Is forgotten ; ?");
 		}
+		this.matchZeroMore(UniCharset.NameSymbol);
+		String label = this.substring(startIndex, this.getPosition());
+		this.skipComment(UniCharset.WhiteSpaceNewLine);
+		if(!this.match("from")) {
+			this.showErrorMessage("expected from");
+		}
+		this.skipComment(UniCharset.WhiteSpaceNewLine);
+		startIndex = this.getPosition();
+		this.matchZeroMore(UniCharset.NodeLabel);
+		String fileName = this.substring(startIndex, this.getPosition());
+		fileName = this.source.checkFileName(fileName);
+		this.parser.importPeg(label, fileName);
 	}
 
 	private int skipQuotedString(char endChar) {
@@ -125,10 +130,6 @@ public class PegParserParser extends SourceContext {
 			}
 		}
 		return left;
-	}
-
-	private String substring(int startIndex, int endIndex) {
-		return this.source.substring(startIndex, endIndex);
 	}
 
 	private Peg parseSingleExpr(String ruleName) {
@@ -332,6 +333,10 @@ public class PegParserParser extends SourceContext {
 			return true;
 		}
 		return false;
+	}
+	
+	private String substring(int startIndex, int endIndex) {
+		return this.source.substring(startIndex, endIndex);
 	}
 
 }
