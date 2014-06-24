@@ -1,0 +1,16 @@
+parsed:
+#toplevel {            ## by peg : null
+   #import {            ## by peg : null
+      #name: os   ## by peg : null
+   }
+   #fromImport {            ## by peg : null
+      #name: sys   ## by peg : null
+      #asterisk: *   ## by peg : null
+   }
+   #fromImport {            ## by peg : null
+      #name: sys   ## by peg : null
+      #name: a   ## by peg : null
+      #name: b   ## by peg : null
+      #name: c   ## by peg : null
+   }
+}

@@ -2,6 +2,7 @@ package org.libbun;
 
 public class PegParserParser extends SourceContext {
 	PegParser parser;
+	boolean   isfirstSingleExpr = true;
 	public PegParserParser(PegParser parser, PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 		this.parser = parser;

@@ -1,0 +1,21 @@
+parsed:
+#translationunit {            ## by peg : null
+   #functiondefinition {            ## by peg : null
+      #typespecifier: int    ## by peg : null
+      #declarator {            ## by peg : null
+         #identifier: main   ## by peg : null
+         #typespecifier: void   ## by peg : null
+      }
+      #compoundstatement {            ## by peg : null
+         #declaration {            ## by peg : null
+            #typespecifier: int    ## by peg : null
+            #declarator {            ## by peg : null
+               #identifier: a   ## by peg : null
+            }
+         }
+         #returnstatement {            ## by peg : null
+            #integerconstant: 0   ## by peg : null
+         }
+      }
+   }
+}

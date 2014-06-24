@@ -3,7 +3,7 @@ package org.libbun;
 public class SimpleParserContext extends ParserContext {
 
 	private UniMap<Peg>        pegCache;
-	private UniMap<SimpleMemo> memoMap2 = new UniMap<SimpleMemo>();
+	private UniMap<SimpleMemo> memoMap = new UniMap<SimpleMemo>();
 	
 	class SimpleMemo {
 		PegObject result;
@@ -122,11 +122,11 @@ public class SimpleParserContext extends ParserContext {
 	}
 		
 	public void initMemo() {
-		this.memoMap2 = new UniMap<SimpleMemo>();
+		this.memoMap = new UniMap<SimpleMemo>();
 	}
 	
 	public UniMap<SimpleMemo> getMemoMap() {
-		return memoMap2;
+		return memoMap;
 	}
 	
 	public final Peg getPattern(String name) {
@@ -145,17 +145,17 @@ public class SimpleParserContext extends ParserContext {
 	public final PegObject parsePegNode(PegObject parentNode, String pattern) {
 		int pos = this.getPosition();
 		String key = pattern + ":" + pos;
-		SimpleMemo m = this.memoMap2.get(key, null);
+		SimpleMemo m = this.memoMap.get(key, null);
 		if(m == null) {
 			m = new SimpleMemo();
 			m.nextPosition = this.getPosition();
 			m.result = foundFailureNode;
-			this.memoMap2.put(key, m);
+			this.memoMap.put(key, m);
 			this.memoMiss = this.memoMiss + 1;
 			Peg e = this.parser.getPattern(pattern);
 			PegObject ans = e.debugMatch(parentNode, this);
 			if(pos == this.getPosition() && !ans.isFailure()) {
-				this.memoMap2.remove(key);
+				this.memoMap.remove(key);
 				return ans;
 			}
 			else {

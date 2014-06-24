@@ -5,7 +5,7 @@ public class PegParserContext extends ParserContext {
 	final UniArray<Log> logStack = new UniArray<Log>(new Log[128]);
 	private int stackTop = 0;
 
-	private UniMap<Memo> memoMap2 = new UniMap<Memo>();
+	private UniMap<Memo> memoMap = new UniMap<Memo>();
 
 	int memoHit = 0;
 	int memoMiss = 0;
@@ -21,11 +21,11 @@ public class PegParserContext extends ParserContext {
 	}
 	
 	public void initMemo() {
-		this.memoMap2 = new UniMap<Memo>();
+		this.memoMap = new UniMap<Memo>();
 	}
 	
 	public UniMap<Memo> getMemoMap() {
-		return memoMap2;
+		return memoMap;
 	}
 
 	public boolean isLeftRecursion(String PatternName) {
@@ -36,17 +36,17 @@ public class PegParserContext extends ParserContext {
 	public final PegObject parsePegNode(PegObject parentNode, String pattern) {
 		int pos = this.getPosition();
 		String key = pattern + ":" + pos;
-		Memo m = this.memoMap2.get(key, null);
+		Memo m = this.memoMap.get(key, null);
 		if(m == null) {
 			m = new Memo();
 			m.nextPosition = this.getPosition();
 			m.result = this.foundFailureNode;
-			this.memoMap2.put(key, m);
+			this.memoMap.put(key, m);
 			this.memoMiss = this.memoMiss + 1;
 			Peg e = this.parser.getPattern(pattern);
 			PegObject ans = e.debugMatch(parentNode, this);
 			if(pos == this.getPosition() && !ans.isFailure()) {
-				this.memoMap2.remove(key);
+				this.memoMap.remove(key);
 				return ans;
 			}
 			else {

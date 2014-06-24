@@ -1,0 +1,15 @@
+parsed:
+#toplevel {            ## by peg : null
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #integer: 5   ## by peg : null
+         #integer: 3   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #add {            ## by peg : null
+            #integer: 4   ## by peg : null
+            #integer: 6   ## by peg : null
+         }
+      }
+   }
+}
