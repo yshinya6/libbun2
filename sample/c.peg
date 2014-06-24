@@ -134,13 +134,13 @@ DeclarationSpecifiers
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
+       )* addtype
     / ( StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
       / Attribute
-      )+
+      )+ addtype
     ;
 
 InitDeclaratorList
@@ -304,7 +304,7 @@ DirectAbstractDeclarator
     ;
 
 TypedefName
-    = << Identifier@ #typedefname >>
+    = << Identifier@ #typedefname >> ctype
     ;
 
 Initializer
@@ -656,8 +656,8 @@ IntegerConstant
     = << ( DecimalConstant
       / HexConstant
       / OctalConstant
-      )@
-    IntegerSuffix@? Spacing #integerconstant >>
+      )
+    IntegerSuffix? #integer >> Spacing
     ;
 
 DecimalConstant = [1-9][0-9]* ;
@@ -682,10 +682,10 @@ Lsuffix
     ;
 
 FloatConstant
-    = ( DecimalFloatConstant
+    = << ( DecimalFloatConstant
       / HexFloatConstant
       )
-    FloatSuffix? Spacing
+    FloatSuffix? #float >> Spacing
     ;
 
 DecimalFloatConstant
@@ -736,7 +736,9 @@ HexEscape    = "\\x" HexDigit+ ;
 //  A.1.6  String Literals
 //-------------------------------------------------------------------------
 
-StringLiteral = << "L"? (["] StringChar@* ["] Spacing)+ #stringliteral >>;
+StringLiteral = << "L"? (["] StringChar@* ["] Spacing)+ #string >>;
+// FIXME we need to concatinate StringLiterals
+// e.g.) "a" "b" => "ab"
 
 StringChar = Escape / ![\"\n\\] . ;
 

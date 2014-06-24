@@ -1,5 +1,7 @@
 package org.libbun;
 
+import java.util.HashSet;
+
 public abstract class Peg {
 	public final static boolean _BackTrack = true;
 	int       flag     = 0;
@@ -929,5 +931,44 @@ class PegIndent extends PegAtom {
 	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitIndent(this);
+	}
+}
+
+
+class PegCType extends PegAtom {
+	static public HashSet<String> typedefs = new HashSet<String>();
+	boolean AddType = false;
+	PegCType(String leftLabel, boolean AddType) {
+		super(leftLabel, AddType ? "addtype" : "ctype");
+		this.AddType = AddType;
+	}
+
+	@Override
+	protected Peg clone(String ns) {
+		return this;
+	}
+	@Override
+	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
+		if(inNode.source != null) {
+			if(AddType) {
+				typedefs.add(inNode.getText());
+				return inNode;
+			}
+			else {
+				if (!typedefs.contains((inNode.getText()))) {
+					return new PegObject(null); //not match
+				}
+			}
+		}
+		return inNode;
+	}
+	@Override
+	protected boolean verify(PegParser parser) {
+		return true;
+	}
+
+	@Override
+	public void accept(PegVisitor visitor) {
+		// TODO Auto-generated method stub
 	}
 }
