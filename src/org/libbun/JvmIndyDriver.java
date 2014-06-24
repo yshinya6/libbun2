@@ -27,6 +27,9 @@ public class JvmIndyDriver extends JvmDriver {
 	private final static MethodHandle fbMethodHandle = initFallBackHandle("Method");
 	private final static MethodHandle testMethodHandle = initTestHandleForVarg("Method");
 
+	private final static MethodHandle fbFuncHandle = initFallBackHandle("Func");
+	private final static MethodHandle testFuncHandle = initTestHandle("Func", 1);
+
 	public JvmIndyDriver() {
 		super("lib/driver/jvm/jvm4python.bun");
 		JvmDriver.JAVA_VERSION = V1_7;
@@ -38,6 +41,7 @@ public class JvmIndyDriver extends JvmDriver {
 		this.initBsmHandle("BinaryOp");
 		this.initBsmHandle("CompOp");
 		this.initBsmHandle("Method");
+		this.initBsmHandle("Func");
 	}
 
 	public static class DebuggableJvmIndyDriver extends JvmIndyDriver {
@@ -149,7 +153,13 @@ public class JvmIndyDriver extends JvmDriver {
 				mBuilders.peek().invokeDynamic(methodName, typeDesc, handleMap.get("bsmMethod"));
 			}
 			else {	// func call
-				
+				driver.pushNode(targetNode);
+				int paramSize = argsNode.size();
+				for(int i = 0 ; i < paramSize; i++) {
+					driver.pushNode(argsNode.get(i));
+				}
+				String typeDesc = this.createDescriptor(paramSize + 1).getDescriptor();
+				mBuilders.peek().invokeDynamic("someythong", typeDesc, handleMap.get("bsmFunc"));
 			}
 		}
 
@@ -489,4 +499,34 @@ public class JvmIndyDriver extends JvmDriver {
 	}
 
 	private final static Map<Class<?>, MethodHandle> funcMap = new HashMap<>();
+
+	public static CallSite bsmFunc(MethodHandles.Lookup lookup, String methodName, MethodType type) throws Throwable {
+		CachedCallSite callSite = new CachedCallSite(methodName, lookup, type);
+		MethodHandle fallback = fbFuncHandle.bindTo(callSite);
+		fallback = fallback.asCollector(Object[].class, type.parameterCount()).asType(type);
+		callSite.setTarget(fallback);
+		return callSite;
+	}
+
+	public static Object fallBackForFunc(CachedCallSite callSite, Object[] args) throws Throwable {
+		MethodType type = callSite.type();
+		int paramSize = args.length;
+		Class<?>[] paramClasses = new Class<?>[paramSize];
+		for(int i = 0; i < paramSize; i++) {
+			paramClasses[i] = args[i].getClass();
+		}
+		// target handle
+		MethodHandle targetHandle = lookupFunc(paramClasses[0]);
+		targetHandle = targetHandle.asType(type);
+		// test handle
+		MethodHandle testHandle = testFuncHandle.bindTo(paramClasses[0]);
+		// guard handle
+		MethodHandle guard = MethodHandles.guardWithTest(testHandle, targetHandle, callSite.getTarget());
+		callSite.setTarget(guard);
+		return targetHandle.invokeWithArguments(args);
+	}
+
+	public static boolean testForFunc(Class<?> recvClass, Object recvObject) {
+		return recvObject.getClass().equals(recvClass);
+	}
 }

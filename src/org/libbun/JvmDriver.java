@@ -104,6 +104,8 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		this.addCommand("NAME", new SymbolCommand());
 		this.addCommand("TRINARY", new TrinaryCommand());
 		this.addCommand("DEFUNC", new DefineFunction());
+		this.addCommand("RETURN_STATEMENT", new ReturnStatement());
+
 		/**
 		 * add jvm opcode command
 		 */
@@ -611,14 +613,20 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			MethodBuilder mBuilder = mBuilders.peek();
 			String varName = node.getText();
 			VarEntry entry = mBuilder.getScopes().getEntry(varName);
-			Type varTypeDesc = Type.getType(toJavaClass(node.getType(null)));
-			if(!entry.isGlobal()) {	// get local variable
-				int varIndex = entry.getVarIndex();
-				mBuilder.loadLocal(varIndex, varTypeDesc);
+			if(!(entry instanceof FuncEntry)) {	// load variable
+				Type varTypeDesc = Type.getType(entry.getVarClass());
+				if(!entry.isGlobal()) {	// get local variable
+					int varIndex = entry.getVarIndex();
+					mBuilder.loadLocal(varIndex, varTypeDesc);
+				}
+				else {	// get global variable
+					Type varHolderDesc = Type.getType(varName + globalVarHolderSuffix);
+					mBuilder.getStatic(varHolderDesc, globalVarHolderFieldName, varTypeDesc);
+				}
 			}
-			else {	// get global variable
-				Type varHolderDesc = Type.getType(varName + globalVarHolderSuffix);
-				mBuilder.getStatic(varHolderDesc, globalVarHolderFieldName, varTypeDesc);
+			else {	// load func object
+				Type funcHolderDesc = Type.getType("L" + ((FuncEntry)entry).getInternalName() + ";");
+				mBuilder.getStatic(funcHolderDesc, funcFieldName, funcHolderDesc);
 			}
 		}
 	}
@@ -795,20 +803,20 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			ClassBuilder cBuilder = new ClassBuilder(internalName, FuncHolder.class);
 
 			// static field
-			cBuilder.visitField(ACC_PUBLIC | ACC_STATIC, funcFieldName, internalName, null, null);
+			Type fieldTypeDesc = Type.getType("L" + internalName + ";");
+			cBuilder.visitField(ACC_PUBLIC | ACC_STATIC, funcFieldName, fieldTypeDesc.getDescriptor(), null, null);
 
 			// static initializer
 			Method initDesc = org.objectweb.asm.commons.Method.getMethod("void <init> ()");
 			Method clinitDesc = org.objectweb.asm.commons.Method.getMethod("void <clinit> ()");
 			MethodBuilder mBuilder = new MethodBuilder(ACC_PUBLIC | ACC_STATIC, clinitDesc, null, null, cBuilder);
-			Type fieldTypeDesc = Type.getType(internalName);
 			mBuilder.newInstance(fieldTypeDesc);
 			mBuilder.dup();
 			mBuilder.invokeConstructor(fieldTypeDesc, initDesc);
 			mBuilder.putStatic(fieldTypeDesc, funcFieldName, fieldTypeDesc);
 			mBuilder.returnValue();
 			mBuilder.endMethod();
-			
+
 			// constructor
 			mBuilder = new MethodBuilder(ACC_PUBLIC, initDesc, null, null, cBuilder);
 			mBuilder.loadThis();
@@ -845,6 +853,13 @@ public class JvmDriver extends BunDriver implements Opcodes {
 				paramTypeDescs[i] = Type.getType(toJavaClass(paramsNode.get(i).getType(null)));
 			}
 			return new Method(methodName, returnTypeDesc, paramTypeDescs);
+		}
+	}
+
+	protected class ReturnStatement extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			mBuilders.peek().returnValue();
 		}
 	}
 

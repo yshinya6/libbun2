@@ -177,3 +177,7 @@ bun #print(x) : void {
 bun #function(name, params, block : void) : void {
 	${DEFUNC}
 }
+
+bun #return(expr : untyped) : void {
+	${expr} ${RETURN_STATEMENT}
+}
