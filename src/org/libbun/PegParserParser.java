@@ -130,7 +130,7 @@ public class PegParserParser extends SourceContext {
 		return this.source.substring(startIndex, endIndex);
 	}
 
-	private Peg parseSingleExpr(String leftLabel) {
+	private Peg parseSingleExpr(String ruleName) {
 		Peg right = null;
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
 		if(this.match(';')) {
@@ -138,42 +138,42 @@ public class PegParserParser extends SourceContext {
 			return null;
 		}
 		if(this.match("indent")) {
-			right = new PegIndent(leftLabel);
-			return this.parsePostfix(leftLabel, right);
+			right = new PegIndent(ruleName);
+			return this.parsePostfix(ruleName, right);
 		}
 		if(this.match(UniCharset.Letter)) {
 			int startIndex = this.getPosition() - 1;
 			int endIndex = this.matchZeroMore(UniCharset.NameSymbol);
 			String s = this.source.substring(startIndex, endIndex);
-			right = new PegLabel(leftLabel, s);
-			if(leftLabel.equals(s)) {
+			right = new PegLabel(ruleName, s);
+			if(ruleName.equals(s)) {
 				right.setLeftRecursion(true);
 			}
 			right.setSource(this.source, startIndex);
-			return this.parsePostfix(leftLabel, right);
+			return this.parsePostfix(ruleName, right);
 		}
 		if(this.match('.')) {
-			right = new PegAny(leftLabel);
-			return this.parsePostfix(leftLabel, right);
+			right = new PegAny(ruleName);
+			return this.parsePostfix(ruleName, right);
 		}
 		if(this.match('$')) {
-			right = this.parseSingleExpr(leftLabel);
+			right = this.parseSingleExpr(ruleName);
 			if(right != null) {
-				right = new PegSetter(leftLabel, right, -1);
+				right = new PegSetter(ruleName, right, -1);
 			}
 			return right;
 		}
 		if(this.match('&')) {
-			right = this.parseSingleExpr(leftLabel);
+			right = this.parseSingleExpr(ruleName);
 			if(right != null) {
-				right = new PegAnd(leftLabel, right);
+				right = new PegAnd(ruleName, right);
 			}
 			return right;
 		}
 		if(this.match('!')) {
-			right = this.parseSingleExpr(leftLabel);
+			right = this.parseSingleExpr(ruleName);
 			if(right != null) {
-				right = new PegNot(leftLabel, right);
+				right = new PegNot(ruleName, right);
 			}
 			return right;
 		}
@@ -181,7 +181,7 @@ public class PegParserParser extends SourceContext {
 			int startIndex = this.getPosition();
 			this.matchZeroMore(UniCharset.NodeLabel);
 			int endIndex = this.getPosition();
-			right = new PegObjectLabel(leftLabel, this.substring(startIndex - 1, endIndex));
+			right = new PegObjectLabel(ruleName, this.substring(startIndex - 1, endIndex));
 			return right;
 		}
 		if(this.match('(')) {
@@ -192,9 +192,9 @@ public class PegParserParser extends SourceContext {
 				return null;
 			}
 			PegParserParser sub = this.subParser(startIndex, endIndex);
-			right = sub.parsePegExpr(leftLabel);
+			right = sub.parsePegExpr(ruleName);
 			if(right != null) {
-				right = this.parsePostfix(leftLabel, right);
+				right = this.parsePostfix(ruleName, right);
 			}
 			return right;
 		}
@@ -205,8 +205,8 @@ public class PegParserParser extends SourceContext {
 				this.showErrorMessage("unclosed ']'");
 				return null;
 			}
-			right = new PegCharacter(leftLabel, this.source.substring(startIndex, endIndex));
-			return this.parsePostfix(leftLabel, right);
+			right = new PegCharacter(ruleName, this.source.substring(startIndex, endIndex));
+			return this.parsePostfix(ruleName, right);
 		}
 		if(this.match('"')) {
 			int startIndex = this.getPosition();
@@ -216,8 +216,8 @@ public class PegParserParser extends SourceContext {
 				return null;
 			}
 			String s = this.source.substring(startIndex, endIndex);
-			right = new PegString(leftLabel, UniCharset._UnquoteString(s));
-			return this.parsePostfix(leftLabel, right);
+			right = new PegString(ruleName, UniCharset._UnquoteString(s));
+			return this.parsePostfix(ruleName, right);
 		}
 		if(this.match('\'')) {
 			int startIndex = this.getPosition();
@@ -227,8 +227,8 @@ public class PegParserParser extends SourceContext {
 				return null;
 			}
 			String s = this.source.substring(startIndex, endIndex);
-			right = new PegString(leftLabel, UniCharset._UnquoteString(s));
-			return this.parsePostfix(leftLabel, right);
+			right = new PegString(ruleName, UniCharset._UnquoteString(s));
+			return this.parsePostfix(ruleName, right);
 		}
 		if(this.match('{')) {
 			boolean leftJoin = false;
@@ -243,9 +243,9 @@ public class PegParserParser extends SourceContext {
 				return null;
 			}
 			PegParserParser sub = this.subParser(startIndex, endIndex);
-			right = sub.parsePegExpr(leftLabel);
-			right = new PegNewObject(leftLabel, leftJoin, right);
-			right = this.parsePostfix(leftLabel, right);
+			right = sub.parsePegExpr(ruleName);
+			right = new PegNewObject(ruleName, leftJoin, right);
+			right = this.parsePostfix(ruleName, right);
 			return right;
 		}
 		if(this.match("<<")) {
@@ -261,17 +261,17 @@ public class PegParserParser extends SourceContext {
 				return null;
 			}
 			PegParserParser sub = this.subParser(startIndex, endIndex);
-			right = sub.parsePegExpr(leftLabel);
-			right = new PegNewObject(leftLabel, leftJoin, right);
-			right = this.parsePostfix(leftLabel, right);
+			right = sub.parsePegExpr(ruleName);
+			right = new PegNewObject(ruleName, leftJoin, right);
+			right = this.parsePostfix(ruleName, right);
 			return right;
 		}
 		this.showErrorMessage("unexpected character '" + this.getChar() + "'");
 		return right;
 	}
 
-	private final Peg parseSequenceExpr(String leftLabel) {
-		Peg left = this.parseSingleExpr(leftLabel);
+	private final Peg parseSequenceExpr(String ruleName) {
+		Peg left = this.parseSingleExpr(ruleName);
 		if(left == null) {
 			return left;
 		}
@@ -284,10 +284,10 @@ public class PegParserParser extends SourceContext {
 				this.skipComment(UniCharset.WhiteSpaceNewLine);
 				return left;
 			}
-			Peg right = this.parseSequenceExpr(leftLabel);
+			Peg right = this.parseSequenceExpr(ruleName);
 			if(right != null) {
 				boolean lrExistense = false;
-				if(left.hasLeftRecursion() == true) {
+				if(left.hasLeftRecursion()) {
 					lrExistense = true;
 				}
 				left = left.appendAsSequence(right);
@@ -297,8 +297,8 @@ public class PegParserParser extends SourceContext {
 		return left;
 	}
 
-	public final Peg parsePegExpr(String leftLabel) {
-		Peg left = this.parseSequenceExpr(leftLabel);
+	public final Peg parsePegExpr(String ruleName) {
+		Peg left = this.parseSequenceExpr(ruleName);
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
 		if(this.match(';')) {
 			return left;
@@ -306,15 +306,15 @@ public class PegParserParser extends SourceContext {
 		if(this.hasChar()) {
 			if(this.match("catch ") || this.match("catch\n")) {
 				this.skipComment(UniCharset.WhiteSpaceNewLine);
-				Peg right = this.parsePegExpr(leftLabel);
-				right = new PegCatch(leftLabel, right);
+				Peg right = this.parsePegExpr(ruleName);
+				right = new PegCatch(ruleName, right);
 				left = left.appendAsChoice(right);
 			}
 			else {
-				Peg right = this.parsePegExpr(leftLabel);
+				Peg right = this.parsePegExpr(ruleName);
 				if(right != null) {
 					boolean lrExistense = false;
-					if(left.hasLeftRecursion() == true) {
+					if(left.hasLeftRecursion()) {
 						lrExistense = true;
 					}
 					left = left.appendAsChoice(right);

@@ -53,7 +53,7 @@ public class PegParserContext extends ParserContext {
 				m.result = ans;
 				m.nextPosition = this.getPosition();
 				if(e.hasLeftRecursion()) {
-					return growLR(pattern, pos, m, parentNode);
+					return growLeftRecursion(pattern, pos, m, parentNode);
 				}
 				else {
 					return ans;
@@ -70,7 +70,7 @@ public class PegParserContext extends ParserContext {
 		}
 	}
 	
-	public final PegObject growLR(String pattern, int pos, Memo m, PegObject parentNode) {
+	public final PegObject growLeftRecursion(String pattern, int pos, Memo m, PegObject parentNode) {
 		while(true) {
 			this.setPosition(pos);
 			Peg e = this.parser.getPattern(pattern);

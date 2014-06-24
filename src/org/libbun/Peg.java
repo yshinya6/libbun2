@@ -2,7 +2,6 @@ package org.libbun;
 
 public abstract class Peg {
 	public final static boolean _BackTrack = true;
-	
 	int       flag     = 0;
 	String    ruleName     = null;
 	boolean   debug    = false;
@@ -907,7 +906,6 @@ class PegCatch extends PegUnary {
 class PegIndent extends PegAtom {
 	PegIndent(String ruleName) {
 		super(ruleName, "indent");
-		// TODO Auto-generated constructor stub
 	}
 	@Override
 	protected Peg clone(String ns) {
