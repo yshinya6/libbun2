@@ -73,19 +73,22 @@ public class SourceContext {
 		return this.sourcePosition;
 	}
 
-	public final char nextChar() {
-		if(this.hasChar()) {
-			int pos = this.sourcePosition;
-			this.consume(1);
-			return this.charAt(pos);
-		}
-		return '\0';
-	}
-
-
 	public final boolean match(char ch) {
 		if(ch == this.getChar()) {
 			this.consume(1);
+			return true;
+		}
+		return false;
+	}
+
+	public final boolean match(String text) {
+		if(this.endPosition - this.sourcePosition >= text.length()) {
+			for(int i = 0; i < text.length(); i++) {
+				if(text.charAt(i) != this.charAt(this.sourcePosition + i)) {
+					return false;
+				}
+			}
+			this.consume(text.length());
 			return true;
 		}
 		return false;
@@ -99,6 +102,30 @@ public class SourceContext {
 		return false;
 	}
 
+	public final boolean match(Peg e) {
+		return e.simpleMatch(null, this);
+	}
+
+	public final boolean match(UniMap<Peg> pegMap, Peg e) {
+		return e.simpleMatch(pegMap, this);
+	}
+
+	public final String slice(Peg e) {
+		int pos = this.getPosition();
+		if(e.simpleMatch(null, this)) {
+			return this.source.substring(pos, this.sourcePosition);
+		}
+		return "";
+	}
+
+	public final String slice(UniMap<Peg> pegMap, Peg e) {
+		int pos = this.getPosition();
+		if(e.simpleMatch(pegMap, this)) {
+			return this.source.substring(pos, this.sourcePosition);
+		}
+		return "";
+	}
+	
 	public final int matchZeroMore(UniCharset charset) {
 		for(;this.hasChar(); this.consume(1)) {
 			char ch = this.charAt(this.sourcePosition);
@@ -115,7 +142,8 @@ public class SourceContext {
 			int pos = this.getPosition();
 			if(this.match('/') && this.match('/')) {
 				while(this.hasChar()) {
-					char ch = this.nextChar();
+					char ch = this.getChar();
+					this.consume(1);
 					if(ch == '\n') {
 						break;
 					}
@@ -172,116 +200,6 @@ public class SourceContext {
 		}
 		return false;
 	}
-
-	public final boolean match(String text) {
-		if(this.endPosition - this.sourcePosition >= text.length()) {
-			for(int i = 0; i < text.length(); i++) {
-				if(text.charAt(i) != this.charAt(this.sourcePosition + i)) {
-					return false;
-				}
-			}
-			this.consume(text.length());
-			return true;
-		}
-		return false;
-	}
-
-
-
-	////	public final BunToken newToken() {
-	////		return new BunToken(this.source, this.sourcePosition, this.sourcePosition);
-	////	}
-	////
-	////	public final BunToken newToken(int startIndex, int endIndex) {
-	////		return new BunToken(this.source, startIndex, endIndex);
-	////	}
-	//
-	//	public final boolean sliceNumber(BunToken token) {
-	//		char ch = this.nextChar();
-	//		if(LibBunSystem._IsDigit(ch)) {
-	//			for(;this.hasChar(); this.consume(1)) {
-	//				ch = this.charAt(this.sourcePosition);
-	//				if(!LibBunSystem._IsDigit(ch)) {
-	//					break;
-	//				}
-	//			}
-	//			token.endIndex = this.sourcePosition;
-	//			return true;
-	//		}
-	//		return false;
-	//	}
-	//
-	//	public final boolean isSymbolLetter(char ch) {
-	//		return (LibBunSystem._IsLetter(ch)  || ch == '_');
-	//	}
-	//
-	//	public final boolean sliceSymbol(BunToken token, String allowedChars) {
-	//		char ch = this.nextChar();
-	//		if(this.isSymbolLetter(ch) || allowedChars.indexOf(ch) != -1) {
-	//			for(;this.hasChar(); this.consume(1)) {
-	//				ch = this.charAt(this.sourcePosition);
-	//				if(!this.isSymbolLetter(ch) && !LibBunSystem._IsDigit(ch) && allowedChars.indexOf(ch) == -1) {
-	//					break;
-	//				}
-	//			}
-	//			token.endIndex = this.sourcePosition;
-	//			return true;
-	//		}
-	//		return false;
-	//	}
-
-//	public final boolean sliceMatchedText(SourceToken token, String text) {
-//		if(this.endPosition - this.sourcePosition >= text.length()) {
-//			for(int i = 0; i < text.length(); i++) {
-//				//System.out.println("i="+i+", '"+text.charAt(i) + "', '"+this.charAt(this.currentPosition + i));
-//				if(text.charAt(i) != this.charAt(this.sourcePosition + i)) {
-//					return false;
-//				}
-//			}
-//			this.consume(text.length());
-//			token.endIndex = this.sourcePosition;
-//			return true;
-//		}
-//		return false;
-//	}
-//
-//	public final boolean sliceQuotedTextUntil(SourceToken token, char endChar, String stopChars) {
-//		for(; this.hasChar(); this.consume(1)) {
-//			char ch = this.charAt(this.sourcePosition);
-//			if(ch == endChar) {
-//				token.endIndex = this.sourcePosition;
-//				return true;
-//			}
-//			if(stopChars.indexOf(ch) != -1) {
-//				break;
-//			}
-//			if(ch == '\\') {
-//				this.consume(1);  // skip next char;
-//			}
-//		}
-//		token.endIndex = this.sourcePosition;
-//		return false;
-//	}
-//
-//	public final boolean sliceUntilWhiteSpace(SourceToken token, String stopChars) {
-//		for(; this.hasChar(); this.consume(1)) {
-//			char ch = this.charAt(this.sourcePosition);
-//			if(ch == '\\') {
-//				this.consume(1);  // skip next char;
-//			}
-//			else {
-//				if(ch == ' ' || ch == '\t' || ch == '\n') {
-//					token.endIndex = this.sourcePosition;
-//					return true;
-//				}
-//				if(stopChars.indexOf(ch) != 0) {
-//					break;
-//				}
-//			}
-//		}
-//		token.endIndex = this.sourcePosition;
-//		return false;
-//	}
 
 	public final String formatErrorMessage(String msg1, String msg2) {
 		return this.source.formatErrorMessage(msg1, this.sourcePosition, msg2);

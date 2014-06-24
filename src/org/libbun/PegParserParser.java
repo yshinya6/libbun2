@@ -7,30 +7,27 @@ public class PegParserParser extends SourceContext {
 		super(source, startIndex, endIndex);
 		this.parser = parser;
 	}
-
 	public PegParserParser(PegParser parser, PegSource source) {
 		super(source, 0, source.sourceText.length());
 		this.parser = parser;
 	}
-
 	private PegParserParser subParser(int startIndex, int endIndex) {
 		return new PegParserParser(this.parser, this.source, startIndex, endIndex);
 	}
-
 	public boolean hasRule() {
 		this.skipComment(UniCharset.SemiColon);
 		return this.hasChar();
 	}
-
 	public void parseRule() {
 		if(this.match("import")) {
+			this.skipComment(UniCharset.WhiteSpaceNewLine);
 			this.parseImportFile();
 			return;
 		}
-		int startIndex = this.getPosition();
 		if(!this.match(UniCharset.Letter)) {
 			this.showErrorMessage("Is forgotten ; ?");
 		}
+		int startIndex = this.getPosition();
 		this.matchZeroMore(UniCharset.NameSymbol);
 		String label = this.substring(startIndex, this.getPosition());
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
@@ -41,11 +38,11 @@ public class PegParserParser extends SourceContext {
 		this.parser.setPegRule(label, parsed);
 	}
 
-	public void parseImportFile() {
-		int startIndex = this.getPosition();
+	private void parseImportFile() {
 		if(!this.match(UniCharset.Letter)) {
 			this.showErrorMessage("Is forgotten ; ?");
 		}
+		int startIndex = this.getPosition();
 		this.matchZeroMore(UniCharset.NameSymbol);
 		String label = this.substring(startIndex, this.getPosition());
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
@@ -78,7 +75,8 @@ public class PegParserParser extends SourceContext {
 	private int skipGroup(int openChar, int closeChar) {
 		int order = 1;
 		while(this.hasChar()) {
-			char ch = this.nextChar();
+			char ch = this.getChar();
+			this.consume(1);
 			if(ch == closeChar) {
 				order = order - 1;
 				if(order == 0) {
