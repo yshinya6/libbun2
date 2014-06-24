@@ -17,11 +17,11 @@ public class DisableMemoPegParserContext extends ParserContext {
 		PegObject childNode;
 	}
 
-	public DisableMemoPegParserContext(PegParser parser, PegSource source) {
+	public DisableMemoPegParserContext(PegRuleSet parser, PegSource source) {
 		this(parser, source, 0, source.sourceText.length());
 	}
 
-	public DisableMemoPegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
+	public DisableMemoPegParserContext(PegRuleSet parser, PegSource source, int startIndex, int endIndex) {
 		super(parser, source, startIndex, endIndex);
 		this.loadPegDefinition(this.parser.pegMap);
 	}

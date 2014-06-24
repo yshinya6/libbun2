@@ -26,11 +26,11 @@ public class SimpleParserContext extends ParserContext {
 	int memoMiss = 0;
 	int memoSize = 0;
 
-	public SimpleParserContext(PegParser parser, PegSource source) {
+	public SimpleParserContext(PegRuleSet parser, PegSource source) {
 		this(parser, source, 0, source.sourceText.length());
 	}
 
-	public SimpleParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
+	public SimpleParserContext(PegRuleSet parser, PegSource source, int startIndex, int endIndex) {
 		super(parser, source, startIndex, endIndex);
 		this.loadPegDefinition(this.parser.pegMap);
 	}

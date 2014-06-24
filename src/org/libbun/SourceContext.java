@@ -36,6 +36,10 @@ public class SourceContext {
 		}
 		this.sourcePosition = pos;
 	}
+	
+	public String substring(int startIndex, int endIndex) {
+		return this.source.substring(startIndex, endIndex);
+	}
 
 	@Override
 	public final String toString() {
@@ -217,6 +221,7 @@ public class SourceContext {
 		System.out.println(this.source.formatErrorMessage("error", this.sourcePosition, msg));
 		Main._Exit(1, msg);
 	}
+
 
 }
 

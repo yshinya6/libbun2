@@ -1,10 +1,10 @@
 package org.libbun;
 
 public abstract class ParserContext extends SourceContext {
-	public  final PegParser    parser;
+	public  final PegRuleSet    parser;
 	public  int objectCount = 0;
 
-	public ParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
+	public ParserContext(PegRuleSet parser, PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 		this.parser = parser;
 	}

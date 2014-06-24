@@ -11,7 +11,7 @@ public class PegParserContext extends ParserContext {
 	int memoMiss = 0;
 	int memoSize = 0;
 
-	public PegParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
+	public PegParserContext(PegRuleSet parser, PegSource source, int startIndex, int endIndex) {
 		super(parser, source, startIndex, endIndex);
 	}
 

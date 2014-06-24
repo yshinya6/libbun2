@@ -1,14 +1,14 @@
 package org.libbun;
 
 public class Namespace extends SymbolTable {
-	public UniMap<PegParser> parserMap;
+	public UniMap<PegRuleSet> parserMap;
 	public UniArray<String> exportSymbolList;
 	public BunDriver  driver;
 
-	public Namespace(PegParser parser, BunDriver driver) {
+	public Namespace(PegRuleSet parser, BunDriver driver) {
 		super(null);
 		this.root = this;
-		this.parserMap = new UniMap<PegParser>();
+		this.parserMap = new UniMap<PegRuleSet>();
 		this.parserMap.put("main", parser);
 		this.driver = driver;
 	}
@@ -29,7 +29,7 @@ public class Namespace extends SymbolTable {
 		if(lang == null) {
 			lang = this.guessLang(source.fileName, "bun");
 		}
-		PegParser parser = this.getParser(lang);
+		PegRuleSet parser = this.getParser(lang);
 		return parser.newContext(source);
 	}
 
@@ -43,10 +43,10 @@ public class Namespace extends SymbolTable {
 		return defaultValue;
 	}
 
-	public final PegParser getParser(String lang) {
-		PegParser p = this.parserMap.get(lang);
+	public final PegRuleSet getParser(String lang) {
+		PegRuleSet p = this.parserMap.get(lang);
 		if(p == null) {
-			p = new PegParser();
+			p = new PegRuleSet();
 			p.loadPegFile("lib/peg/" + lang + ".peg");
 			this.parserMap.put(lang, p);
 		}

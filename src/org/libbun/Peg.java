@@ -16,10 +16,10 @@ public abstract class Peg {
 
 	protected abstract Peg clone(String ns);
 	protected abstract void stringfy(UniStringBuilder sb, boolean debugMode);
-	protected abstract void makeList(PegParser parser, UniArray<String> list, UniMap<String> set);
+	protected abstract void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set);
 	public abstract boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source);
 	protected abstract PegObject lazyMatch(PegObject inNode, ParserContext context);
-	protected abstract boolean verify(PegParser parser);
+	protected abstract boolean verify(PegRuleSet parser);
 	public abstract void accept(PegVisitor visitor);
 
 	public int size() {
@@ -138,8 +138,14 @@ public abstract class Peg {
 	public final static Peg newZeroMore(Peg e) {
 		return new PegZeroMore(null, e);
 	}
+	public final static Peg newZeroMore(Peg ... elist) {
+		return new PegZeroMore(null, newSequence(elist));
+	}
 	public final static Peg newOneMore(Peg e) {
 		return new PegOneMore(null, e);
+	}
+	public final static Peg newOneMore(Peg ... elist) {
+		return new PegOneMore(null, newSequence(elist));
 	}
 	public final static Peg newSequence(Peg ... elist) {
 		PegSequence l = new PegSequence();
@@ -155,6 +161,10 @@ public abstract class Peg {
 		}
 		return l;
 	}
+
+	public static Peg newNot(Peg e) {
+		return new PegNot(null, e);
+	}
 }
 
 abstract class PegAtom extends Peg {
@@ -168,7 +178,7 @@ abstract class PegAtom extends Peg {
 		sb.append(this.symbol);
 	}	
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		return true;
 	}
 	@Override
@@ -180,7 +190,7 @@ abstract class PegAtom extends Peg {
 		return this;  // just avoid NullPointerException
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 	}
 
 }
@@ -316,7 +326,7 @@ class PegLabel extends PegAtom {
 		return context.parseRightPegNode(left, this.symbol);
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 		if(!set.hasKey(this.symbol)) {
 			Peg next = parser.getDefinedPeg(this.symbol);
 			list.add(this.symbol);
@@ -325,7 +335,7 @@ class PegLabel extends PegAtom {
 		}
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		if(!parser.hasPattern(this.symbol)) {
 			Main._PrintLine(this.source.formatErrorMessage("error", this.sourcePosition, "undefined label: " + this.symbol));
 			return false;
@@ -373,11 +383,11 @@ abstract class PegUnary extends Peg {
 		}
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 		this.innerExpr.makeList(parser, list, set);
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		return this.innerExpr.verify(parser);
 	}
 }
@@ -634,13 +644,13 @@ abstract class PegList extends Peg {
 		}
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 		for(int i = 0; i < this.size(); i++) {
 			this.get(i).makeList(parser, list, set);
 		}
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		boolean noerror = true;
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
@@ -806,7 +816,7 @@ class PegChoice extends PegList {
 		return node;
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		boolean noerror = true;
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
@@ -893,7 +903,7 @@ class PegObjectLabel extends PegAtom {
 		return inNode;
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		parser.addObjectLabel(this.symbol);
 		return true;
 	}
@@ -1074,7 +1084,7 @@ class PegIndent extends PegAtom {
 		return inNode;
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		return true;
 	}
 	@Override

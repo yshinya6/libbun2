@@ -148,7 +148,7 @@ public class Main {
 
 	public final static void main(String[] args) {
 		parseCommandArgument(args);
-		PegParser p = new PegParser();
+		PegRuleSet p = new PegRuleSet();
 		p.loadPegFile(LanguagePeg);
 		BunDriver driver = loadDriver(DriverName);
 		Namespace gamma = new Namespace(p, driver);
@@ -253,7 +253,7 @@ public class Main {
 						line = line.substring(loc+1);
 					}
 					else {
-						PegParser p = gamma.root.getParser("main");
+						PegRuleSet p = gamma.root.getParser("main");
 						p.show(line.substring(1));
 						startPoint = null;
 					}

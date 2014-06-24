@@ -1,13 +1,16 @@
 package org.libbun;
 
 public class PegParserParser extends SourceContext {
-	PegParser parser;
+	PegRuleSet parser;
 	boolean   isfirstSingleExpr = true;
-	public PegParserParser(PegParser parser, PegSource source, int startIndex, int endIndex) {
+//	public final static Peg RuleName = Peg.newOneMore(Peg.newCharacter("A-Za-z0-9_"));
+//	public final static Peg WhiteSpace = Peg.newOneMore(Peg.newCharacter(" \t\r\n"));
+	
+	public PegParserParser(PegRuleSet parser, PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 		this.parser = parser;
 	}
-	public PegParserParser(PegParser parser, PegSource source) {
+	public PegParserParser(PegRuleSet parser, PegSource source) {
 		super(source, 0, source.sourceText.length());
 		this.parser = parser;
 	}
@@ -24,10 +27,10 @@ public class PegParserParser extends SourceContext {
 			this.parseImportFile();
 			return;
 		}
+		int startIndex = this.getPosition();
 		if(!this.match(UniCharset.Letter)) {
 			this.showErrorMessage("Is forgotten ; ?");
 		}
-		int startIndex = this.getPosition();
 		this.matchZeroMore(UniCharset.NameSymbol);
 		String label = this.substring(startIndex, this.getPosition());
 		this.skipComment(UniCharset.WhiteSpaceNewLine);
@@ -333,8 +336,5 @@ public class PegParserParser extends SourceContext {
 		return false;
 	}
 	
-	private String substring(int startIndex, int endIndex) {
-		return this.source.substring(startIndex, endIndex);
-	}
 
 }
