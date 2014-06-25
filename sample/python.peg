@@ -98,7 +98,7 @@ ReturnStmt
     ;
 
 Block
-    = NL+ << (indent WS* Stmt@ NL?)+ #block>>
+    = WS* EOS+ << (indent WS* Stmt@ NL?)+ #block>>
     / WS* << Stmt@ #block>>
     ;
 
@@ -173,8 +173,22 @@ Unary
 
 Selector
     = '.' Symbol@ #field
-    / '[' WS* Expr@ WS* ']' #index
+    / '[' WS* (Slice / Expr)@ WS* ']' #index
     / '(' << _* ( _* Expr@ ( _* ',' _* Expr@ )* )? #args >>@ ')'  #apply
+    ;
+
+Slice
+    = << SliceBegin@ WS* ":" WS* SliceEnd@ #slice >>
+    / << SliceBegin@ WS* ":" #slice >>
+    / << ":" SliceEnd@ #slice >>
+    ;
+
+SliceBegin
+    = << Expr@ #sliceBegin >>
+    ;
+
+SliceEnd
+    = << Expr@ #sliceEnd >>
     ;
 
 Value
