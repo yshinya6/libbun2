@@ -44,7 +44,12 @@ Raise
     ;
 
 IfStmt
-    = <<"if" WS+ Expr@ WS* ":" Block@ (indent _* "else" WS* ":" NL+ Block@)? #if>>
+    = <<"if" WS+ Expr@ WS* ":" Block@ (indent WS* "else" WS* ":" Block@)? #if >>
+    / <<"if" WS+ Expr@ WS* ":" Block@ (Elif@)* (indent WS* "else" WS* ":" Block@)? #if >>
+    ;
+
+Elif
+    = << indent WS* "elif" WS+ Expr@ WS* ":" Block@ #if >>
     ;
 
 WhileStmt
