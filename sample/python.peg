@@ -12,7 +12,9 @@ Stmt
     / ContinueStmt EOS?
     / DefineFunction EOS?
     / DefineClass EOS?
+    / Assert EOS?
     / Print EOS?
+    / Raise EOS?
     / With EOS?
     / Expr EOS?
     / EOS+
@@ -29,8 +31,16 @@ With
     = <<"with" WS+ Expr@ WS+ "as" WS+ Symbol@ WS* ":" NL+ Block@ #with>>
     ;
 
+Assert
+    = <<"assert" WS+ Expr@ #assert>>
+    ;
+
 Print
     = <<"print" WS+ Expr@ #print >>
+    ;
+
+Raise
+    = <<"raise" WS+ Expr@ #throw >>
     ;
 
 IfStmt
@@ -59,11 +69,15 @@ DefineFunction
     ;
 
 DefineClass
-    = <<"class" WS+ Symbol@ (WS* "(" (Extend@)? WS* ")" )? WS* ":" NL+ ClassBlock@ #class>>
+    = <<"class" WS+ Symbol@ (WS* "(" WS* (Extend@)? WS* ")" )? WS* ":" ClassBlock@ #class>>
     ;
 
 Extend
-    = << Symbol@ #extend >>
+    = << ExtendContent@ #extend >>
+    ;
+
+ExtendContent
+    = Symbol@
     ;
 
 BreakStmt
@@ -84,11 +98,12 @@ Block
     ;
 
 ClassBlock
-    = << (indent WS* ClassStmt@ NL?)+ #block>>;
+    = NL+ << (indent WS* ClassStmt@ NL?)+ #block>>;
 
 ClassStmt
-    = DefineFunction
-    / Assignment
+    = Stmt
+    //= DefineFunction
+    /// Expr
     ;
 
 Expr
@@ -154,12 +169,13 @@ Unary
 Selector
     = '.' Symbol@ #field
     / '[' WS* Expr@ WS* ']' #index
-    / '(' << _* ( Expr@ ( _* ',' _* Expr@ )* )? #args >>@ ')'  #apply
+    / '(' << _* ( _* Expr@ ( _* ',' _* Expr@ )* )? #args >>@ ')'  #apply
     ;
 
 Value
-    = Symbol
-    / StringLiteral
+    //= << StringLiteral@ (_* StringLiteral@)+ #strings >>
+    = StringLiteral
+    / Symbol
     / Number
     / ArrayLiteral
     / MapLiteral
@@ -186,7 +202,11 @@ MapContent
     = << (StringLiteral / Symbol)@ _* ":" _* Expr@ #keyvalue>>;
 
 Params
-    = << Symbol@? (_* "," _* Symbol@)* _* #params>>;
+    = << Param@? (_* "," _* Param@)* _* #params>>;
+
+Param
+    = << Symbol@ (WS* '=' WS* Expr@)? #param >>
+    ;
 
 Args
     = << Expr@? (_* "," _* Expr@)* _* #args>>;
@@ -199,8 +219,10 @@ Symbol
     ;
 
 StringLiteral
-    = '"' << ('\\"' / !'"' .)* #string >> '"'
-    / "'" << ("\\'" / !"'" .)* #string >> "'"
+    = [bru]? '"""' << ('\\"' / !'"""' .)@*  #string >> '"""'
+    / [bru]? "'''" << ("\\'" / !"'''" .)@*  #string >> "'''"
+    / [bru]? '"' << ('\\"' / !'"' .)@* #string >> '"'
+    / [bru]? "'" << ("\\'" / !"'" .)@* #string >> "'"
     ;
 
 Number
