@@ -1,0 +1,47 @@
+parsed:
+#toplevel {            ## by peg : null
+   #assign {            ## by peg : null
+      #name: a   ## by peg : null
+      #array {            ## by peg : null
+         #integer: 1   ## by peg : null
+         #integer: 2   ## by peg : null
+         #integer: 3   ## by peg : null
+      }
+   }
+   #assign {            ## by peg : null
+      #name: b   ## by peg : null
+      #index {            ## by peg : null
+         #name: a   ## by peg : null
+         #slice {            ## by peg : null
+            #sliceBegin {            ## by peg : null
+               #integer: 1   ## by peg : null
+            }
+         }
+      }
+   }
+   #assign {            ## by peg : null
+      #name: c   ## by peg : null
+      #index {            ## by peg : null
+         #name: a   ## by peg : null
+         #slice {            ## by peg : null
+            #sliceBegin {            ## by peg : null
+               #integer: 0   ## by peg : null
+            }
+            #sliceEnd {            ## by peg : null
+               #integer: 2   ## by peg : null
+            }
+         }
+      }
+   }
+   #assign {            ## by peg : null
+      #name: d   ## by peg : null
+      #index {            ## by peg : null
+         #name: a   ## by peg : null
+         #slice {            ## by peg : null
+            #sliceEnd {            ## by peg : null
+               #integer: 1   ## by peg : null
+            }
+         }
+      }
+   }
+}

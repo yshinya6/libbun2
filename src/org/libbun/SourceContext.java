@@ -185,8 +185,8 @@ public class SourceContext {
 	public final boolean matchIndentSize(String text) {
 		int indentSize = 0;
 		if(this.endPosition - this.sourcePosition >= text.length()) {
-			for(int i = 0; i < this.endPosition; i++) {
-				char ch = this.charAt(this.sourcePosition + i);
+			for(int i = this.sourcePosition; i < this.endPosition; i++) {
+				char ch = this.charAt(i);
 				if(ch != ' ' && ch != '\t') {
 					break;
 				}

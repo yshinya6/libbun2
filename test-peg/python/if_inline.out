@@ -1,0 +1,15 @@
+parsed:
+#toplevel {            ## by peg : null
+   #if {            ## by peg : null
+      #lt {            ## by peg : null
+         #integer: 3   ## by peg : null
+         #integer: 2   ## by peg : null
+      }
+      #block {            ## by peg : null
+         #assign {            ## by peg : null
+            #name: a   ## by peg : null
+            #integer: 3   ## by peg : null
+         }
+      }
+   }
+}
