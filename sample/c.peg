@@ -123,7 +123,8 @@ DeclarationList
 Declaration = DeclarationNoAttribute (Attribute / Assembler)@? SEMI #declaration;
 
 DeclarationNoAttribute
-    = <<DeclarationSpecifiers@ InitDeclaratorList@? ##DeclarationNoAttribute>> addtype;
+    = << DeclarationSpecifiers@ InitDeclaratorList@? #declarationnoattribute >>
+    ;
 
 DeclarationSpecifiers
     = << ( StorageClassSpecifier
@@ -136,13 +137,13 @@ DeclarationSpecifiers
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )* ##DeclarationSpecifier >>
+       )* #declarationspecifier >>
     / << ( StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
       / Attribute
-      )@+ ##DeclarationSpecifier >>
+      )@+ #declarationspecifier >>
     ;
 
 InitDeclaratorList
@@ -204,7 +205,7 @@ SpecifierQualifierList
     ;
 
 StructDeclaratorList
-    = StructDeclarator <<@ (COMMA StructDeclarator)@ #structdeclaratorlist >>*
+    = << StructDeclarator@ (COMMA StructDeclarator@)* #structdeclaratorlist >>
     ;
 
 StructDeclarator
@@ -306,7 +307,7 @@ DirectAbstractDeclarator
     ;
 
 TypedefName
-    = << Identifier@ #typedefname >> ctype
+    = << Identifier@ #typedefname >>
     ;
 
 Initializer
