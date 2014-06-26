@@ -292,7 +292,7 @@ class PegLabel extends PegAtom {
 	protected boolean verify(PegRuleSet parser) {
 		if(!parser.hasRule(this.symbol)) {
 			Main._PrintLine(this.source.formatErrorMessage("error", this.sourcePosition, "undefined label: " + this.symbol));
-			return false;
+			parser.foundError = true;
 		}
 		return true;
 	}

@@ -103,6 +103,11 @@ public final class PegRuleSet {
 		System.out.println("WHAT? parsed: " + node);		
 	}
 	private Peg toPeg(PegObject node) {
+		Peg e = this.toPegImpl(node);
+		e.setSource(node.source, node.startIndex);
+		return e;
+	}	
+	private Peg toPegImpl(PegObject node) {
 		if(node.is("#name")) {
 			return new PegLabel(null, node.getText());
 		}
@@ -171,7 +176,10 @@ public final class PegRuleSet {
 			}
 			return new PegSetter(null, toPeg(node.get(0)), index);
 		}
-		System.out.println("undefined peg: " + node);
+		if(node.is("#catch")) {
+			return new PegCatch(null, toPeg(node.get(0)));
+		}
+		Main._Exit(1, "undefined peg: " + node);
 		return null;
 	}
 //
@@ -345,7 +353,7 @@ public final class PegRuleSet {
 //		  / RuleName Setter?
 //		  ;
 		Peg _SetterTerm = choice(
-			seq(s("("), n("Expr"), s(")"), opt(n("Setter"))),
+			seq(s("("), opt(n("_")), n("Expr"), opt(n("_")), s(")"), opt(n("Setter"))),
 			seq(O(s("<<"), choice(seq(s("@"), c(" \\t\\n"), L("#newjoin")), seq(s(""), L("#new"))), 
 					opt(n("_")), set(n("Expr")), opt(n("_")), s(">>")), opt(n("Setter"))),
 			seq(n("RuleName"), opt(n("Setter")))
@@ -370,8 +378,13 @@ public final class PegRuleSet {
 //	  = << ('&' #and / '!' #not) SuffixTerm@ >> / SuffixTerm 
 //	  ;
 		this.setRule("Predicate",  choice(
-			O(choice(seq(s("&"), L("#and")),seq(s("!"), L("#not"))), set(n("SuffixTerm"))), n("SuffixTerm")
+			O(choice(seq(s("&"), L("#and")),seq(s("!"), L("#not"))), set(n("SuffixTerm"))), 
+			n("SuffixTerm")
 		));
+//  Catch
+//    = << 'catch' Expr@ >>
+//    ;
+		Peg Catch = O(s("catch"), n("_"), L("#catch"), set(n("Expr")));
 //	Sequence 
 //	  = Predicated <<@ (_ Predicated@)+ #seq >>?
 //	  ;
@@ -379,7 +392,7 @@ public final class PegRuleSet {
 //	Choice
 //	  = Sequence <<@ _? ('/' _? Sequence@)+ #choice >>?
 //	  ;
-		Peg _Choice = seq(n("Sequence"), opt(LO( L("#choice"), opt(n("_")), one(s("/"), opt(n("_")), set(n("Sequence"))))));
+		Peg _Choice = seq(n("Sequence"), opt(LO( L("#choice"), one(opt(n("_")), s("/"), opt(n("_")), set(choice(Catch, n("Sequence")))))));
 //	Expr
 //	  = Choice
 //	  ;
