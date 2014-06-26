@@ -79,7 +79,7 @@ DefineClass
     ;
 
 Extend
-    = << ExtendContent@ #extend >>
+    = << ExtendContent@ #super >>
     ;
 
 ExtendContent

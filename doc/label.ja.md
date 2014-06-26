@@ -520,6 +520,35 @@ module A {
 }
 ```
 
+### Try
+
+* 入力例
+
+```
+try {
+	1 + 1
+} catch(e) {
+	b
+}
+```
+
+* ラベル
+
+```
+#try {
+	#block {
+		#add {
+			#integer: 1
+			#integer: 1
+		}
+	}
+	#name: e
+	#block {
+		#name: b
+	}
+}
+```
+
 ### インターフェース
 
 TODO
