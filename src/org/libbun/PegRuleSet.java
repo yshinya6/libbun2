@@ -8,6 +8,7 @@ public final class PegRuleSet {
 
 	public PegRuleSet() {
 		this.pegMap = new UniMap<Peg>();
+		this.pegMap.put("indent", new PegIndent(null));  // default rule
 	}
 
 	public final boolean hasRule(String ruleName) {
@@ -77,17 +78,16 @@ public final class PegRuleSet {
 			p.initMemo();
 			PegObject node = p.parseNode("TopLevel");
 			if(node.isFailure()) {
-				System.out.println("FAILED: " + node);
+				Main._Exit(1, "FAILED: " + node);
 				break;
 			}
-			parse(node);
+			parse(p, node);
 		}
 		this.check();
 		return this.foundError;
 	}
 	
-	private void parse(PegObject node) {
-//		System.out.println("parsed: " + node);
+	private void parse(ParserContext context, PegObject node) {
 		if(node.is("#rule")) {
 			String ruleName = node.textAt(0, "");
 			Peg e = toPeg(node.get(1));
@@ -95,6 +95,9 @@ public final class PegRuleSet {
 			return;
 		}
 		if(node.is("#import")) {
+			String ruleName = node.textAt(0, "");
+			String fileName = context.source.checkFileName(node.textAt(1, ""));
+			this.importRuleFromFile(ruleName, fileName);
 			return;
 		}
 		System.out.println("WHAT? parsed: " + node);		
@@ -161,7 +164,12 @@ public final class PegRuleSet {
 			return o;
 		}
 		if(node.is("#setter")) {
-			return new PegSetter(null, toPeg(node.get(0)), -1);
+			int index = -1;
+			String indexString = node.getText();
+			if(indexString.length() > 0) {
+				index = (int)UniCharset._ParseInt(indexString);
+			}
+			return new PegSetter(null, toPeg(node.get(0)), index);
 		}
 		System.out.println("undefined peg: " + node);
 		return null;
@@ -177,7 +185,7 @@ public final class PegRuleSet {
 //		return true;
 //	}
 
-	void importPeg(String label, String fileName) {
+	void importRuleFromFile(String label, String fileName) {
 		if(Main.PegDebuggerMode) {
 			System.out.println("importing " + fileName);
 		}
@@ -380,12 +388,15 @@ public final class PegRuleSet {
 //	  = << RuleName@ _? '=' _? Expr@ #rule>>
 //	  ;
 		this.setRule("Rule", O(L("#rule"), set(n("RuleName")), opt(n("_")), s("="), opt(n("_")), set(n("Expr"))));
+//	Import
+//    = << 'import' _ RuleName@ from String@ #import>>
+//		  ;
+		this.setRule("Import", O(s("import"), L("#import"), n("_"), set(n("RuleName")), n("_"), s("from"), n("_"), set(_String)));
 //	TopLevel   
 //	  =  Rule _? ';'
 //	  ;
 //		this.setRule("TopLevel", seq(n("Rule"), opt(n("_")), s(";"), opt(n("_"))));
-		this.setRule("TopLevel", seq(opt(n("_")), 
-			choice(seq(n("Rule"), opt(n("_")), s(";")), seq(s("import"), n("_"), n("RuleName"), n("_"), s("from"), n("_"), n("RuleName")))));
+		this.setRule("TopLevel", seq(opt(n("_")), choice(n("Rule"), n("Import")), opt(n("_")), s(";")));
 		this.check();
 		return this;
 	}

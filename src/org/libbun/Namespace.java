@@ -26,6 +26,30 @@ public class Namespace extends SymbolTable {
 			this.setSymbol(symbol, ns.getSymbol(symbol));
 		}
 	}
+	
+
+	public final PegRuleSet loadPegFile(String ruleNs, String fileName) {
+		PegRuleSet rules = this.ruleMap.get(fileName);
+		if(rules == null) {
+			rules = new PegRuleSet();
+			rules.loadPegFile(fileName);
+			this.ruleMap.get(fileName);
+		}
+		if(ruleNs != null) {
+			this.ruleMap.put(ruleNs, rules);
+		}
+		return rules;
+	}
+	
+	public final PegRuleSet getRuleSet(String ruleNs) {
+		PegRuleSet p = this.ruleMap.get(ruleNs);
+		if(p == null) {
+			p = new PegRuleSet();
+			p.loadPegFile("lib/peg/" + ruleNs + ".peg");
+			this.ruleMap.put(ruleNs, p);
+		}
+		return p;
+	}
 
 	public void initParserRuleSet(ParserContext context, String lang) {
 		if(lang == null) {
@@ -45,15 +69,6 @@ public class Namespace extends SymbolTable {
 		return defaultValue;
 	}
 
-	public final PegRuleSet getRuleSet(String lang) {
-		PegRuleSet p = this.ruleMap.get(lang);
-		if(p == null) {
-			p = new PegRuleSet();
-			p.loadPegFile("lib/peg/" + lang + ".peg");
-			this.ruleMap.put(lang, p);
-		}
-		return p;
-	}
 
 
 

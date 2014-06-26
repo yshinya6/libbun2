@@ -152,10 +152,9 @@ public class Main {
 
 	public final static void main(String[] args) {
 		parseCommandArgument(args);
-		PegRuleSet p = new PegRuleSet();
-		p.loadPegFile(LanguagePeg);
 		BunDriver driver = loadDriver(DriverName);
 		Namespace gamma = new Namespace(driver);
+		gamma.loadPegFile("main", LanguagePeg);
 		driver.initTable(gamma);
 		if(InputFileName != null) {
 			loadScript(gamma, driver, InputFileName);
