@@ -141,6 +141,14 @@ public class PegParserParser extends SourceContext {
 			right = new PegIndent(ruleName);
 			return this.parsePostfix(ruleName, right);
 		}
+		if(this.match("ctype")) {
+			right = new PegCType(ruleName, false);
+			return this.parsePostfix(ruleName, right);
+		}
+		if(this.match("addtype")) {
+			right = new PegCType(ruleName, true);
+			return this.parsePostfix(ruleName, right);
+		}
 		if(this.match(UniCharset.Letter)) {
 			int startIndex = this.getPosition() - 1;
 			int endIndex = this.matchZeroMore(UniCharset.NameSymbol);
