@@ -135,44 +135,6 @@ public class SimpleParserContext extends ParserContext {
 		}
 		return left;
 	}
-
-	// memo has bugs
-	public final PegObject parsePegNode2(PegObject parentNode, String pattern) {
-		int pos = this.getPosition();
-		String key = pattern + ":" + pos;
-		SimpleMemo m = this.memoMap.get(key, null);
-		if(m == null) {
-			m = new SimpleMemo();
-			m.nextPosition = this.getPosition();
-			m.result = foundFailureNode;
-			this.memoMap.put(key, m);
-			this.memoMiss = this.memoMiss + 1;
-			Peg e = this.getRule(pattern);
-			PegObject ans = e.debugMatch(parentNode, this);
-			if(pos == this.getPosition() && !ans.isFailure()) {
-				this.memoMap.remove(key);
-				return ans;
-			}
-			else {
-				m.result = ans;
-				m.nextPosition = this.getPosition();
-//				if(getLrExistence(pattern)) {
-//					return growLR(pattern, pos, m, parentNode);
-//				}
-//				else {
-				return ans;
-//				}
-			}
-		}
-		else {
-			this.memoHit = this.memoHit + 1;
-			this.sourcePosition = m.nextPosition;
-			if(m.result == null) {
-				return parentNode;
-			}
-			return m.result;
-		}
-	}
 	
 	public final int getStackPosition(Peg trace) {
 		this.pushImpl(trace, null, '\0', null, 0, null);
@@ -217,6 +179,7 @@ public class SimpleParserContext extends ParserContext {
 				}
 			}
 		}
+		this.popBack(stack, false);
 	}
 
 	public void popBack(int stackPostion, boolean backtrack) {

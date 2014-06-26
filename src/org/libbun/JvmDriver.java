@@ -1203,7 +1203,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	public static class MapImpl {
 		private final Map<String, Object> valueMap;
 		public MapImpl(String[] keys, Object[] values) {
-			this.valueMap = new LinkedHashMap<>();
+			this.valueMap = new LinkedHashMap<String, Object>();
 			int size = keys.length;
 			for(int i = 0; i < size; i++) {
 				this.valueMap.put(keys[i], values[i]);

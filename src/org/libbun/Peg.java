@@ -966,6 +966,7 @@ class PegNewObject extends PegList {
 			PegObject node = e.debugMatch(newnode, context);
 			if(node.isFailure()) {
 				//System.out.println("** failed[" + pos + "] " + this);
+				context.popBack(stack, true);
 				return node;
 			}
 //			if(node != newnode) {

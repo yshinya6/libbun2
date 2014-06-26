@@ -424,7 +424,7 @@ public class JvmIndyDriver extends JvmDriver {
 		return true;
 	}
 
-	private final static Map<Class<?>, vTable> vTableMap = new HashMap<>();
+	private final static Map<Class<?>, vTable> vTableMap = new HashMap<Class<?>, vTable>();
 
 	private static MethodHandle lookupMethodHandle(Class<?> recvClass, String methodName) throws Throwable {
 		if(recvClass == null || recvClass.equals(Object.class)) {
@@ -453,7 +453,7 @@ public class JvmIndyDriver extends JvmDriver {
 		 * @throws Throwable 
 		 */
 		private vTable(Class<?> recvClass) throws Throwable {
-			this.mhMap = new HashMap<>();
+			this.mhMap = new HashMap<String, MethodHandle>();
 			Lookup lookup = MethodHandles.lookup();
 			java.lang.reflect.Method[] methods = recvClass.getMethods();
 			for(java.lang.reflect.Method method : methods) {
@@ -498,7 +498,7 @@ public class JvmIndyDriver extends JvmDriver {
 		throw new NoSuchMethodException();
 	}
 
-	private final static Map<Class<?>, MethodHandle> funcMap = new HashMap<>();
+	private final static Map<Class<?>, MethodHandle> funcMap = new HashMap<Class<?>, MethodHandle>();
 
 	public static CallSite bsmFunc(MethodHandles.Lookup lookup, String methodName, MethodType type) throws Throwable {
 		CachedCallSite callSite = new CachedCallSite(methodName, lookup, type);
