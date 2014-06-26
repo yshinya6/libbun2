@@ -31,7 +31,7 @@ parsed:
    }
    #class {            ## by peg : null
       #name: B   ## by peg : null
-      #extend {            ## by peg : null
+      #super {            ## by peg : null
          #name: A   ## by peg : null
       }
       #block {            ## by peg : null
