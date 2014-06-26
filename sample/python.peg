@@ -259,9 +259,10 @@ FloatLiteral
     / Digits (("." (Digits Exponent?)?) / Exponent);
 
 IntegerLiteral
-    = "0" [xX] [0-9a-fA-F]+
-    / "0" Digits
-    / [1-9] Digits?;
+    = "0" [xX] [0-9a-fA-F]+      // hexadecimal integer
+    / "0" [0-7]+                 // octal integer
+    / "0"                        // zero
+    / [1-9] Digits?;             // decimal integer
 
 Number
     = << ('-' WS* / '+' WS*)? FloatLiteral   #float >>
