@@ -249,9 +249,24 @@ StringLiteral
     / [bru]? "'" << ("\\'" / !"'" .)@* #string >> "'"
     ;
 
+Digits = [0-9]+;
+
+Exponent = [eE] [+-]? Digits;
+
+FloatLiteral
+    = "." Digits Exponent?
+    / Digits "." Exponent
+    / Digits (("." (Digits Exponent?)?) / Exponent);
+
+IntegerLiteral
+    = "0" [xX] [0-9a-fA-F]+      // hexadecimal integer
+    / "0" [0-7]+                 // octal integer
+    / "0"                        // zero
+    / [1-9] Digits?;             // decimal integer
+
 Number
-    = << ('-' WS* / '+' WS*)?('0'/[1-9][0-9]*) '.' [0-9]+ #float >>
-    / << ('-' WS* / '+' WS*)?('0'/[1-9][0-9]*) #integer>>
+    = << ('-' WS* / '+' WS*)? FloatLiteral   #float >>
+    / << ('-' WS* / '+' WS*)? IntegerLiteral #integer>>
     ;
 
 Asterisk
