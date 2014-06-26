@@ -38,7 +38,7 @@ public class PegParserParser extends SourceContext {
 			this.showErrorMessage("Is forgotten ; ?");
 		}
 		Peg parsed = this.parsePegExpr(label);
-		this.parser.setPegRule(label, parsed);
+		this.parser.setRule(label, parsed);
 	}
 
 	private void parseImportFile() {

@@ -123,48 +123,6 @@ public abstract class Peg {
 		}
 	}
 	
-	public final static Peg newString(String token) {
-		return new PegString(null, token);
-	}
-	public final static Peg newAny() {
-		return new PegAny(null);
-	}
-	public final static Peg newCharacter(String charSet) {
-		return new PegCharacter(null, charSet);
-	}
-	public final static Peg newOptional(Peg e) {
-		return new PegOptional(null, e);
-	}
-	public final static Peg newZeroMore(Peg e) {
-		return new PegZeroMore(null, e);
-	}
-	public final static Peg newZeroMore(Peg ... elist) {
-		return new PegZeroMore(null, newSequence(elist));
-	}
-	public final static Peg newOneMore(Peg e) {
-		return new PegOneMore(null, e);
-	}
-	public final static Peg newOneMore(Peg ... elist) {
-		return new PegOneMore(null, newSequence(elist));
-	}
-	public final static Peg newSequence(Peg ... elist) {
-		PegSequence l = new PegSequence();
-		for(Peg e : elist) {
-			l.list.add(e);
-		}
-		return l;
-	}
-	public final static Peg newChoice(Peg ... elist) {
-		PegSequence l = new PegSequence();
-		for(Peg e : elist) {
-			l.list.add(e);
-		}
-		return l;
-	}
-
-	public static Peg newNot(Peg e) {
-		return new PegNot(null, e);
-	}
 }
 
 abstract class PegAtom extends Peg {
@@ -319,16 +277,12 @@ class PegLabel extends PegAtom {
 		return false;
 	}
 	@Override protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
-		PegObject left = context.parsePegNode(parentNode, this.symbol);
-		if(left.isFailure()) {
-			return left;
-		}
-		return context.parseRightPegNode(left, this.symbol);
+		return context.parsePegObject(parentNode, this.symbol);
 	}
 	@Override
 	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 		if(!set.hasKey(this.symbol)) {
-			Peg next = parser.getDefinedPeg(this.symbol);
+			Peg next = parser.getRule(this.symbol);
 			list.add(this.symbol);
 			set.put(this.symbol, this.symbol);
 			next.makeList(parser, list, set);
@@ -336,7 +290,7 @@ class PegLabel extends PegAtom {
 	}
 	@Override
 	protected boolean verify(PegRuleSet parser) {
-		if(!parser.hasPattern(this.symbol)) {
+		if(!parser.hasRule(this.symbol)) {
 			Main._PrintLine(this.source.formatErrorMessage("error", this.sourcePosition, "undefined label: " + this.symbol));
 			return false;
 		}
@@ -423,18 +377,17 @@ class PegOptional extends PegUnary {
 		this.innerExpr.simpleMatch(pegMap, source);
 		return true;
 	}
-	@Override protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
-		PegObject node = parentNode;
+	@Override protected PegObject lazyMatch(PegObject innode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
 		Peg errorPeg = context.storeFailurePeg();
 		int errorPosition = context.storeFailurePosition();
-		node = this.innerExpr.debugMatch(node, context);
-		if(node.isFailure()) {
+		PegObject parsedNode = this.innerExpr.debugMatch(innode, context);
+		if(parsedNode.isFailure()) {
 			context.popBack(stackPosition, Peg._BackTrack);
 			context.restoreFailure(errorPeg, errorPosition);
-			node = parentNode;
+			return innode;
 		}
-		return node;
+		return parsedNode;
 	}
 }
 
@@ -700,17 +653,23 @@ class PegSequence extends PegList {
 		return true;
 	}
 	@Override
-	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
+	protected PegObject lazyMatch(PegObject innode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
-		for(int i = 0; i < this.list.size(); i++) {
-			Peg e  = this.list.ArrayValues[i];
-			inNode = e.debugMatch(inNode, context);
-			if(inNode.isFailure()) {
+		for(int i = 0; i < this.size(); i++) {
+			Peg e  = this.get(i);
+			PegObject parsedNode = e.debugMatch(innode, context);
+			if(parsedNode.isFailure()) {
 				context.popBack(stackPosition, Peg._BackTrack);
-				return inNode;
+				return parsedNode;
 			}
+//			if(innode != parsedNode) {
+//				System.out.println("BEFORE: inputNode " + innode);
+//				System.out.println("e: " + e.getClass().getSimpleName());
+//				System.out.println("AFTER: parsedNode " + parsedNode);
+//			}
+			innode = parsedNode;
 		}
-		return inNode;
+		return innode;
 	}
 	@Override
 	public void accept(PegVisitor visitor) {
@@ -853,9 +812,9 @@ class PegSetter extends PegUnary {
 	@Override
 	protected String getOperator() {
 		if(this.index != -1) {
-			return "@" + this.index;
+			return "^" + this.index;
 		}
-		return "@";
+		return "^";
 	}
 	@Override
 	public void accept(PegVisitor visitor) {
@@ -915,9 +874,10 @@ class PegObjectLabel extends PegAtom {
 
 class PegNewObject extends PegList {
 	boolean leftJoin = false;
-	String nodeName = "";
+	String nodeName = "noname";
 	public PegNewObject(String ruleName, boolean leftJoin) {
 		super();
+		this.leftJoin = leftJoin;
 	}
 	public PegNewObject(String ruleName, boolean leftJoin, Peg e) {
 		super(e);
@@ -957,10 +917,10 @@ class PegNewObject extends PegList {
 	protected final void stringfy(UniStringBuilder sb, boolean debugMode) {
 		if(debugMode) {
 			if(this.leftJoin) {
-				sb.append("<<@ ");
+				sb.append("8<^ ");
 			}
 			else {
-				sb.append("<< ");
+				sb.append("8< ");
 			}
 		}
 		else {
@@ -968,7 +928,7 @@ class PegNewObject extends PegList {
 		}
 		super.stringfy(sb, debugMode);
 		if(debugMode) {
-			sb.append(" >>");
+			sb.append(" >8");
 		}
 		else {
 			sb.append(" )");
@@ -1003,19 +963,18 @@ class PegNewObject extends PegList {
 			Peg e = this.get(i);
 			PegObject node = e.debugMatch(newnode, context);
 			if(node.isFailure()) {
+				//System.out.println("** failed[" + pos + "] " + this);
 				return node;
 			}
-			if(node != newnode) {
-				this.warning("dropping " + node);
-			}
+//			if(node != newnode) {
+//				this.warning("dropping @" + newnode.name + " " + node);
+//			}
 		}
 		int top = context.getStackPosition(this);
 		context.addSubObject(newnode, stack, top);
-//		if(newnode.name == null || newnode.name.length() == 0) {
-//			newnode.name = context.source.substring(pos, context.getPosition());
-//		}
 		newnode.setSource(this, context.source, pos, context.getPosition());
 		newnode.checkNullEntry();
+		//System.out.println("** created[" + pos + "] " + newnode);
 		return newnode;
 	}
 

@@ -146,20 +146,24 @@ public class Main {
 		return new PythonDriver();
 	}
 
+	public final static ParserContext newParserContext(PegSource source) {
+		return new SimpleParserContext(source);
+	}
+
 	public final static void main(String[] args) {
 		parseCommandArgument(args);
 		PegRuleSet p = new PegRuleSet();
 		p.loadPegFile(LanguagePeg);
 		BunDriver driver = loadDriver(DriverName);
-		Namespace gamma = new Namespace(p, driver);
+		Namespace gamma = new Namespace(driver);
 		driver.initTable(gamma);
 		if(InputFileName != null) {
 			loadScript(gamma, driver, InputFileName);
-			if (ShellMode) {
-				performShell(gamma, driver);
-			}
 		}
 		else {
+			ShellMode = true;
+		}
+		if(ShellMode) {
 			performShell(gamma, driver);
 		}
 	}
@@ -172,9 +176,10 @@ public class Main {
 
 	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, PegSource source) {
 		try {
-			ParserContext context =  gamma.newParserContext("main", source);
+			ParserContext context = Main.newParserContext(source);
+			gamma.initParserRuleSet(context, "main");
 			ParseProfileStart();
-			PegObject node = context.parsePegNode(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
+			PegObject node = context.parsePegObject(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
 			if(node.isFailure()) {
 				node.name = BunSymbol.PerrorFunctor;
 			}
@@ -253,7 +258,7 @@ public class Main {
 						line = line.substring(loc+1);
 					}
 					else {
-						PegRuleSet p = gamma.root.getParser("main");
+						PegRuleSet p = gamma.root.getRuleSet("main");
 						p.show(line.substring(1));
 						startPoint = null;
 					}
@@ -481,6 +486,7 @@ public class Main {
 	public final static void _ArrayCopy(Object src, int sIndex, Object dst, int dIndex, int length) {
 		System.arraycopy(src, sIndex, dst, dIndex, length);
 	}
+
 
 
 

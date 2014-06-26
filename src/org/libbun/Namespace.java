@@ -1,22 +1,24 @@
 package org.libbun;
 
 public class Namespace extends SymbolTable {
-	public UniMap<PegRuleSet> parserMap;
-	public UniArray<String> exportSymbolList;
+	public UniMap<PegRuleSet> ruleMap;
+	public UniArray<String>   exportSymbolList;
 	public BunDriver  driver;
 
-	public Namespace(PegRuleSet parser, BunDriver driver) {
+	public Namespace(BunDriver driver) {
 		super(null);
 		this.root = this;
-		this.parserMap = new UniMap<PegRuleSet>();
-		this.parserMap.put("main", parser);
+		this.ruleMap = new UniMap<PegRuleSet>();
+		PegRuleSet pegRule = new PegRuleSet();
+		pegRule.loadPegRule();
+		this.ruleMap.put("peg", pegRule);
+//		this.ruleMap.put("main", ruleSet);
 		this.driver = driver;
 	}
 	
 	public final String toString() {
 		return "root";
 	}
-
 
 	public void importFrom(Namespace ns) {
 		for(int i = 0; i < ns.exportSymbolList.size(); i++) {
@@ -25,12 +27,12 @@ public class Namespace extends SymbolTable {
 		}
 	}
 
-	public ParserContext newParserContext(String lang, PegSource source) {
+	public void initParserRuleSet(ParserContext context, String lang) {
 		if(lang == null) {
-			lang = this.guessLang(source.fileName, "bun");
+			lang = this.guessLang(context.source.fileName, "bun");
 		}
-		PegRuleSet parser = this.getParser(lang);
-		return parser.newContext(source);
+		PegRuleSet ruleSet = this.getRuleSet(lang);
+		context.setRuleSet(ruleSet);
 	}
 
 	private String guessLang(String fileName, String defaultValue) {
@@ -43,12 +45,12 @@ public class Namespace extends SymbolTable {
 		return defaultValue;
 	}
 
-	public final PegRuleSet getParser(String lang) {
-		PegRuleSet p = this.parserMap.get(lang);
+	public final PegRuleSet getRuleSet(String lang) {
+		PegRuleSet p = this.ruleMap.get(lang);
 		if(p == null) {
 			p = new PegRuleSet();
 			p.loadPegFile("lib/peg/" + lang + ".peg");
-			this.parserMap.put(lang, p);
+			this.ruleMap.put(lang, p);
 		}
 		return p;
 	}
