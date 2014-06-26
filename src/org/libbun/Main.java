@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 import java.text.DecimalFormat;
 
 public class Main {
@@ -131,7 +132,9 @@ public class Main {
 		driverMap.put("ll", LLVMDriver.class);
 		driverMap.put("llvm", LLVMDriver.class);
 		driverMap.put("jvm", JvmDriver.class);
-//		driverMap.put("jvm-debug", DebugableJvmDriver.class);
+		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
+		driverMap.put("jvm-indy", JvmIndyDriver.class);
+		driverMap.put("jvm-indy-debug", JvmIndyDriver.DebuggableJvmIndyDriver.class);
 	}
 
 	private static BunDriver loadDriver(String driverName) {
