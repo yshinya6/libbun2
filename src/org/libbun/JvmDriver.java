@@ -225,6 +225,16 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	@Override
+	public void report(PegObject node, String errorType, String msg) {
+		super.report(node, errorType, msg);
+		throw new ErrorFoundException();
+	}
+
+	protected static class ErrorFoundException extends RuntimeException {
+		private static final long serialVersionUID = 2249359743283234876L;
+	}
+
+	@Override
 	public void pushCommand(String cmd, PegObject node, String[] params) {
 		DriverCommand command = this.commandMap.get(cmd);
 		this.currentCommand = cmd;
@@ -278,14 +288,19 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			if(sourceName.equals("(stdin)")) {
 				allowPrinting = true;
 			}
-			for(int i = 0; i < size; i++) {
-				PegObject targetNode = node.get(i);
-				driver.pushNode(targetNode);
-				if(targetNode.is("#error")) {
-					mBuilders.clear();
-					break;
+			try {
+				for(int i = 0; i < size; i++) {
+					PegObject targetNode = node.get(i);
+					driver.pushNode(targetNode);
+					if(targetNode.is("#error")) {
+						mBuilders.clear();
+						break;
+					}
+					insertPrintIns(toJavaClass(targetNode.getType(null)));
 				}
-				insertPrintIns(toJavaClass(targetNode.getType(null)));
+			}
+			catch(ErrorFoundException e) {
+				mBuilders.clear();
 			}
 		}
 	}
@@ -522,7 +537,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		int scopeDepth = currentBuilder.getScopes().depth();
 		if(scopeDepth > 1) {	// define as local variable.
 			driver.pushNode(initValueNode);
-			currentBuilder.storeLocal(entry.getVarIndex(), Type.getType(varClass));
+			currentBuilder.visitVarInsn(Type.getType(varClass).getOpcode(ISTORE), entry.getVarIndex());
 		}
 		else {	// define as global variable.
 			ClassBuilder cBuilder = new ClassBuilder(varName + JvmDriver.globalVarHolderSuffix);
@@ -572,7 +587,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			if(!entry.isGlobal()) {	// local variable
 				int varIndex = entry.getVarIndex();
 				driver.pushNode(rightNode);
-				mBuilder.storeLocal(varIndex, varTypeDesc);
+				mBuilder.visitVarInsn(varTypeDesc.getOpcode(ISTORE), varIndex);
 			}
 			else { // global variable
 				driver.pushNode(rightNode);
@@ -598,7 +613,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			PegObject leftNode = node.get(0);
 			if(leftNode.is("#name")) {
-				if(!mBuilders.peek().getScopes().hasEntryInCurrentScope(leftNode.getText())) {
+				if(!mBuilders.peek().getScopes().hasEntry(leftNode.getText())) {
 					defineVariable(driver, leftNode.getText(), node.get(1), false);
 					return;
 				}
@@ -616,8 +631,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			if(!(entry instanceof FuncEntry)) {	// load variable
 				Type varTypeDesc = Type.getType(entry.getVarClass());
 				if(!entry.isGlobal()) {	// get local variable
-					int varIndex = entry.getVarIndex();
-					mBuilder.loadLocal(varIndex, varTypeDesc);
+					mBuilder.visitVarInsn(varTypeDesc.getOpcode(ILOAD), entry.getVarIndex());
 				}
 				else {	// get global variable
 					Type varHolderDesc = Type.getType(varName + globalVarHolderSuffix);
@@ -1320,10 +1334,10 @@ class MethodBuilder extends GeneratorAdapter implements Opcodes {
 	private final Stack<Label> breakLabels;
 	private final Stack<Label> continueLabels;
 
-	public MethodBuilder(int arg0, Method arg1, String arg2, Type[] arg3, ClassVisitor arg4) {
-		super(arg0, arg1, arg2, arg3, arg4);
+	public MethodBuilder(int access, Method method, String signature, Type[] exceptions, ClassVisitor cv) {
+		super(access, method, signature, exceptions, cv);
 		int startIndex = 0;
-		if((arg0 & ACC_STATIC) != ACC_STATIC) {
+		if((access & ACC_STATIC) != ACC_STATIC) {
 			startIndex = 1;
 		}
 		this.scopes = new VarScopes(startIndex);
