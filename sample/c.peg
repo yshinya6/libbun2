@@ -120,27 +120,29 @@ DeclarationList
 //  A.2.2  Declarations
 //-------------------------------------------------------------------------
 
-Declaration
-    = << DeclarationSpecifiers@ InitDeclaratorList@? (Attribute / Assembler)@? SEMI #declaration>>;
+Declaration = DeclarationNoAttribute (Attribute / Assembler)@? SEMI #declaration;
+
+DeclarationNoAttribute
+    = <<DeclarationSpecifiers@ InitDeclaratorList@? ##DeclarationNoAttribute>> addtype;
 
 DeclarationSpecifiers
-    = ( StorageClassSpecifier
+    = << ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
+       )@*
        TypedefName@
        ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )*
-    / ( StorageClassSpecifier
+       )* ##DeclarationSpecifier >>
+    / << ( StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
       / Attribute
-      )+
+      )@+ ##DeclarationSpecifier >>
     ;
 
 InitDeclaratorList
@@ -304,7 +306,7 @@ DirectAbstractDeclarator
     ;
 
 TypedefName
-    = << Identifier@ #typedefname >>
+    = << Identifier@ #typedefname >> ctype
     ;
 
 Initializer
@@ -656,8 +658,8 @@ IntegerConstant
     = << ( DecimalConstant
       / HexConstant
       / OctalConstant
-      )@
-    IntegerSuffix@? Spacing #integerconstant >>
+      )
+    IntegerSuffix? #integer >> Spacing
     ;
 
 DecimalConstant = [1-9][0-9]* ;
@@ -682,10 +684,10 @@ Lsuffix
     ;
 
 FloatConstant
-    = ( DecimalFloatConstant
+    = << ( DecimalFloatConstant
       / HexFloatConstant
       )
-    FloatSuffix? Spacing
+    FloatSuffix? #float >> Spacing
     ;
 
 DecimalFloatConstant
@@ -736,7 +738,9 @@ HexEscape    = "\\x" HexDigit+ ;
 //  A.1.6  String Literals
 //-------------------------------------------------------------------------
 
-StringLiteral = << "L"? (["] StringChar@* ["] Spacing)+ #stringliteral >>;
+StringLiteral = << "L"? (["] StringChar@* ["] Spacing)+ #string >>;
+// FIXME we need to concatinate StringLiterals
+// e.g.) "a" "b" => "ab"
 
 StringChar = Escape / ![\"\n\\] . ;
 

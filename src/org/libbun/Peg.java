@@ -1,5 +1,7 @@
 package org.libbun;
 
+import java.util.HashSet;
+
 public abstract class Peg {
 	public final static boolean _BackTrack = true;
 	int       flag     = 0;
@@ -1049,5 +1051,70 @@ class PegIndent extends PegAtom {
 	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitIndent(this);
+	}
+}
+
+
+class PegCType extends PegAtom {
+	static public HashSet<String> typedefs = new HashSet<String>();
+	boolean AddType = false;
+	PegCType(String leftLabel, boolean AddType) {
+		super(leftLabel, AddType ? "addtype" : "ctype");
+		this.AddType = AddType;
+	}
+
+	@Override
+	protected Peg clone(String ns) {
+		return this;
+	}
+	@Override
+	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
+		if(inNode.source != null) {
+			if(AddType) {
+				if(inNode.name.equals("#DeclarationNoAttribute") && inNode.AST.length >= 2) {
+					// inNode.AST = [typedef struct A, StructA]
+					PegObject first = inNode.AST[0];
+					if(first.AST.length >= 2) {
+						String firstText = first.AST[0].getText().trim();
+						// first is "typedef"
+						if(first.AST[0].name.equals("#storageclassspecifier") && firstText.equals("typedef")) {
+							PegObject second = inNode.AST[1];
+							for (int i = 0; i < second.AST.length; i++) {
+								PegObject decl = second.get(i);
+								if(decl.name.equals("#declarator")) {
+									// "typedef struct A StructA;"
+									// add new typename StructA
+									System.out.println(decl.get(decl.AST.length - 1).getText());
+									typedefs.add(decl.get(decl.AST.length - 1).getText());
+								}
+							}
+							return inNode;
+						}
+					}
+				}
+			}
+			else {
+				String name = inNode.getText().trim();
+				if (!typedefs.contains(name)) {
+					return new PegObject(null); //not match
+				}
+			}
+		}
+		return inNode;
+	}
+	@Override
+	protected boolean verify(PegRuleSet parser) {
+		return true;
+	}
+
+	@Override
+	public void accept(PegVisitor visitor) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

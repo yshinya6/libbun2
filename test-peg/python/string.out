@@ -1,5 +1,10 @@
 parsed:
 #toplevel {            ## by peg : null
-   #string: hpge   ## by peg : null
-   #string: hoge   ## by peg : null
+   #assign {            ## by peg : null
+      #name: a   ## by peg : null
+      #string: a
+
+
+   ## by peg : null
+   }
 }
