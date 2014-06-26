@@ -12,6 +12,7 @@ Stmt
     / ContinueStmt EOS?
     / DefineFunction EOS?
     / DefineClass EOS?
+    / Try EOS?
     / Assert EOS?
     / Print EOS?
     / Raise EOS?
@@ -32,7 +33,7 @@ With
     ;
 
 Assert
-    = <<"assert" WS+ Expr@ #assert>>
+    = <<"assert" WS+ Expr@ (WS* "," WS* Expr@)? #assert>>
     ;
 
 Print
@@ -109,6 +110,10 @@ ClassStmt
     = Stmt
     //= DefineFunction
     /// Expr
+    ;
+
+Try
+    = << "try" WS* ":" Block@ indent WS* "except" WS+ Expr@ WS* ":" Block@ #try >>
     ;
 
 Expr
