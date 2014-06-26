@@ -92,6 +92,7 @@ public final class PegRuleSet {
 			String ruleName = node.textAt(0, "");
 			Peg e = toPeg(node.get(1));
 			this.setRule(ruleName, e);
+			//System.out.println("#rule** " + node + "\n@@@@ => " + e);
 			return;
 		}
 		if(node.is("#import")) {
@@ -123,14 +124,14 @@ public final class PegRuleSet {
 		if(node.is("#choice")) {
 			PegChoice l = new PegChoice();
 			for(int i = 0; i < node.size(); i++) {
-				l.add(toPeg(node.get(i)));
+				l.list.add(toPeg(node.get(i)));
 			}
 			return l;
 		}
 		if(node.is("#sequence")) {
 			PegSequence l = new PegSequence();
 			for(int i = 0; i < node.size(); i++) {
-				l.add(toPeg(node.get(i)));
+				l.list.add(toPeg(node.get(i)));
 			}
 			return l;
 		}
@@ -152,19 +153,29 @@ public final class PegRuleSet {
 		if(node.is("#label")) {
 			return new PegObjectLabel(null, node.getText());
 		}
-		if(node.is("#new")) {
-			Peg seq = toPeg(node.get(0));
-			PegNewObject o = new PegNewObject(null, false);
-			for(int i = 0; i < seq.size(); i++) {
-				o.list.add(seq.get(i));
-			}
-			return o;
-		}
 		if(node.is("#newjoin")) {
 			Peg seq = toPeg(node.get(0));
 			PegNewObject o = new PegNewObject(null, true);
-			for(int i = 0; i < seq.size(); i++) {
-				o.list.add(seq.get(i));
+			if(seq.size() > 0) {
+				for(int i = 0; i < seq.size(); i++) {
+					o.list.add(seq.get(i));
+				}
+			}
+			else {
+				o.list.add(seq);
+			}
+			return o;
+		}
+		if(node.is("#new")) {
+			Peg seq = toPeg(node.get(0));
+			PegNewObject o = new PegNewObject(null, false);
+			if(seq.size() > 0) {
+				for(int i = 0; i < seq.size(); i++) {
+					o.list.add(seq.get(i));
+				}
+			}
+			else {
+				o.list.add(seq);
 			}
 			return o;
 		}

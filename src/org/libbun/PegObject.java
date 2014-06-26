@@ -30,7 +30,7 @@ public class PegObject {
 	}
 
 	public final boolean is(String functor) {
-		return this.name.startsWith(functor);
+		return this.name.equals(functor);
 	}
 
 	public final void setSource(Peg createdPeg, PegSource source, int startIndex, int endIndex) {
