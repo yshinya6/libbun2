@@ -1,25 +1,27 @@
 package org.libbun;
 
+import java.util.HashSet;
+
 public abstract class Peg {
 	public final static boolean _BackTrack = true;
-	
 	int       flag     = 0;
-	String    name     = null;
+	String    ruleName     = null;
 	boolean   debug    = false;
 	boolean   hasLeftRecursion = false;
 
 	PegSource source = null;
 	int       sourcePosition = 0;
 	
-	Peg(String leftLabel) {
-		this.name = leftLabel;
+	Peg(String ruleName) {
+		this.ruleName = ruleName;
 	}
 
 	protected abstract Peg clone(String ns);
 	protected abstract void stringfy(UniStringBuilder sb, boolean debugMode);
-	protected abstract void makeList(PegParser parser, UniArray<String> list, UniMap<String> set);
+	protected abstract void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set);
+	public abstract boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source);
 	protected abstract PegObject lazyMatch(PegObject inNode, ParserContext context);
-	protected abstract boolean verify(PegParser parser);
+	protected abstract boolean verify(PegRuleSet parser);
 	public abstract void accept(PegVisitor visitor);
 
 	public int size() {
@@ -32,9 +34,9 @@ public abstract class Peg {
 	@Override public String toString() {
 		UniStringBuilder sb = new UniStringBuilder();
 		this.stringfy(sb, false);
-		if(this.name != null) {
+		if(this.ruleName != null) {
 			sb.append(" defined in ");
-			sb.append(this.name);
+			sb.append(this.ruleName);
 		}
 		return sb.toString();
 	}
@@ -122,12 +124,13 @@ public abstract class Peg {
 			Main._PrintLine("PEG warning: " + msg);
 		}
 	}
+	
 }
 
 abstract class PegAtom extends Peg {
 	String symbol;
-	public PegAtom (String leftLabel, String symbol) {
-		super(leftLabel);
+	public PegAtom (String ruleName, String symbol) {
+		super(ruleName);
 		this.symbol = symbol;
 	}
 	@Override
@@ -135,7 +138,7 @@ abstract class PegAtom extends Peg {
 		sb.append(this.symbol);
 	}	
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		return true;
 	}
 	@Override
@@ -147,14 +150,14 @@ abstract class PegAtom extends Peg {
 		return this;  // just avoid NullPointerException
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 	}
 
 }
 
 class PegString extends PegAtom {
-	public PegString(String leftLabel, String symbol) {
-		super(leftLabel, symbol);
+	public PegString(String ruleName, String symbol) {
+		super(ruleName, symbol);
 	}
 	@Override
 	protected Peg clone(String ns) {
@@ -173,6 +176,13 @@ class PegString extends PegAtom {
 		visitor.visitPegString(this);
 	}
 	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		if(source.match(this.symbol)) {
+			return true;
+		}
+		return false;
+	}
+	@Override
 	public PegObject lazyMatch(PegObject inNode, ParserContext context) {
 		if(context.match(this.symbol)) {
 			return inNode;
@@ -182,8 +192,8 @@ class PegString extends PegAtom {
 }
 
 class PegAny extends PegAtom {
-	public PegAny(String leftLabel) {
-		super(leftLabel, ".");
+	public PegAny(String ruleName) {
+		super(ruleName, ".");
 	}
 	@Override
 	protected Peg clone(String ns) {
@@ -192,6 +202,14 @@ class PegAny extends PegAtom {
 	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitPegAny(this);
+	}
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		if(source.hasChar()) {
+			source.consume(1);
+			return true;
+		}
+		return false;
 	}
 	@Override
 	public PegObject lazyMatch(PegObject inNode, ParserContext context) {
@@ -205,8 +223,8 @@ class PegAny extends PegAtom {
 
 class PegCharacter extends PegAtom {
 	UniCharset charset;
-	public PegCharacter(String leftLabel, String token) {
-		super(leftLabel, token);
+	public PegCharacter(String ruleName, String token) {
+		super(ruleName, token);
 		this.charset = new UniCharset(token);
 	}
 	@Override
@@ -222,6 +240,15 @@ class PegCharacter extends PegAtom {
 		visitor.visitPegCharacter(this);
 	}
 	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext context) {
+		char ch = context.getChar();
+		if(this.charset.match(ch)) {
+			context.consume(1);
+			return true;
+		}
+		return false;
+	}
+	@Override
 	public PegObject lazyMatch(PegObject inNode, ParserContext context) {
 		char ch = context.getChar();
 		if(!this.charset.match(ch)) {
@@ -233,37 +260,41 @@ class PegCharacter extends PegAtom {
 }
 
 class PegLabel extends PegAtom {
-	public PegLabel(String leftLabel, String token) {
-		super(leftLabel, token);
+	public PegLabel(String ruleName, String token) {
+		super(ruleName, token);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		if(ns != null && ns.length() > 0) {
-			return new PegLabel(this.name, ns + this.symbol);
+			return new PegLabel(this.ruleName, ns + this.symbol);
 		}
 		return this;
 	}
-	@Override protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
-		PegObject left = context.parsePegNode(parentNode, this.symbol);
-		if(left.isFailure()) {
-			return left;
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		Peg e = pegMap.get(this.symbol, null);
+		if(e != null) {
+			return e.simpleMatch(pegMap, source);
 		}
-		return context.parseRightPegNode(left, this.symbol);
+		return false;
+	}
+	@Override protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
+		return context.parsePegObject(parentNode, this.symbol);
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 		if(!set.hasKey(this.symbol)) {
-			Peg next = parser.getDefinedPeg(this.symbol);
+			Peg next = parser.getRule(this.symbol);
 			list.add(this.symbol);
 			set.put(this.symbol, this.symbol);
 			next.makeList(parser, list, set);
 		}
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
-		if(!parser.hasPattern(this.symbol)) {
+	protected boolean verify(PegRuleSet parser) {
+		if(!parser.hasRule(this.symbol)) {
 			Main._PrintLine(this.source.formatErrorMessage("error", this.sourcePosition, "undefined label: " + this.symbol));
-			return false;
+			parser.foundError = true;
 		}
 		return true;
 	}
@@ -276,8 +307,8 @@ class PegLabel extends PegAtom {
 abstract class PegUnary extends Peg {
 	Peg innerExpr;
 	boolean prefix;
-	public PegUnary(String leftLabel, Peg e, boolean prefix) {
-		super(leftLabel);
+	public PegUnary(String ruleName, Peg e, boolean prefix) {
+		super(ruleName);
 		this.innerExpr = e;
 		this.prefix = prefix;
 	}
@@ -308,30 +339,30 @@ abstract class PegUnary extends Peg {
 		}
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 		this.innerExpr.makeList(parser, list, set);
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		return this.innerExpr.verify(parser);
 	}
 }
 
 //abstract class PegSuffixed extends PegUnary {
-//	public PegSuffixed(String leftLabel, Peg e) {
-//		super(leftLabel, e, false);
+//	public PegSuffixed(String ruleName, Peg e) {
+//		super(ruleName, e, false);
 //	}
 //}
 
 class PegOptional extends PegUnary {
-	public PegOptional(String leftLabel, Peg e) {
-		super(leftLabel, e, false);
+	public PegOptional(String ruleName, Peg e) {
+		super(ruleName, e, false);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegOptional(this.name, e);
+			return new PegOptional(this.ruleName, e);
 		}
 		return this;
 	}
@@ -343,41 +374,63 @@ class PegOptional extends PegUnary {
 	public void accept(PegVisitor visitor) {
 		visitor.visitPegOptional(this);
 	}
-	@Override protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
-		PegObject node = parentNode;
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		this.innerExpr.simpleMatch(pegMap, source);
+		return true;
+	}
+	@Override protected PegObject lazyMatch(PegObject innode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
 		Peg errorPeg = context.storeFailurePeg();
 		int errorPosition = context.storeFailurePosition();
-		node = this.innerExpr.debugMatch(node, context);
-		if(node.isFailure()) {
+		PegObject parsedNode = this.innerExpr.debugMatch(innode, context);
+		if(parsedNode.isFailure()) {
 			context.popBack(stackPosition, Peg._BackTrack);
 			context.restoreFailure(errorPeg, errorPosition);
-			node = parentNode;
+			return innode;
 		}
-		return node;
+		return parsedNode;
 	}
 }
 
 class PegOneMore extends PegUnary {
 	public int atleast = 0; 
-	protected PegOneMore(String leftLabel, Peg e, int atLeast) {
-		super(leftLabel, e, false);
+	protected PegOneMore(String ruleName, Peg e, int atLeast) {
+		super(ruleName, e, false);
 		this.atleast = atLeast;
 	}
-	public PegOneMore(String leftLabel, Peg e) {
-		this(leftLabel, e, 1);
+	public PegOneMore(String ruleName, Peg e) {
+		this(ruleName, e, 1);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegOneMore(this.name, e);
+			return new PegOneMore(this.ruleName, e);
 		}
 		return this;
 	}
 	@Override
 	protected String getOperator() {
 		return "+";
+	}
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		int count = 0;
+		while(source.hasChar()) {
+			int startPosition = source.getPosition();
+			if(!this.innerExpr.simpleMatch(pegMap, source)) {
+				break;
+			}
+			if(!(startPosition < source.getPosition())) {
+				break;
+			}
+			count = count + 1;
+		}
+		if(count < this.atleast) {
+			return false;
+		}
+		return true;
 	}
 	@Override
 	public PegObject lazyMatch(PegObject parentNode, ParserContext context) {
@@ -391,12 +444,8 @@ class PegOneMore extends PegUnary {
 			if(node.isFailure()) {
 				break;
 			}
-//			if(node != prevNode) {
-//				this.warning("ignored result of " + this.innerExpr);
-//			}
 			prevNode = node;
 			if(!(startPosition < context.getPosition())) {
-//				this.warning("avoid infinite loop " + this);
 				break;
 			}
 			count = count + 1;
@@ -415,14 +464,14 @@ class PegOneMore extends PegUnary {
 }
 
 class PegZeroMore extends PegOneMore {
-	public PegZeroMore(String leftLabel, Peg e) {
-		super(leftLabel, e, 0);
+	public PegZeroMore(String ruleName, Peg e) {
+		super(ruleName, e, 0);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegZeroMore(this.name, e);
+			return new PegZeroMore(this.ruleName, e);
 		}
 		return this;
 	}
@@ -437,20 +486,27 @@ class PegZeroMore extends PegOneMore {
 }
 
 class PegAnd extends PegUnary {
-	PegAnd(String leftLabel, Peg e) {
-		super(leftLabel, e, true);
+	PegAnd(String ruleName, Peg e) {
+		super(ruleName, e, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegAnd(this.name, e);
+			return new PegAnd(this.ruleName, e);
 		}
 		return this;
 	}
 	@Override
 	protected String getOperator() {
 		return "&";
+	}
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		int pos = source.getPosition();
+		boolean res = this.innerExpr.simpleMatch(pegMap, source);
+		source.rollback(pos);
+		return res;
 	}
 	@Override
 	protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
@@ -467,20 +523,27 @@ class PegAnd extends PegUnary {
 }
 
 class PegNot extends PegUnary {
-	PegNot(String leftLabel, Peg e) {
-		super(leftLabel, e, true);
+	PegNot(String ruleName, Peg e) {
+		super(ruleName, e, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegNot(this.name, e);
+			return new PegNot(this.ruleName, e);
 		}
 		return this;
 	}
 	@Override
 	protected String getOperator() {
 		return "!";
+	}
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		int pos = source.getPosition();
+		boolean res = this.innerExpr.simpleMatch(pegMap, source);
+		source.rollback(pos);
+		return !res;
 	}
 	@Override
 	protected PegObject lazyMatch(PegObject parentNode, ParserContext context) {
@@ -506,7 +569,7 @@ abstract class PegList extends Peg {
 		this.list = new UniArray<Peg>(new Peg[2]);
 	}
 	PegList(Peg first) {
-		super(first.name);
+		super(first.ruleName);
 		this.list = new UniArray<Peg>(new Peg[2]);
 		this.add(first);
 	}
@@ -536,13 +599,13 @@ abstract class PegList extends Peg {
 		}
 	}
 	@Override
-	protected void makeList(PegParser parser, UniArray<String> list, UniMap<String> set) {
+	protected void makeList(PegRuleSet parser, UniArray<String> list, UniMap<String> set) {
 		for(int i = 0; i < this.size(); i++) {
 			this.get(i).makeList(parser, list, set);
 		}
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		boolean noerror = true;
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
@@ -580,17 +643,35 @@ class PegSequence extends PegList {
 		return this;
 	}
 	@Override
-	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
-		int stackPosition = context.getStackPosition(this);
-		for(int i = 0; i < this.list.size(); i++) {
-			Peg e  = this.list.ArrayValues[i];
-			inNode = e.debugMatch(inNode, context);
-			if(inNode.isFailure()) {
-				context.popBack(stackPosition, Peg._BackTrack);
-				return inNode;
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		int pos = source.getPosition();
+		for(int i = 0; i < this.size(); i++) {
+			Peg e  = this.get(i);
+			if(!e.simpleMatch(pegMap, source)) {
+				source.rollback(pos);
+				return false;
 			}
 		}
-		return inNode;
+		return true;
+	}
+	@Override
+	protected PegObject lazyMatch(PegObject innode, ParserContext context) {
+		int stackPosition = context.getStackPosition(this);
+		for(int i = 0; i < this.size(); i++) {
+			Peg e  = this.get(i);
+			PegObject parsedNode = e.debugMatch(innode, context);
+			if(parsedNode.isFailure()) {
+				context.popBack(stackPosition, Peg._BackTrack);
+				return parsedNode;
+			}
+//			if(innode != parsedNode) {
+//				System.out.println("BEFORE: inputNode " + innode);
+//				System.out.println("e: " + e.getClass().getSimpleName());
+//				System.out.println("AFTER: parsedNode " + parsedNode);
+//			}
+			innode = parsedNode;
+		}
+		return innode;
 	}
 	@Override
 	public void accept(PegVisitor visitor) {
@@ -640,8 +721,8 @@ class PegChoice extends PegList {
 			}
 		}
 		else if(e != null) {
-			if(this.name == null) {
-				this.name = e.name;
+			if(this.ruleName == null) {
+				this.ruleName = e.ruleName;
 			}
 			this.list.add(e);
 			if(e.hasLeftRecursion() == true) {
@@ -659,6 +740,16 @@ class PegChoice extends PegList {
 		}
 	}
 	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		for(int i = 0; i < this.list.size(); i++) {
+			Peg e  = this.list.ArrayValues[i];
+			if(e.simpleMatch(pegMap, source)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	@Override
 	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
 		PegObject node = inNode;
@@ -672,7 +763,7 @@ class PegChoice extends PegList {
 				node.startIndex = context.storeFailurePosition();
 				node.endIndex = context.storeFailurePosition();
 				if(Main.PegDebuggerMode) {
-					Main._PrintLine(node.formatSourceMessage("error: " + this.name, " by " + node.createdPeg));
+					Main._PrintLine(node.formatSourceMessage("error: " + this.ruleName, " by " + node.createdPeg));
 				}
 				context.restoreFailure(errorPeg, errorPosition);
 				return e.debugMatch(node, context);
@@ -686,7 +777,7 @@ class PegChoice extends PegList {
 		return node;
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		boolean noerror = true;
 		for(int i = 0; i < this.list.size(); i++) {
 			Peg e  = this.list.ArrayValues[i];
@@ -707,8 +798,8 @@ class PegChoice extends PegList {
 
 class PegSetter extends PegUnary {
 	public int index;
-	public PegSetter(String leftLabel, Peg e, int index) {
-		super(leftLabel, e, false);
+	public PegSetter(String ruleName, Peg e, int index) {
+		super(ruleName, e, false);
 		this.innerExpr = e;
 		this.index = index;
 	}
@@ -716,20 +807,24 @@ class PegSetter extends PegUnary {
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegSetter(this.name, e, this.index);
+			return new PegSetter(this.ruleName, e, this.index);
 		}
 		return this;
 	}
 	@Override
 	protected String getOperator() {
 		if(this.index != -1) {
-			return "@" + this.index;
+			return "^" + this.index;
 		}
-		return "@";
+		return "^";
 	}
 	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitSetter(this);
+	}
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		return this.simpleMatch(pegMap, source);
 	}
 	@Override
 	public PegObject lazyMatch(PegObject parentNode, ParserContext context) {
@@ -746,8 +841,8 @@ class PegSetter extends PegUnary {
 }
 
 class PegObjectLabel extends PegAtom {
-	public PegObjectLabel(String leftLabel, String objectLabel) {
-		super(leftLabel, objectLabel);
+	public PegObjectLabel(String ruleName, String objectLabel) {
+		super(ruleName, objectLabel);
 	}
 	@Override
 	protected Peg clone(String ns) {
@@ -760,12 +855,16 @@ class PegObjectLabel extends PegAtom {
 		}
 	}
 	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		return true;
+	}
+	@Override
 	public PegObject lazyMatch(PegObject inNode, ParserContext context) {
 		inNode.name = this.symbol;
 		return inNode;
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		parser.addObjectLabel(this.symbol);
 		return true;
 	}
@@ -777,11 +876,12 @@ class PegObjectLabel extends PegAtom {
 
 class PegNewObject extends PegList {
 	boolean leftJoin = false;
-	String nodeName = "";
-	public PegNewObject(String leftLabel, boolean leftJoin) {
+	String nodeName = "noname";
+	public PegNewObject(String ruleName, boolean leftJoin) {
 		super();
+		this.leftJoin = leftJoin;
 	}
-	public PegNewObject(String leftLabel, boolean leftJoin, Peg e) {
+	public PegNewObject(String ruleName, boolean leftJoin, Peg e) {
 		super(e);
 		this.leftJoin = leftJoin;
 	}
@@ -795,7 +895,7 @@ class PegNewObject extends PegList {
 			}
 		}
 		if(hasClone) {
-			PegList l = new PegNewObject(this.name, this.leftJoin);
+			PegList l = new PegNewObject(this.ruleName, this.leftJoin);
 			for(int i = 0; i < this.list.size(); i++) {
 				l.list.add(this.get(i).clone(ns));
 			}
@@ -819,10 +919,10 @@ class PegNewObject extends PegList {
 	protected final void stringfy(UniStringBuilder sb, boolean debugMode) {
 		if(debugMode) {
 			if(this.leftJoin) {
-				sb.append("<<@ ");
+				sb.append("8<^ ");
 			}
 			else {
-				sb.append("<< ");
+				sb.append("8< ");
 			}
 		}
 		else {
@@ -830,11 +930,24 @@ class PegNewObject extends PegList {
 		}
 		super.stringfy(sb, debugMode);
 		if(debugMode) {
-			sb.append(" >>");
+			sb.append(" >8");
 		}
 		else {
 			sb.append(" )");
 		}
+	}
+
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		int pos = source.getPosition();
+		for(int i = 0; i < this.size(); i++) {
+			Peg e = this.get(i);
+			if(!e.simpleMatch(pegMap, source)) {
+				source.rollback(pos);
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -852,19 +965,18 @@ class PegNewObject extends PegList {
 			Peg e = this.get(i);
 			PegObject node = e.debugMatch(newnode, context);
 			if(node.isFailure()) {
+				//System.out.println("** failed[" + pos + "] " + this);
 				return node;
 			}
-			if(node != newnode) {
-				this.warning("dropping " + node);
-			}
+//			if(node != newnode) {
+//				this.warning("dropping @" + newnode.name + " " + node);
+//			}
 		}
 		int top = context.getStackPosition(this);
 		context.addSubObject(newnode, stack, top);
-//		if(newnode.name == null || newnode.name.length() == 0) {
-//			newnode.name = context.source.substring(pos, context.getPosition());
-//		}
 		newnode.setSource(this, context.source, pos, context.getPosition());
 		newnode.checkNullEntry();
+		//System.out.println("** created[" + pos + "] " + newnode);
 		return newnode;
 	}
 
@@ -878,20 +990,25 @@ class PegNewObject extends PegList {
 // (e / catch e)
 
 class PegCatch extends PegUnary {
-	PegCatch (String leftLabel, Peg first) {
-		super(leftLabel, first, true);
+	PegCatch (String ruleName, Peg first) {
+		super(ruleName, first, true);
 	}
 	@Override
 	protected Peg clone(String ns) {
 		Peg e = this.innerExpr.clone(ns);
 		if(e != this) {
-			return new PegCatch(this.name, e);
+			return new PegCatch(this.ruleName, e);
 		}
 		return this;
 	}
 	@Override
 	protected String getOperator() {
 		return "catch ";
+	}
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		this.innerExpr.simpleMatch(pegMap, source);
+		return true;
 	}
 	@Override
 	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
@@ -905,13 +1022,16 @@ class PegCatch extends PegUnary {
 }
 
 class PegIndent extends PegAtom {
-	PegIndent(String leftLabel) {
-		super(leftLabel, "indent");
-		// TODO Auto-generated constructor stub
+	PegIndent(String ruleName) {
+		super(ruleName, "indent");
 	}
 	@Override
 	protected Peg clone(String ns) {
 		return this;
+	}
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		return false;
 	}
 	@Override
 	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
@@ -925,11 +1045,76 @@ class PegIndent extends PegAtom {
 		return inNode;
 	}
 	@Override
-	protected boolean verify(PegParser parser) {
+	protected boolean verify(PegRuleSet parser) {
 		return true;
 	}
 	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitIndent(this);
+	}
+}
+
+
+class PegCType extends PegAtom {
+	static public HashSet<String> typedefs = new HashSet<String>();
+	boolean AddType = false;
+	PegCType(String leftLabel, boolean AddType) {
+		super(leftLabel, AddType ? "addtype" : "ctype");
+		this.AddType = AddType;
+	}
+
+	@Override
+	protected Peg clone(String ns) {
+		return this;
+	}
+	@Override
+	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
+		if(inNode.source != null) {
+			if(AddType) {
+				if(inNode.name.equals("#DeclarationNoAttribute") && inNode.AST.length >= 2) {
+					// inNode.AST = [typedef struct A, StructA]
+					PegObject first = inNode.AST[0];
+					if(first.AST.length >= 2) {
+						String firstText = first.AST[0].getText().trim();
+						// first is "typedef"
+						if(first.AST[0].name.equals("#storageclassspecifier") && firstText.equals("typedef")) {
+							PegObject second = inNode.AST[1];
+							for (int i = 0; i < second.AST.length; i++) {
+								PegObject decl = second.get(i);
+								if(decl.name.equals("#declarator")) {
+									// "typedef struct A StructA;"
+									// add new typename StructA
+									System.out.println(decl.get(decl.AST.length - 1).getText());
+									typedefs.add(decl.get(decl.AST.length - 1).getText());
+								}
+							}
+							return inNode;
+						}
+					}
+				}
+			}
+			else {
+				String name = inNode.getText().trim();
+				if (!typedefs.contains(name)) {
+					return new PegObject(null); //not match
+				}
+			}
+		}
+		return inNode;
+	}
+	@Override
+	protected boolean verify(PegRuleSet parser) {
+		return true;
+	}
+
+	@Override
+	public void accept(PegVisitor visitor) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public boolean simpleMatch(UniMap<Peg> pegMap, SourceContext source) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

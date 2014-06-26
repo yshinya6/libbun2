@@ -1,7 +1,6 @@
 package org.libbun;
 
 public class SimpleParserContext extends ParserContext {
-
 	private UniMap<Peg>        pegCache;
 	private UniMap<SimpleMemo> memoMap = new UniMap<SimpleMemo>();
 	
@@ -26,15 +25,19 @@ public class SimpleParserContext extends ParserContext {
 	int memoMiss = 0;
 	int memoSize = 0;
 
-	public SimpleParserContext(PegParser parser, PegSource source) {
-		this(parser, source, 0, source.sourceText.length());
+	public SimpleParserContext(PegSource source) {
+		this(source, 0, source.sourceText.length());
 	}
 
-	public SimpleParserContext(PegParser parser, PegSource source, int startIndex, int endIndex) {
-		super(parser, source, startIndex, endIndex);
-		this.loadPegDefinition(this.parser.pegMap);
+	public SimpleParserContext(PegSource source, int startIndex, int endIndex) {
+		super(source, startIndex, endIndex);
 	}
 	
+	@Override
+	public void setRuleSet(PegRuleSet ruleSet) {
+		this.loadPegDefinition(ruleSet.pegMap);
+	}
+
 	public final void loadPegDefinition(UniMap<Peg> pegMap) {
 		this.pegCache = new UniMap<Peg>();	
 		UniArray<String> list = pegMap.keys();
@@ -42,15 +45,14 @@ public class SimpleParserContext extends ParserContext {
 			String key = list.ArrayValues[i];
 			Peg e = pegMap.get(key, null);
 			this.checkLeftRecursion(key, e);
-			//this.appendPegCache(key, e);
 		}
 		list = this.pegCache.keys();
 		for(int i = 0; i < list.size(); i++) {
 			String key = list.ArrayValues[i];
 			Peg e = this.pegCache.get(key, null);
-			if(Main.PegDebuggerMode) {
-				System.out.println(e.toPrintableString(key, "\n  = ", "\n  / ", "\n  ;", true));
-			}
+//			if(Main.PegDebuggerMode) {
+//				System.out.println(e.toPrintableString(key, "\n  = ", "\n  / ", "\n  ;", true));
+//			}
 		}
 	}
 	
@@ -69,7 +71,7 @@ public class SimpleParserContext extends ParserContext {
 					String label = ((PegLabel) first).symbol;
 					if(label.equals(name)) {
 						//this.lrExistence = true;
-						String key = this.parser.nameRightJoinName(name);  // left recursion
+						String key = this.nameRightJoinName(name);  // left recursion
 						this.appendPegCache(key, seq.cdr());
 						return;
 					}
@@ -87,6 +89,10 @@ public class SimpleParserContext extends ParserContext {
 		}
 		this.appendPegCache(name, e);
 	}
+	
+	private String nameRightJoinName(String name) {
+		return name + "+";
+	}
 
 	private void appendPegCache(String name, Peg e) {
 		Peg defined = this.pegCache.get(name, null);
@@ -95,30 +101,10 @@ public class SimpleParserContext extends ParserContext {
 		}
 		this.pegCache.put(name, e);
 	}
-	
-//	private boolean hasLabel(String name, Peg e) {
-//		if(e instanceof PegChoice) {
-//			for(int i = 0; i < e.size(); i++) {
-//				if(this.hasLabel(name, e.get(i))) {
-//					return true;
-//				}
-//			}
-//			return false;
-//		}
-//		if(e instanceof PegLabel) {
-//			String label = ((PegLabel) e).symbol;
-//			if(name.equals(label)) {
-//				return true;
-//			}
-//			e = this.pegMap.get(label, null);
-//			return this.hasLabel(name, e);
-//		}
-//		return false;
-//	}
-	
+		
 	@Override
 	public SourceContext subContext(int startIndex, int endIndex) {
-		return new SimpleParserContext(this.parser, this.source, startIndex, endIndex);
+		return new SimpleParserContext(this.source, startIndex, endIndex);
 	}
 		
 	public void initMemo() {
@@ -129,20 +115,29 @@ public class SimpleParserContext extends ParserContext {
 		return memoMap;
 	}
 	
-	public final Peg getPattern(String name) {
+	public final Peg getRule(String name) {
 		return this.pegCache.get(name, null);
 	}
 
-	public final Peg getRightPattern(String name) {
-		return this.pegCache.get(this.parser.nameRightJoinName(name), null);
+	private final Peg getRightJoinRule(String name) {
+		return this.pegCache.get(this.nameRightJoinName(name), null);
 	}
 
-	public boolean isLeftRecursion(String PatternName) {
-		Peg e = this.parser.getRightPattern(PatternName);
-		return e != null;
+	public final PegObject parsePegObject(PegObject parentNode, String ruleName) {
+		Peg e = this.getRule(ruleName);
+		PegObject left = e.debugMatch(parentNode, this);
+		if(left.isFailure()) {
+			return left;
+		}
+		e = this.getRightJoinRule(ruleName);
+		if(e != null) {
+			return e.debugMatch(left, this);
+		}
+		return left;
 	}
 
-	public final PegObject parsePegNode(PegObject parentNode, String pattern) {
+	// memo has bugs
+	public final PegObject parsePegNode2(PegObject parentNode, String pattern) {
 		int pos = this.getPosition();
 		String key = pattern + ":" + pos;
 		SimpleMemo m = this.memoMap.get(key, null);
@@ -152,7 +147,7 @@ public class SimpleParserContext extends ParserContext {
 			m.result = foundFailureNode;
 			this.memoMap.put(key, m);
 			this.memoMiss = this.memoMiss + 1;
-			Peg e = this.parser.getPattern(pattern);
+			Peg e = this.getRule(pattern);
 			PegObject ans = e.debugMatch(parentNode, this);
 			if(pos == this.getPosition() && !ans.isFailure()) {
 				this.memoMap.remove(key);
@@ -179,17 +174,6 @@ public class SimpleParserContext extends ParserContext {
 		}
 	}
 	
-	public final PegObject parseRightPegNode(PegObject left, String symbol) {
-		Peg e = this.getRightPattern(symbol);
-		if(e != null) {
-			PegObject right = e.debugMatch(left, this);
-			if(!right.isFailure()) {
-				left = right;
-			}
-		}
-		return left;
-	}
-
 	public final int getStackPosition(Peg trace) {
 		this.pushImpl(trace, null, '\0', null, 0, null);
 		return this.stackTop;
