@@ -29,8 +29,6 @@ public class SourceContext {
 
 	public final void rollback(int pos) {
 		if(this.sourcePosition > pos) {
-			//			System.out.println("backtracking");
-			//			new Exception().printStackTrace();
 			this.backtrackCount = this.backtrackCount + 1;
 			this.backtrackSize = this.backtrackSize + (this.sourcePosition - pos);
 		}

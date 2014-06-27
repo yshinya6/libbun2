@@ -25,6 +25,8 @@ public abstract class ParserContext extends SourceContext {
 	}
 
 	public abstract void initMemo();
+	public void removeMemo(int startIndex, int endIndex) {
+	}
 
 	protected abstract PegObject parsePegObject(PegObject inNode, String key);
 	
@@ -44,7 +46,14 @@ public abstract class ParserContext extends SourceContext {
 		}
 		return this.foundFailureNode;
 	}
-	
+
+	public final PegObject refoundFailure(Peg created, int pos) {
+		this.foundFailureNode.startIndex = pos;
+		this.foundFailureNode.endIndex   = pos;
+		this.foundFailureNode.createdPeg = created;
+		return this.foundFailureNode;
+	}
+
 	public final Peg storeFailurePeg() {
 		return this.foundFailureNode.createdPeg;
 	}

@@ -825,6 +825,7 @@ class PegNewObject extends PegList {
 			newnode.setSource(this, context.source, pos, context.getPosition());
 			newnode.checkNullEntry();
 			//System.out.println("** created[" + pos + "] " + newnode);
+			context.removeMemo(pos+1, context.getPosition());
 			checkedNode = newnode;
 		}
 		return checkedNode;
