@@ -19,7 +19,7 @@ parsed:
                #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
                   #identifier: i    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
                }
-               #initializer {            ## by peg : ( (AssignmentExpression^ / LWING InitializerList^ COMMA? RWING)  ) defined in Initializer
+               #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
                   #integer: 0   ## by peg : ( (DecimalConstant / HexConstant / OctalConstant) IntegerSuffix?  ) defined in IntegerConstant
                }
             }

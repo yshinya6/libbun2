@@ -314,7 +314,7 @@ TypedefName
 
 Initializer
     = << (AssignmentExpression@
-    / LWING InitializerList@ COMMA? RWING) #initializer>>
+    / LWING InitializerList@* COMMA? RWING) #initializer>>
     ;
 
 InitializerList

@@ -8,7 +8,7 @@ parsed:
          #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
             #identifier: c0    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
          }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING InitializerList^ COMMA? RWING)  ) defined in Initializer
+         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
             #float: 1.   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
          }
       }
@@ -21,7 +21,7 @@ parsed:
          #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
             #identifier: c1    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
          }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING InitializerList^ COMMA? RWING)  ) defined in Initializer
+         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
             #float: 2.0   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
          }
       }
@@ -34,7 +34,7 @@ parsed:
          #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
             #identifier: c2    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
          }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING InitializerList^ COMMA? RWING)  ) defined in Initializer
+         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
             #float: .3   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
          }
       }
@@ -47,7 +47,7 @@ parsed:
          #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
             #identifier: c2    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
          }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING InitializerList^ COMMA? RWING)  ) defined in Initializer
+         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
             #float: 4.f   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
          }
       }
