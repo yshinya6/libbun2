@@ -105,30 +105,6 @@ public class SourceContext {
 		}
 		return false;
 	}
-
-	public final boolean match(Peg e) {
-		return e.simpleMatch(null, this);
-	}
-
-	public final boolean match(UniMap<Peg> pegMap, Peg e) {
-		return e.simpleMatch(pegMap, this);
-	}
-
-	public final String slice(Peg e) {
-		int pos = this.getPosition();
-		if(e.simpleMatch(null, this)) {
-			return this.source.substring(pos, this.sourcePosition);
-		}
-		return "";
-	}
-
-	public final String slice(UniMap<Peg> pegMap, Peg e) {
-		int pos = this.getPosition();
-		if(e.simpleMatch(pegMap, this)) {
-			return this.source.substring(pos, this.sourcePosition);
-		}
-		return "";
-	}
 	
 	public final int matchZeroMore(UniCharset charset) {
 		for(;this.hasChar(); this.consume(1)) {

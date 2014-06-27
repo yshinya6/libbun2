@@ -125,13 +125,13 @@ public class SimpleParserContext extends ParserContext {
 
 	public final PegObject parsePegObject(PegObject parentNode, String ruleName) {
 		Peg e = this.getRule(ruleName);
-		PegObject left = e.debugMatch(parentNode, this);
+		PegObject left = e.performMatch(parentNode, this);
 		if(left.isFailure()) {
 			return left;
 		}
 		e = this.getRightJoinRule(ruleName);
 		if(e != null) {
-			return e.debugMatch(left, this);
+			return e.performMatch(left, this);
 		}
 		return left;
 	}

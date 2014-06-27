@@ -1,6 +1,5 @@
 package org.libbun;
 
-
 public class SymbolTable {
 	Namespace          root = null;
 	PegObject          scope     = null;

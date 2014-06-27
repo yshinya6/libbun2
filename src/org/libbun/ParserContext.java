@@ -56,13 +56,27 @@ public abstract class ParserContext extends SourceContext {
 		this.foundFailureNode.startIndex   = pos;
 		this.foundFailureNode.endIndex   = pos;
 	}
-	
+
+	private boolean verifyMode = false;
+	public final boolean isVerifyMode() {
+		return this.verifyMode;
+	}
+	public boolean startVerifyMode() {
+		boolean verifyMode = this.verifyMode;
+		this.verifyMode = true;
+		return verifyMode;
+	}
+	public void endVerifyMode(boolean verifyMode) {
+		this.verifyMode = verifyMode;
+	}
+
 	public abstract int getStackPosition(Peg peg);
 	public abstract void popBack(int stackPosition, boolean backtrack);
 	public abstract void push(Peg peg, PegObject parentNode, int index, PegObject node);
 	public abstract void addSubObject(PegObject newnode, int stack, int top);
 	
 	public abstract void showStatInfo(PegObject node);
+
 
 
 }

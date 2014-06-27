@@ -55,11 +55,11 @@ public final class PegRuleSet {
 		this.foundError = false;
 		UniArray<String> list = this.pegMap.keys();
 		for(int i = 0; i < list.size(); i++) {
-			String key = list.ArrayValues[i];
-			Peg e = this.pegMap.get(key, null);
-			e.verify(this);
+			String ruleName = list.ArrayValues[i];
+			Peg e = this.pegMap.get(ruleName, null);
+			e.verify(ruleName, this);
 			if(Main.PegDebuggerMode) {
-				System.out.println(e.toPrintableString(key, "\n  = ", "\n  / ", "\n  ;", true));
+				System.out.println(e.toPrintableString(ruleName, "\n  = ", "\n  / ", "\n  ;", true));
 			}
 		}
 		if(this.foundError) {
@@ -110,16 +110,16 @@ public final class PegRuleSet {
 	}	
 	private Peg toPegImpl(PegObject node) {
 		if(node.is("#name")) {
-			return new PegLabel(null, node.getText());
+			return new PegLabel(node.getText());
 		}
 		if(node.is("#string")) {
-			return new PegString(null, UniCharset._UnquoteString(node.getText()));
+			return new PegString(UniCharset._UnquoteString(node.getText()));
 		}
 		if(node.is("#character")) {
-			return new PegCharacter(null, node.getText());
+			return new PegCharacter(node.getText());
 		}
 		if(node.is("#any")) {
-			return new PegAny(null);
+			return new PegAny();
 		}
 		if(node.is("#choice")) {
 			PegChoice l = new PegChoice();
@@ -136,22 +136,22 @@ public final class PegRuleSet {
 			return l;
 		}
 		if(node.is("#not")) {
-			return new PegNot(null, toPeg(node.get(0)));
+			return new PegNot(toPeg(node.get(0)));
 		}
 		if(node.is("#and")) {
-			return new PegAnd(null, toPeg(node.get(0)));
+			return new PegAnd(toPeg(node.get(0)));
 		}
 		if(node.is("#one")) {
 			return new PegOneMore(null, toPeg(node.get(0)));
 		}
 		if(node.is("#zero")) {
-			return new PegZeroMore(null, toPeg(node.get(0)));
+			return new PegZeroMore(toPeg(node.get(0)));
 		}
 		if(node.is("#option")) {
-			return new PegOptional(null, toPeg(node.get(0)));
+			return new PegOptional(toPeg(node.get(0)));
 		}
 		if(node.is("#label")) {
-			return new PegObjectLabel(null, node.getText());
+			return new PegTag(null, node.getText());
 		}
 		if(node.is("#newjoin")) {
 			Peg seq = toPeg(node.get(0));
@@ -216,7 +216,7 @@ public final class PegRuleSet {
 		if(loc > 0) {
 			prefix = label.substring(0, loc+1);
 			label = label.substring(loc+1);
-			this.pegMap.put(label, new PegLabel(label, prefix+label));
+			this.pegMap.put(label, new PegLabel(prefix+label));
 		}
 		for(int i = 0; i < list.size(); i++) {
 			String l = list.ArrayValues[i];
@@ -249,22 +249,22 @@ public final class PegRuleSet {
 
 	// Definiton of Bun's Peg	
 	private final static Peg s(String token) {
-		return new PegString(null, token);
+		return new PegString(token);
 	}
 	private final static Peg c(String charSet) {
-		return new PegCharacter(null, charSet);
+		return new PegCharacter(charSet);
 	}
 	public static Peg n(String ruleName) {
-		return new PegLabel(null, ruleName);
+		return new PegLabel(ruleName);
 	}
 	private final static Peg opt(Peg e) {
-		return new PegOptional(null, e);
+		return new PegOptional(e);
 	}
 	private final static Peg zero(Peg e) {
-		return new PegZeroMore(null, e);
+		return new PegZeroMore(e);
 	}
 	private final static Peg zero(Peg ... elist) {
-		return new PegZeroMore(null, seq(elist));
+		return new PegZeroMore(seq(elist));
 	}
 	private final static Peg one(Peg e) {
 		return new PegOneMore(null, e);
@@ -287,10 +287,10 @@ public final class PegRuleSet {
 		return l;
 	}
 	public static Peg not(Peg e) {
-		return new PegNot(null, e);
+		return new PegNot(e);
 	}
 	public static Peg L(String label) {
-		return new PegObjectLabel(null, label);
+		return new PegTag(null, label);
 	}
 	public static Peg O(Peg ... elist) {
 		PegNewObject l = new PegNewObject(null, false);
@@ -311,7 +311,7 @@ public final class PegRuleSet {
 	}
 
 	PegRuleSet loadPegRule() {
-		Peg Any = new PegAny(null);
+		Peg Any = new PegAny();
 		Peg NewLine = c("\\r\\n");
 //		Comment
 //		  = '/*' (!'*/' .)* '*/'
@@ -357,7 +357,7 @@ public final class PegRuleSet {
 //	Setter
 //	  = '@' <<@ [0-9]? #setter>>
 //	  ;
-		setRule("Setter", seq(s("@"), LO(opt(c("0-9")), L("#setter"))));
+		setRule("Setter", seq(choice(s("^"), s("@")), LO(opt(c("0-9")), L("#setter"))));
 //		SetterTerm
 //		  = '(' Expr ')' Setter?
 //		  / '<<' << ('@' [ \t\n] #newjoin / '' #new) _? Expr@ >> _? '>>' Setter?
@@ -365,8 +365,8 @@ public final class PegRuleSet {
 //		  ;
 		Peg _SetterTerm = choice(
 			seq(s("("), opt(n("_")), n("Expr"), opt(n("_")), s(")"), opt(n("Setter"))),
-			seq(O(s("<<"), choice(seq(s("@"), c(" \\t\\n"), L("#newjoin")), seq(s(""), L("#new"))), 
-					opt(n("_")), set(n("Expr")), opt(n("_")), s(">>")), opt(n("Setter"))),
+			seq(O(choice(s("8<"), s("<<")), choice(seq(choice(s("^"), s("@")), c(" \\t\\n"), L("#newjoin")), seq(s(""), L("#new"))), 
+					opt(n("_")), set(n("Expr")), opt(n("_")), choice(s(">8"), s(">>"))), opt(n("Setter"))),
 			seq(n("RuleName"), opt(n("Setter")))
 		);
 //	Term
