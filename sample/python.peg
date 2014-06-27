@@ -29,7 +29,7 @@ EOS
     ;
 
 With
-    = <<"with" WS+ Expr@ WS+ "as" WS+ Symbol@ WS* ":" NL+ Block@ #with>>
+    = <<"with" WS+ Expr@ WS+ "as" WS+ Symbol@ WS* ":" Block@ #with>>
     ;
 
 Assert
@@ -45,12 +45,11 @@ Raise
     ;
 
 IfStmt
-    = <<"if" WS+ Expr@ WS* ":" Block@ (indent WS* "else" WS* ":" Block@)? #if >>
-    / <<"if" WS+ Expr@ WS* ":" Block@ (Elif@)* (indent WS* "else" WS* ":" Block@)? #if >>
+    = <<"if" WS+ Expr@ WS* ":" Block@ (Elif@)* ("else" WS* ":" Block@)? #if >>
     ;
 
 Elif
-    = << indent WS* "elif" WS+ Expr@ WS* ":" Block@ #if >>
+    = << "elif" WS+ Expr@ WS* ":" Block@ #if >>
     ;
 
 WhileStmt
@@ -153,6 +152,7 @@ EqOp
     / 'is' #eq
     / '==' #eq
     / '!=' #noteq
+    / 'in' #in
     ;
 
 Relation
@@ -197,7 +197,6 @@ SliceEnd
     ;
 
 Value
-    //= << StringLiteral@ (_* StringLiteral@)+ #strings >>
     = StringLiteral
     / Symbol
     / Number
@@ -205,9 +204,6 @@ Value
     / MapLiteral
     / TupleLiteral
     ;
-
-Assignment
-    = Expr;
 
 ArrayLiteral
     = << "[" _* Expr@? (_* "," _* Expr@)* _* "]" #array>>
