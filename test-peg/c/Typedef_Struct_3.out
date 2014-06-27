@@ -25,5 +25,18 @@ parsed:
             }
          }
       }
+      #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
+         #identifier: Student   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+      }
+   }
+   #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
+      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)* TypedefName^ (StorageClassSpecifier / TypeQualifier / FunctionSpecifier / Attribute)*  ) defined in DeclarationSpecifiers
+         #typedefname {            ## by peg : ( Identifier^  ) defined in TypedefName
+            #identifier: Student    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+         }
+      }
+      #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
+         #identifier: a   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+      }
    }
 }
