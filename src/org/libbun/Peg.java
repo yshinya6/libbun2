@@ -1037,7 +1037,7 @@ class PegIndent extends PegAtom {
 	protected PegObject lazyMatch(PegObject inNode, ParserContext context) {
 		if(inNode.source != null) {
 			String indent = inNode.source.getIndentText(inNode.startIndex);
-			System.out.println("###" + indent + "###");
+			//System.out.println("###" + indent + "###");
 			if(context.match(indent)) {
 				return inNode;
 			}

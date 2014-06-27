@@ -6,18 +6,18 @@ Stmt
     = IfStmt EOS?
     / WhileStmt EOS?
     / ForStmt EOS?
-    / ReturnStmt EOS?
-    / ImportStmt EOS?
-    / BreakStmt EOS?
-    / ContinueStmt EOS?
+    / ReturnStmt EOS
+    / ImportStmt EOS
+    / BreakStmt EOS
+    / ContinueStmt EOS
     / DefineFunction EOS?
     / DefineClass EOS?
     / Try EOS?
-    / Assert EOS?
-    / Print EOS?
-    / Raise EOS?
-    / With EOS?
-    / Expr EOS?
+    / Assert EOS
+    / Print EOS
+    / Raise EOS
+    / With EOS
+    / Expr EOS
     / EOS+
     / catch .*
     ;
@@ -98,12 +98,12 @@ ReturnStmt
     ;
 
 Block
-    = WS* EOS+ << (indent WS* Stmt@ NL?)+ #block>>
+    = WS* EOS+ << (indent WS* Stmt@ EOS?)+ #block>>
     / WS* << Stmt@ #block>>
     ;
 
 ClassBlock
-    = NL+ << (indent WS* ClassStmt@ NL?)+ #block>>;
+    = NL+ << (indent WS* ClassStmt@ EOS?)+ #block>>;
 
 ClassStmt
     = Stmt
@@ -112,7 +112,7 @@ ClassStmt
     ;
 
 Try
-    = << "try" WS* ":" Block@ indent WS* "except" WS+ Expr@ WS* ":" Block@ #try >>
+    = << "try" WS* ":" Block@ "except" WS+ Expr@ WS* ":" Block@ #try >>
     ;
 
 Expr
