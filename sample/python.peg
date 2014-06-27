@@ -6,18 +6,18 @@ Stmt
     = IfStmt EOS?
     / WhileStmt EOS?
     / ForStmt EOS?
-    / ReturnStmt EOS?
-    / ImportStmt EOS?
-    / BreakStmt EOS?
-    / ContinueStmt EOS?
+    / ReturnStmt EOS
+    / ImportStmt EOS
+    / BreakStmt EOS
+    / ContinueStmt EOS
     / DefineFunction EOS?
     / DefineClass EOS?
     / Try EOS?
-    / Assert EOS?
-    / Print EOS?
-    / Raise EOS?
-    / With EOS?
-    / Expr EOS?
+    / Assert EOS
+    / Print EOS
+    / Raise EOS
+    / With EOS
+    / Expr EOS
     / EOS+
     / catch .*
     ;
@@ -29,7 +29,7 @@ EOS
     ;
 
 With
-    = <<"with" WS+ Expr@ WS+ "as" WS+ Symbol@ WS* ":" NL+ Block@ #with>>
+    = <<"with" WS+ Expr@ WS+ "as" WS+ Symbol@ WS* ":" Block@ #with>>
     ;
 
 Assert
@@ -45,12 +45,11 @@ Raise
     ;
 
 IfStmt
-    = <<"if" WS+ Expr@ WS* ":" Block@ (indent WS* "else" WS* ":" Block@)? #if >>
-    / <<"if" WS+ Expr@ WS* ":" Block@ (Elif@)* (indent WS* "else" WS* ":" Block@)? #if >>
+    = <<"if" WS+ Expr@ WS* ":" Block@ (Elif@)* ("else" WS* ":" Block@)? #if >>
     ;
 
 Elif
-    = << indent WS* "elif" WS+ Expr@ WS* ":" Block@ #if >>
+    = << "elif" WS+ Expr@ WS* ":" Block@ #if >>
     ;
 
 WhileStmt
@@ -99,12 +98,12 @@ ReturnStmt
     ;
 
 Block
-    = WS* EOS+ << (indent WS* Stmt@ NL?)+ #block>>
+    = WS* EOS+ << (indent WS* Stmt@ EOS?)+ #block>>
     / WS* << Stmt@ #block>>
     ;
 
 ClassBlock
-    = NL+ << (indent WS* ClassStmt@ NL?)+ #block>>;
+    = NL+ << (indent WS* ClassStmt@ EOS?)+ #block>>;
 
 ClassStmt
     = Stmt
@@ -113,7 +112,7 @@ ClassStmt
     ;
 
 Try
-    = << "try" WS* ":" Block@ indent WS* "except" WS+ Expr@ WS* ":" Block@ #try >>
+    = << "try" WS* ":" Block@ "except" WS+ Expr@ WS* ":" Block@ #try >>
     ;
 
 Expr
@@ -153,6 +152,7 @@ EqOp
     / 'is' #eq
     / '==' #eq
     / '!=' #noteq
+    / 'in' #in
     ;
 
 Relation
@@ -197,7 +197,6 @@ SliceEnd
     ;
 
 Value
-    //= << StringLiteral@ (_* StringLiteral@)+ #strings >>
     = StringLiteral
     / Symbol
     / Number
@@ -205,9 +204,6 @@ Value
     / MapLiteral
     / TupleLiteral
     ;
-
-Assignment
-    = Expr;
 
 ArrayLiteral
     = << "[" _* Expr@? (_* "," _* Expr@)* _* "]" #array>>

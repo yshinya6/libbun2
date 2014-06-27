@@ -897,10 +897,10 @@ class PegIndent extends PegAtom {
 	protected PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		if(inNode.source != null) {
 			String indent = inNode.source.getIndentText(inNode.startIndex);
-			if(context.matchIndentSize(indent)) {
+			//System.out.println("###" + indent + "###");
+			if(context.match(indent)) {
 				return inNode;
 			}
-			return new PegObject(null); //not match
 		}
 		return inNode;
 	}
