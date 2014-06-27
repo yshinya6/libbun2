@@ -1,31 +1,39 @@
 parsed:
-#translationunit {            ## by peg : null
-   #declaration {            ## by peg : null
-      #typespecifier {            ## by peg : null
-         #union: union    ## by peg : null
-         #identifier: data    ## by peg : null
-         #structdeclaration {            ## by peg : null
-            #typespecifier: int    ## by peg : null
-            #declarator {            ## by peg : null
-               #identifier: id   ## by peg : null
+#translationunit {            ## by peg : ( Spacing (ExternalDeclaration^)+ EOT  ) defined in TranslationUnit
+   #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
+      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
+         #typespecifier {            ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+            #union: union    ## by peg : ( UNION  ) defined in StructOrUnion
+            #identifier: data    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+            #structdeclaration {            ## by peg : ( SpecifierQualifierList StructDeclaratorList^ SEMI  ) defined in StructDeclaration
+               #typespecifier: int    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+               #structdeclaratorlist {            ## by peg : ( StructDeclarator^ (COMMA StructDeclarator^)*  ) defined in StructDeclaratorList
+                  #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
+                     #identifier: id   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+                  }
+               }
             }
-         }
-         #structdeclaration {            ## by peg : null
-            #typespecifier: char    ## by peg : null
-            #declarator {            ## by peg : null
-               #pointer: *   ## by peg : null
-               #identifier: content   ## by peg : null
+            #structdeclaration {            ## by peg : ( SpecifierQualifierList StructDeclaratorList^ SEMI  ) defined in StructDeclaration
+               #typespecifier: char    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+               #structdeclaratorlist {            ## by peg : ( StructDeclarator^ (COMMA StructDeclarator^)*  ) defined in StructDeclaratorList
+                  #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
+                     #pointer: *   ## by peg : ( (STAR^ (TypeQualifier^)*)+  ) defined in Pointer
+                     #identifier: content   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+                  }
+               }
             }
          }
       }
    }
-   #declaration {            ## by peg : null
-      #typespecifier {            ## by peg : null
-         #union: union    ## by peg : null
-         #identifier: data    ## by peg : null
+   #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
+      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
+         #typespecifier {            ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+            #union: union    ## by peg : ( UNION  ) defined in StructOrUnion
+            #identifier: data    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+         }
       }
-      #declarator {            ## by peg : null
-         #identifier: d   ## by peg : null
+      #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
+         #identifier: d   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
       }
    }
 }

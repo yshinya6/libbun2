@@ -120,10 +120,12 @@ DeclarationList
 //  A.2.2  Declarations
 //-------------------------------------------------------------------------
 
-Declaration = DeclarationNoAttribute (Attribute / Assembler)@? SEMI #declaration;
+Declaration
+    = << DeclarationNoAttribute@ (Attribute / Assembler)@? SEMI #declaration >>
+    ;
 
 DeclarationNoAttribute
-    = << DeclarationSpecifiers@ InitDeclaratorList@? #declarationnoattribute >>
+    = DeclarationSpecifiers@ InitDeclaratorList@?
     ;
 
 DeclarationSpecifiers
@@ -312,7 +314,7 @@ TypedefName
 
 Initializer
     = << (AssignmentExpression@
-    / LWING InitializerList@ COMMA? RWING) #initializer>>
+    / LWING InitializerList@* COMMA? RWING) #initializer>>
     ;
 
 InitializerList
@@ -398,7 +400,7 @@ PostfixExpression
       / PTR #ptr Identifier@
       / INC #inc
       / DEC #dec
-      ) >>*
+      )@ >>*
     ;
 
 ArgumentExpressionList
