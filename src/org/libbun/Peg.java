@@ -798,61 +798,41 @@ class PegNewObject extends PegList {
 	}
 	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
-		PegObject leftNode = inNode;
-		int pos = context.getPosition();
-//		if(!context.isVerified(this, pos)) {
-			// **********
-			// Note that prediction is disabled if comment out this block untile HERE	
-			PegObject vnode = inNode;
-			boolean verifyMode = context.startVerifyMode();
+		PegObject checkedNode = context.precheck(this, inNode);
+		if(checkedNode == null) {
+			PegObject leftNode = inNode;
+			int pos = context.getPosition();
+			int stack = context.getStackPosition(this);
+			PegObject newnode = context.newPegObject(this.nodeName);
+			newnode.setSource(this, context.source, pos, context.getPosition());
+			if(this.leftJoin) {
+				context.push(this, newnode, 0, leftNode);
+			}
 			for(int i = 0; i < this.size(); i++) {
 				Peg e = this.get(i);
-				vnode = e.performMatch(vnode, context);
-				if(vnode.isFailure()) {
-					context.endVerifyMode(verifyMode);
-					context.rollback(pos);
-					return vnode;
+				PegObject node = e.performMatch(newnode, context);
+				if(node.isFailure()) {
+					//System.out.println("** failed[" + pos + "] " + this);
+					context.popBack(stack, true);
+					return node;
 				}
+				//			if(node != newnode) {
+				//				this.warning("dropping @" + newnode.name + " " + node);
+				//			}
 			}
-			context.endVerifyMode(verifyMode);
-			if(verifyMode) {
-				return vnode;
-			}
-			context.rollback(pos);
-			// ***** HERE *****
-//			context.verified(this, pos);
-//		}
-		
-		int stack = context.getStackPosition(this);
-		PegObject newnode = context.newPegObject(this.nodeName);
-		newnode.setSource(this, context.source, pos, context.getPosition());
-		if(this.leftJoin) {
-			context.push(this, newnode, 0, leftNode);
+			int top = context.getStackPosition(this);
+			context.addSubObject(newnode, stack, top);
+			newnode.setSource(this, context.source, pos, context.getPosition());
+			newnode.checkNullEntry();
+			//System.out.println("** created[" + pos + "] " + newnode);
+			checkedNode = newnode;
 		}
-		for(int i = 0; i < this.size(); i++) {
-			Peg e = this.get(i);
-			PegObject node = e.performMatch(newnode, context);
-			if(node.isFailure()) {
-				//System.out.println("** failed[" + pos + "] " + this);
-				context.popBack(stack, true);
-				return node;
-			}
-			//			if(node != newnode) {
-			//				this.warning("dropping @" + newnode.name + " " + node);
-			//			}
-		}
-		int top = context.getStackPosition(this);
-		context.addSubObject(newnode, stack, top);
-		newnode.setSource(this, context.source, pos, context.getPosition());
-		newnode.checkNullEntry();
-		//System.out.println("** created[" + pos + "] " + newnode);
-		return newnode;
+		return checkedNode;
 	}
 
 	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitNewObject(this);
-
 	}
 }
 

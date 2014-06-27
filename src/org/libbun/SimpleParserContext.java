@@ -136,6 +136,41 @@ public class SimpleParserContext extends ParserContext {
 		return left;
 	}
 	
+	public PegObject precheck(PegNewObject peg, PegObject inNode) {
+		int pos = this.getPosition();
+		PegObject vnode = inNode;
+		boolean verifyMode = this.startVerifyMode();
+		for(int i = 0; i < peg.size(); i++) {
+			Peg e = peg.get(i);
+			vnode = e.performMatch(vnode, this);
+			if(vnode.isFailure()) {
+				this.endVerifyMode(verifyMode);
+				this.rollback(pos);
+				return vnode;
+			}
+		}
+		this.endVerifyMode(verifyMode);
+		if(verifyMode) {
+			return vnode;
+		}
+		this.rollback(pos);
+		return null;
+	}
+	
+	private boolean verifyMode = false;
+	public final boolean isVerifyMode() {
+		return this.verifyMode;
+	}
+	public boolean startVerifyMode() {
+		boolean verifyMode = this.verifyMode;
+		this.verifyMode = true;
+		return verifyMode;
+	}
+	public void endVerifyMode(boolean verifyMode) {
+		this.verifyMode = verifyMode;
+	}
+
+	
 	public final int getStackPosition(Peg trace) {
 		this.pushImpl(trace, null, '\0', null, 0, null);
 		return this.stackTop;
