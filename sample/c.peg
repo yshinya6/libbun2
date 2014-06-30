@@ -193,7 +193,7 @@ StructOrUnion
     ;
 
 StructDeclaration
-    = << SpecifierQualifierList StructDeclaratorList@ SEMI #structdeclaration >>
+    = << SpecifierQualifierList StructDeclaratorList@? SEMI #structdeclaration >>
     ;
 
 SpecifierQualifierList
