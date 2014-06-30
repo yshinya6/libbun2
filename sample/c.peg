@@ -412,7 +412,7 @@ UnaryExpression
     / INC UnaryExpression
     / DEC UnaryExpression
     / UnaryOperator CastExpression
-    / SIZEOF (UnaryExpression / LPAR TypeName RPAR )
+    / << SIZEOF #sizeof (UnaryExpression@ / LPAR@ TypeName@ RPAR@ ) >>
     ;
 
 UnaryOperator
