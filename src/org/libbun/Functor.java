@@ -89,7 +89,6 @@ public class Functor {
 	public void add(TemplateEngine section) {
 		this.template = section;
 	}
-	
 }
 
 
@@ -151,13 +150,12 @@ class BunTemplateFunctor extends Functor {
 	private Functor parseFunctor(SymbolTable gamma, PegObject bunNode) {
 		int isSymbol = 0;
 		String name = bunNode.textAt(0, null);
-		GreekList greekList = this.parseGreekList(gamma, bunNode.get(5, null));
+		GreekList greekList = this.parseGreekList(gamma, bunNode.get(4, null));
 		UniMap<Integer> nameMap = new UniMap<Integer>();
 		if(bunNode.get(1).isEmptyToken()) {
 			isSymbol |= Functor._SymbolFunctor;
 		}
-		String checkerName = bunNode.textAt(4, null);
-		BunType funcType = this.parseFuncType(gamma, greekList, bunNode.get(1), bunNode.get(2), checkerName, nameMap);
+		BunType funcType = this.parseFuncType(gamma, greekList, bunNode.get(1), bunNode.get(2), nameMap);
 		Functor functor = new Functor(isSymbol, name, funcType);
 		TemplateEngine section = this.parseSection(bunNode.get(3), nameMap);
 		functor.add(section);
@@ -186,7 +184,7 @@ class BunTemplateFunctor extends Functor {
 		return listed;
 	}
 
-	private BunType parseFuncType(SymbolTable gamma, GreekList greekList, PegObject paramNode, PegObject returnTypeNode, String checkerName, UniMap<Integer> nameMap) {
+	private BunType parseFuncType(SymbolTable gamma, GreekList greekList, PegObject paramNode, PegObject returnTypeNode, UniMap<Integer> nameMap) {
 		if(paramNode.size() == 0 && paramNode.getText().equals("(*)")) {
 			return null; // 
 		}
@@ -198,11 +196,7 @@ class BunTemplateFunctor extends Functor {
 			nameMap.put(name, i);
 		}
 		typeList.add(this.parseType(gamma, greekList, returnTypeNode));
-		BunType t = BunType.newFuncType(typeList);
-//		if(greekList != null || checkerName != null) {
-//			t = new FunctorType(greekList, t, checkerName);
-//		}
-		return t;
+		return BunType.newFuncType(typeList);
 	}
 
 	private BunType parseType(SymbolTable gamma, GreekList greekList, PegObject node) {
@@ -218,7 +212,8 @@ class BunTemplateFunctor extends Functor {
 		}
 		if(node.is("#type")) {
 			if(node.isEmptyToken()) {
-				return BunType.newVarType(node);
+				return BunType.UntypedType;
+				//return BunType.newVarType(node);
 			}
 			String typeName = node.getText();
 			BunType t = gamma.getType(typeName, null);

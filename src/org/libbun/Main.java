@@ -202,6 +202,9 @@ public class Main {
 			if(!ParseOnly && driver != null) {
 				driver.startTransaction(null);
 				node = gamma.tryMatch(node, true);
+				if(EnableVerbose) {
+					System.out.println("Typed node: \n" + node + "\n:untyped: " + node.countUnmatched(0));
+				}
 				node.matched.build(node, driver);
 				driver.endTransaction();
 			}

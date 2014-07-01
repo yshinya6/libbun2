@@ -39,7 +39,9 @@ public class SymbolTable {
 		}
 		this.symbolTable.put(key, f);
 		f.storedTable = this;
-		//System.out.println("SET gamma " + this + ", name = " + key);
+		if(Main.EnableVerbose) {
+			Main._PrintLine("SET @" + this + ", name = " + key + " as " + f.funcType);
+		}
 	}
 	public final Functor getLocalSymbol(String name) {
 		if(this.symbolTable != null) {
@@ -89,6 +91,9 @@ public class SymbolTable {
 			PegObject o = new PegObject("#error", errorNode.source, null, errorNode.startIndex);
 			o.matched = this.getSymbol("#error");
 			//o.typed = BunType.newErrorType(message);
+			if(Main.EnableVerbose) {
+				Main._PrintLine(errorNode.formatSourceMessage("debug", message));
+			}
 			return o;
 		}
 		errorNode.matched = null;
@@ -122,6 +127,7 @@ public class SymbolTable {
 	}
 	
 	public final boolean checkTypeAt(PegObject node, int index, BunType type, boolean isStrongTyping) {
+		//System.out.println("@@ " + node.get(index).tag + ", " + index + ", " + type + " untyped?" + (type == BunType.UntypedType));
 		if(type == BunType.UntypedType) {  // UntypedType does not invoke tryMatch()
 			return true;
 		}
@@ -129,6 +135,7 @@ public class SymbolTable {
 			PegObject subnode = node.get(index);
 			subnode = this.tryMatch(subnode, isStrongTyping);
 			node.AST[index] = subnode;
+			subnode.parent = node;
 			if(type.accept(this, subnode, isStrongTyping)) {
 				return true;
 			}

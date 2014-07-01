@@ -86,6 +86,13 @@ public class BunTypeChecker {
 	abstract class TypeChecker {
 		public abstract PegObject check(SymbolTable gamma, PegObject node, boolean isStrongTyping);
 	}
+	class TvarChecker extends TypeChecker {
+		@Override
+		public PegObject check(SymbolTable gamma, PegObject node, boolean isStrongTyping) {
+			node.typed = BunType.newVarType();
+			return node;
+		}
+	}
 	class VarChecker extends TypeChecker {
 		@Override
 		public PegObject check(SymbolTable gamma, PegObject node, boolean isStrongTyping) {
@@ -99,7 +106,10 @@ public class BunTypeChecker {
 				gamma = block.getLocalSymbolTable();
 				flag |= Functor._ReadOnlyFunctor;
 			}
-			setName(gamma, flag, node.get(0), type, node);
+			PegObject nameNode = node.get(0);
+			setName(gamma, flag, nameNode, type, node);
+			nameNode.matched = gamma.getSymbol("#name:0");
+			nameNode.typed = type;
 			return node;
 		}
 	}
@@ -186,8 +196,10 @@ public class BunTypeChecker {
 	public BunTypeChecker() {
 		if(checkerMap == null) {
 			checkerMap = new UniMap<TypeChecker>();
+			checkerMap.put("#Tvar:0", new TvarChecker());
 			checkerMap.put("#var:3", new VarChecker());
-			checkerMap.put("#name",  new NameChecker());
+			checkerMap.put("#let:3", new VarChecker());
+			checkerMap.put("#name:0",  new NameChecker());
 		}
 	}
 
@@ -198,8 +210,14 @@ public class BunTypeChecker {
 		}
 		TypeChecker c = checkerMap.get(nodeKey, null);
 		if(c != null) {
+//			if(Main.EnableVerbose) {
+//				System.out.println("Using extended type checker: " + nodeKey);
+//			}
 			return c.check(gamma, node, isStrongTyping);
 		}
+//		if(Main.EnableVerbose) {
+//			System.out.println("Unusing extended type checker: '" + nodeKey + "' c =" + c);
+//		}
 		return node;
 	}
 	

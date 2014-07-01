@@ -1,6 +1,5 @@
 package org.libbun;
 
-
 public class PegObject {
 	PegSource    source = null;
 	int          startIndex = 0;
@@ -246,6 +245,15 @@ public class PegObject {
 	public void setVariable(boolean flag) {
 	}
 
-
+	public final int countUnmatched(int c) {
+		for(int i = 0; i < this.size(); i++) {
+			PegObject o = this.get(i);
+			c = o.countUnmatched(c);
+		}
+		if(this.matched == null) {
+			return c+1;
+		}
+		return c;
+	}
 
 }
