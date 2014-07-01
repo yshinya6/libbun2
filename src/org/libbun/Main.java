@@ -185,7 +185,7 @@ public class Main {
 			ParseProfileStart();
 			PegObject node = context.parsePegObject(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
 			if(node.isFailure()) {
-				node.name = BunSymbol.PerrorFunctor;
+				node.tag = BunSymbol.PerrorFunctor;
 			}
 			gamma.set(node);
 			if(PegDebuggerMode || EnableVerboseAst) {
@@ -201,7 +201,7 @@ public class Main {
 			ParseProfileStop();
 			if(!ParseOnly && driver != null) {
 				driver.startTransaction(null);
-				gamma.tryMatch(node);
+				node = gamma.tryMatch(node, true);
 				node.matched.build(node, driver);
 				driver.endTransaction();
 			}
