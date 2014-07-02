@@ -405,7 +405,7 @@ PostfixExpression
       <<@
       ( FunctionCall #apply
       / Index #index
-      / DOT #dot Identifier@
+      / DOT #field Identifier@
       / PTR #ptr Identifier@
       / INC #inc
       / DEC #dec
