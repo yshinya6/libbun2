@@ -135,6 +135,7 @@ public class Main {
 		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
 		driverMap.put("jvm-indy", JvmIndyDriver.class);
 		driverMap.put("jvm-indy-debug", JvmIndyDriver.DebuggableJvmIndyDriver.class);
+		driverMap.put("debug-gui", DebugGuiDriver.class);
 	}
 
 	private static BunDriver loadDriver(String driverName) {
