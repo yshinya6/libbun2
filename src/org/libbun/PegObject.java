@@ -149,7 +149,7 @@ public class PegObject {
 				node = gamma.tryMatch(node, true);
 			}
 			if(node.matched != null) {
-				return node.getType(defaultType);
+				return node.matched.getReturnType(defaultType);
 			}
 		}
 		return defaultType;

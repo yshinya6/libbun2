@@ -102,7 +102,7 @@ public class SymbolTable {
 	}
 
 	public final PegObject check(PegObject node, boolean isStrongTyping) {
-		return BunTypeChecker.check(this, node, isStrongTyping);
+		return this.root.checker.check(this, node, isStrongTyping);
 	}
 
 	public final PegObject tryMatch(PegObject node, boolean isStrongTyping) {

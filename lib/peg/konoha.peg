@@ -44,7 +44,7 @@ FuncDecl
   ;
 
 Params
-  = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #params >>
+  = << '(' _ (Param@ ( _ ',' _ Param@)*)? _ ')' #block >>
   ;
 Param
   = << Name@ TypeAnno@ #param >>

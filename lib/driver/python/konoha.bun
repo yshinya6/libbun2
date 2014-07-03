@@ -197,12 +197,8 @@ template #name() {
 	${textof name}
 }
 
-template #function(name, params, block): void {
-	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
-}
-
 template #function(name, params, rtype, block): void {
-	def ${push name}(${list params ", "}): ${begin} ${block} ${end}
+	def ${name}(${list params ", "}): ${begin} ${block} ${end}
 }
 
 template #param(name, type): void {
@@ -230,6 +226,6 @@ template #return(expr): void {
 	return ${expr}
 }
 
-template #error(*) {
+template #error() {
 	error!!
 }
