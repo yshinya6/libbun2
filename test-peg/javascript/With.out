@@ -1,0 +1,18 @@
+parsed:
+#block {            ## by peg : ( SourceElement^ (__ SourceElement^)*  ) defined in SourceElements
+   #with {            ## by peg : ( WithToken __ '(' __ Expression^ __ ')' __ Statement^  ) defined in WithStatement
+      #identifier: document   ## by peg : ( IdentifierStart IdentifierPart*  ) defined in IdentifierName
+      #block {            ## by peg : ( (Statement^ __)*  ) defined in Block
+         #exprstmt {            ## by peg : ( Expression^ EOS  ) defined in ExpressionStatement
+            #call {            ## by peg : ( MemberExpression^ __ Arguments^  ) defined in FirstCall
+               #identifier: write   ## by peg : ( IdentifierStart IdentifierPart*  ) defined in IdentifierName
+               #arguments {            ## by peg : ( Argument^ (__ ',' __ Argument^)*  ) defined in ArgumentList
+                  #argument {            ## by peg : ( AssignmentExpression^  ) defined in Argument
+                     #string: hoge   ## by peg : ( DoubleStringCharacter*  ) defined in StringLiteral
+                  }
+               }
+            }
+         }
+      }
+   }
+}
