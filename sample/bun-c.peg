@@ -231,23 +231,23 @@ Enumerator
     ;
 
 TypeQualifier
-    = CONST
+    = << CONST #c.const>>
     / RESTRICT
     / VOLATILE
     / DECLSPEC LPAR Identifier RPAR
     ;
 
 FunctionSpecifier
-    = INLINE
-    / STDCALL
+    = << INLINE #c.inline >>
+    / << STDCALL #c.stdcall >>
     ;
 
 Attribute
-    = ATTRIBUTE LPAR LPAR Identifier AttributeParamList? RPAR RPAR;
+    = << ATTRIBUTE #c.attribute LPAR LPAR (PostfixExpression@ / TypeQualifier@ / Identifier@) AttributeParamList@? RPAR RPAR >>;
 
-AttributeParam = IntegerConstant / Identifier / StringLiteral;
+AttributeParam = << IntegerConstant@ / Identifier@ / StringLiteral@ #attributeparam >>;
 
-AttributeParamList = LPAR (AttributeParam (COMMA AttributeParam)*)? RPAR;
+AttributeParamList = LPAR (AttributeParam@ (COMMA AttributeParam@)*)? RPAR;
 
 
 Assembler = ASM LPAR (StringLiteral (COMMA StringLiteral)*)? RPAR;
@@ -389,10 +389,13 @@ PrimaryExpression
     / LPAR Expression RPAR
     ;
 
+Index
+    = LBRK@ Expression@ RBRK@
+    ;
+
+
 FunctionCall
-    = ( LBRK@ Expression@ RBRK@
-      / LPAR@ ArgumentExpressionList@? RPAR@
-      )
+    = LPAR@ ArgumentExpressionList@? RPAR@
     ;
 
 PostfixExpression
@@ -401,8 +404,9 @@ PostfixExpression
       )
       <<@
       ( FunctionCall #apply
-      / DOT #dot Identifier@
-      / PTR #c.ptr Identifier@
+      / Index #index
+      / DOT #field Identifier@
+      / PTR #ptr Identifier@
       / INC #inc
       / DEC #dec
       )@ >>*
@@ -417,7 +421,7 @@ UnaryExpression
     / INC UnaryExpression
     / DEC UnaryExpression
     / UnaryOperator CastExpression
-    / SIZEOF (UnaryExpression / LPAR TypeName RPAR )
+    / << SIZEOF #c.sizeof (UnaryExpression@ / LPAR@ TypeName@ RPAR@ ) >>
     ;
 
 UnaryOperator
@@ -435,11 +439,11 @@ CastExpression
     ;
 
 MultiplicativeExpression
-    = CastExpression <<@ (STAR #star / DIV #div / MOD #mod ) CastExpression@ >>*
+    = CastExpression <<@ (STAR #mul / DIV #div / MOD #mod ) CastExpression@ >>*
     ;
 
 AdditiveExpression
-    = MultiplicativeExpression <<@ (PLUS #plus / MINUS #minus) MultiplicativeExpression@ >>*
+    = MultiplicativeExpression <<@ (PLUS #add / MINUS #sub) MultiplicativeExpression@ >>*
     ;
 
 ShiftExpression
