@@ -155,7 +155,7 @@ template<T> #add(x: T, y: T) :T {
 }
 
 template #add(x: unicode, y: any): unicode {
-	(${x} + ustr(${y}))
+	(${x} + unicode(${y}))
 }
 
 template #add(x: unicode, y: unicode): unicode {
@@ -231,13 +231,12 @@ template #apply(f, args) {
 }
 
 
+template #empty(): void {
+}
 
 template #block(*): void {
 	${statement this}
 }
-
-
-
 
 template #if(x: bool, then: void): void {
 	if ${x}: ${begin} ${statement then} ${end}

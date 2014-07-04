@@ -29,6 +29,16 @@ public class Debugger extends BunDriver {
 	public void endTransaction() {
 	}
 
+	@Override
+	public void startTopLevel() {
+		System.out.println();
+	}
+
+	@Override
+	public void endTopLevel() {
+	}
+
+
 
 	@Override
 	public void pushName(PegObject node, String name) {

@@ -2,8 +2,11 @@ package org.libbun;
 
 public class Functor {
 	public final static int _SymbolFunctor = 1;
-	public final static int _ReadOnlyFunctor = (1 << 1);
-	public final static int _LocalFunctor    = (1 << 2);
+	public final static int _ExportFunctor      = (1 << 1);
+	public final static int _PublicFunctor      = (1 << 2);
+	public final static int _LocalFunctor       = (1 << 3);
+	public final static int _ReadOnlyFunctor    = (1 << 4);
+	
 	public final static Functor ErrorFunctor = new ErrorFunctor();
 	
 	public SymbolTable storedTable = null;

@@ -6,6 +6,8 @@ public abstract class BunDriver {
 
 	public abstract void startTransaction(String fileName);
 	public abstract void endTransaction();
+	public abstract void startTopLevel();
+	public abstract void endTopLevel();
 
 	public abstract void pushType(BunType type);   // deprecated
 	public abstract void pushName(PegObject nameNode, String name);
@@ -49,7 +51,8 @@ public abstract class BunDriver {
 		}
 	}
 
-	
+	public abstract void pushCode(String text);
+
 	protected UniMap<DriverCommand> commandMap = new UniMap<DriverCommand>();
 	
 	public boolean hasCommand(String cmd) {
@@ -65,15 +68,26 @@ public abstract class BunDriver {
 		command.invoke(this, node, params);
 	}
 
-	public abstract void pushCode(String text);
+	public String rename(int flag, String name) {
+		if(!Main._IsFlag(flag, Functor._SymbolFunctor) && name.equals("main")) {
+			hasMainFunc = true;
+		}
+		return name;
+	}
+	
+	private boolean hasMainFunc = false;
+	protected final boolean hasMainFunction() {
+		return hasMainFunc;
+	}
+
+	public void generateMain() {  // Override
+	}
 	
 	public void report(PegObject node, String errorType, String msg) {
 		System.err.println(node.formatSourceMessage(errorType, msg));
 	}
 
-	public void performChecker(String checkerName, SymbolTable gamma, PegObject node) {
-		return;
-	}
+
 
 
 }
@@ -102,10 +116,21 @@ abstract class SourceDriver extends BunDriver {
 
 	@Override
 	public void endTransaction() {
-		this.builder.show();
+		if(this.fileName == null) {
+			System.out.println(this.builder.toString());
+		}
 		this.builder = null;
 	}
 
+	@Override
+	public void startTopLevel() {
+		this.builder.appendNewLine();
+	}
+
+	@Override
+	public void endTopLevel() {
+	}
+	
 	@Override
 	public void pushCode(String text) {
 		this.builder.append(text);

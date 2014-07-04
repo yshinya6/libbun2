@@ -182,32 +182,37 @@ public class Main {
 		try {
 			ParserContext context = Main.newParserContext(source);
 			gamma.initParserRuleSet(context, "main");
-			ParseProfileStart();
-			PegObject node = context.parsePegObject(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
-			if(node.isFailure()) {
-				node = context.newErrorObject();
-			}
-			gamma.setNode(node);
-			if(PegDebuggerMode || EnableVerboseAst) {
-				System.out.println("parsed:\n" + node.toString());
-				if(context.hasChar()) {
-					System.out.println("** uncosumed: '" + context + "' **");
+			driver.startTransaction(null);
+			while(context.hasNode()) {
+				ParseProfileStart();
+				PegObject node = context.parsePegObject(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
+				if(node.isFailure()) {
+					node = context.newErrorObject();
+				}
+				gamma.setNode(node);
+				if(PegDebuggerMode || EnableVerboseAst) {
+					System.out.println("parsed:\n" + node.toString());
+					if(context.hasChar()) {
+						System.out.println("** uncosumed: '" + context + "' **");
+					}
+				}
+				if(PegDebuggerMode || EnableVerbose) {
+					System.out.println();
+					context.showStatInfo(node);
+				}
+				ParseProfileStop();
+				if(!ParseOnly && driver != null) {
+					node = gamma.tryMatch(node, true);
+					if(EnableVerbose) {
+						System.out.println("Typed node: \n" + node + "\n:untyped: " + node.countUnmatched(0));
+					}
+					driver.startTopLevel();
+					node.matched.build(node, driver);
+					driver.endTopLevel();
 				}
 			}
-			if(PegDebuggerMode || EnableVerbose) {
-				System.out.println();
-				context.showStatInfo(node);
-			}
-			ParseProfileStop();
-			if(!ParseOnly && driver != null) {
-				driver.startTransaction(null);
-				node = gamma.tryMatch(node, true);
-				if(EnableVerbose) {
-					System.out.println("Typed node: \n" + node + "\n:untyped: " + node.countUnmatched(0));
-				}
-				node.matched.build(node, driver);
-				driver.endTransaction();
-			}
+			driver.generateMain();
+			driver.endTransaction();
 		}
 		catch (Exception e) {
 			PrintStackTrace(e, source.lineNumber);

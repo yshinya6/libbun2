@@ -163,6 +163,15 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			System.exit(1);
 		}
 	}
+	
+	@Override
+	public void startTopLevel() {
+	}
+
+	@Override
+	public void endTopLevel() {
+	}
+
 
 	/**
 	 * insert print instruction after top level expression.

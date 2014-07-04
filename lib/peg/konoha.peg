@@ -29,15 +29,20 @@ Name
   ;
 
 TopLevel
+  = (NL / ';')* TopLevelStmt EOL
+  ;
+
+TopLevelStmt
   = 'export' NL (FuncDecl/LetDecl)
   / FuncDecl 
   / LetDecl
   / IfStmt
-  / Expr EOL
+  / Expr
+  / << '' #empty >>
   ;
 
 EOL
-  = (!'\n' (_ / ';')))* ('\n' / !.)
+  = (!'\n' (';' / _ ))* ('\n' / !.)
   ;
 
 FuncDecl

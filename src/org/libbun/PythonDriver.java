@@ -18,4 +18,10 @@ public class PythonDriver extends SourceDriver {
 		this.pushNodeList("(", args, ", ", ")");
 	}
 
+	public void generateMain() {  // Override
+		if(this.hasMainFunction()) {
+			this.pushCode("\nif __name__ == '__main__':\n\tmain()\n");
+		}
+	}
+
 }

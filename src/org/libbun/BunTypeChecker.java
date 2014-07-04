@@ -46,8 +46,8 @@ public class BunTypeChecker {
 		return f;
 	}
 	private class FunctionFunctor extends NameFunctor {
-		public FunctionFunctor(String name, BunType type, PegObject funcNode, Functor defined) {
-			super(0, name, type, funcNode);
+		public FunctionFunctor(int flag, String name, BunType type, PegObject funcNode, Functor defined) {
+			super(flag, name, type, funcNode);
 			this.nextChoice = defined;
 		}
 		@Override 
@@ -72,16 +72,28 @@ public class BunTypeChecker {
 		}
 		return false;
 	}
-	private Functor setFunctionName(SymbolTable gamma, String name, BunType type, PegObject node) {
+	
+	private Functor setFunctionName(SymbolTable gamma, int flag, String name, BunType type, PegObject node) {
 		String key = name + ":" + type.getFuncParamSize();
 		Functor defined = gamma.getSymbol(key);
 		type = type.getRealType();
-		defined = new FunctionFunctor(name, type.getRealType(), node, defined);
-		if(Main.EnableVerbose) {
-			Main._PrintLine(name + " :" + type.getName() + " initValue=" + node);
-		}
+		name = gamma.root.driver.rename(flag, name);
+		defined = new FunctionFunctor(flag, name, type.getRealType(), node, defined);
 		gamma.setSymbol(key, defined);
 		return defined;
+	}
+	
+	private int checkNameFlag(PegObject node, int flag) {
+		if(node.findParentNode("#function") != null) {
+			flag |= Functor._LocalFunctor;
+		}
+		if(node.findParentNode("#public") != null) {
+			flag |= Functor._PublicFunctor;
+		}
+		if(node.findParentNode("#export") != null) {
+			flag |= Functor._ExportFunctor;
+		}
+		return flag;
 	}
 
 	/***********************************************************************/
@@ -107,7 +119,7 @@ public class BunTypeChecker {
 			else {
 				PegObject block = node.findParentNode("#block");
 				gamma = block.getLocalSymbolTable();
-				flag |= Functor._ReadOnlyFunctor;
+				flag |= Functor._LocalFunctor;
 			}
 			PegObject nameNode = node.get(0);
 			setName(gamma, flag, nameNode, type, node);
@@ -165,7 +177,8 @@ public class BunTypeChecker {
 				}
 				block = blockgamma.tryMatch(block, false);
 				node.set(3, block);
-				setFunctionName(gamma, node.textAt(0, "f"), node.typed, node);
+				int flag = checkNameFlag(node, 0);
+				setFunctionName(gamma, flag, node.textAt(0, ""), node.typed, node);
 			}
 			else {
 				System.out.println("** second time");
