@@ -202,10 +202,6 @@ template<T> #gte(x: T, y: T): bool {
 	(${x} >= ${y})
 }
 
-template #apply(f, args) {
-	${f}(${list args ", "})
-}
-
 template<T> #let(name, type: T, value: T): void {
 	${name} = ${value}
 }
@@ -226,9 +222,22 @@ template #param(name, type): void {
 	${name}
 }
 
+template #arguments(*) {
+	(${list this ", "})
+}
+
+template #apply(f, args) {
+	${f}(${list args ", "})
+}
+
+
+
 template #block(*): void {
 	${statement this}
 }
+
+
+
 
 template #if(x: bool, then: void): void {
 	if ${x}: ${begin} ${statement then} ${end}

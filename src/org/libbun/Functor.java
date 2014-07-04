@@ -43,6 +43,9 @@ public class Functor {
 	
 	public BunType getReturnType(BunType defaultType) {
 		if(this.funcType != null) {
+			if(this.is(Functor._SymbolFunctor)) {
+				return this.funcType;
+			}
 			return this.funcType.getReturnType();
 		}
 		return defaultType;

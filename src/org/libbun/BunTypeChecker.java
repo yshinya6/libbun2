@@ -26,7 +26,7 @@ public class BunTypeChecker {
 		if(defined != null) {
 			gamma.report(nameNode, "notice", "duplicated name: " + name);
 		}
-		type = type.getRealType();
+		//type = type.getRealType();
 //		if(type.hasVarType()) {
 //			gamma.report(nameNode, "notice", "ambigious variable: " + name + " :" + type.getName());
 //		}
@@ -177,27 +177,42 @@ public class BunTypeChecker {
 	class Apply2Checker extends TypeChecker {
 		@Override
 		public PegObject check(SymbolTable gamma, PegObject node, boolean isStrongTyping) {
+			gamma.checkTypeAt(node, 0, BunType.AnyType, false);
 			PegObject f = node.get(0);
-			PegObject args = node.get(1);
-			if(f.is("#name")) {
-				boolean firstClassFunction = true;
-				String name = f.getText();
-				Functor fc = getName(gamma, name);
-				if(fc == null) {
-					fc = gamma.getFunctor(name, args.size());
-					firstClassFunction = false;
-				}
-				System.out.println("@@@@@@@@ fc = " + fc + ", isFirstClass=" + firstClassFunction);
-				gamma.tryMatchImpl("function", name, fc, args, isStrongTyping);
-				System.out.println("@@@@@@@@ matched = " + args.matched + ", isFirstClass=" + firstClassFunction);
-				if(args.matched != null) {
-					if(!firstClassFunction) {
+			if(f.matched != null) {
+				gamma.checkTypeAt(node, 1, BunType.AnyType, isStrongTyping);
+				return checkFuncType(gamma, node, f.typed.getRealType(), isStrongTyping);
+			}
+			else {
+				PegObject args = node.get(1);
+				if(f.is("#name")) {
+					String name = f.getText();
+					Functor fc = gamma.getFunctor(name, args.size());
+					//System.out.println("@@@@@@@@ fc = " + fc + ", isFirstClass=" + firstClassFunction);
+					gamma.tryMatchImpl("function", name, fc, args, isStrongTyping);
+					//System.out.println("@@@@@@@@ matched = " + args.matched + ", isFirstClass=" + firstClassFunction);
+					if(args.matched != null) {
 						args.tag = name; // for readability
 						return args;
 					}
-					node.typed = args.typed;
 				}
 			}
+			return node;
+		}
+
+		private PegObject checkFuncType(SymbolTable gamma, PegObject node, BunType funcType, boolean isStrongTyping) {
+			PegObject args = node.get(1);
+			if(Main.EnableVerbose) {
+				System.out.println("FirstClassFunction : " + funcType);
+			}
+			if(args.size() != funcType.getFuncParamSize()) {
+				return gamma.typeErrorNode(args, "mismatched function parameter: " + funcType, isStrongTyping);
+			}
+			for(int i = 0; i < args.size(); i++) {
+				gamma.checkTypeAt(args, i, funcType.get(i), isStrongTyping);
+			}
+			args.typed = funcType.getReturnType();
+			node.typed = args.typed;
 			return node;
 		}
 	}
