@@ -27,7 +27,7 @@ public class Functor {
 			return this.name + "*";
 		}
 		else {
-			if(this.name.equals("#coercion") || this.name.equals("#conv")) {
+			if(this.name.equals("#cast") || this.name.equals("#conv")) {
 				return BunType.keyTypeRel(this.name, this.funcType.get(0), this.funcType.getReturnType());
 			}
 			if(this.is(Functor._SymbolFunctor)) {
@@ -58,7 +58,8 @@ public class Functor {
 			}
 		}
 		node.matched = this;
-		this.returnType(varFuncType).typed(gamma, node, true);
+		node.typed = this.returnType(varFuncType);
+		//this.returnType(varFuncType).typed(gamma, node, true);
 		return gamma.check(node, isStrongTyping);
 	}
 	
@@ -86,11 +87,10 @@ public class Functor {
 			this.template.build(node, driver);
 		}
 	}
-	public void add(TemplateEngine section) {
+	public void setTemplate(TemplateEngine section) {
 		this.template = section;
 	}
 }
-
 
 class ErrorFunctor extends Functor {
 	public ErrorFunctor() {
@@ -98,14 +98,7 @@ class ErrorFunctor extends Functor {
 	}
 	@Override
 	public void build(PegObject node, BunDriver driver) {
-//		PegObject msgNode = node.get(0, null);
-//		if(msgNode != null) {
-//			String errorMessage = node.getTextAt(0, "*error*");
-//			driver.report(node, "error", errorMessage);
-//		}
-//		else {
 		driver.report(node, "error", "syntax error");
-//		}
 	}
 }
 
@@ -158,7 +151,7 @@ class BunTemplateFunctor extends Functor {
 		BunType funcType = this.parseFuncType(gamma, greekList, bunNode.get(1), bunNode.get(2), nameMap);
 		Functor functor = new Functor(isSymbol, name, funcType);
 		TemplateEngine section = this.parseSection(bunNode.get(3), nameMap);
-		functor.add(section);
+		functor.setTemplate(section);
 		return functor;
 	}
 

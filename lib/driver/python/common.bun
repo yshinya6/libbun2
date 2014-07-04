@@ -39,6 +39,14 @@ template #Tint(): long {
 	long
 }
 
+template #cast(x: long) : int {
+	int(${x})
+}
+
+template #cast(x: int) : long {
+	long(${x})
+}
+
 template #Tfloat(): float {
 	float
 }
@@ -69,11 +77,23 @@ template #false(): bool {
 	False
 }
 
-template #integer(): int {
+template #int(): int {
+	${textof this}
+}
+
+template #int32(): int {
+	${textof this}
+}
+
+template #int64(): int {
 	${textof this}
 }
 
 template #float(): float {
+	${textof this}
+}
+
+template #double(): float {
 	${textof this}
 }
 
@@ -189,7 +209,7 @@ template<T> #let(name, type: T, value: T): void {
 	${name} = ${value}
 }
 
-template #var(name, type: T, value: T): void {
+template<T> #var(name, type: T, value: T): void {
 	${name} = ${value}
 }
 
@@ -226,6 +246,10 @@ template #return(expr): void {
 	return ${expr}
 }
 
-template #error() {
+template #toplevel(*): void {
+	${statement this}
+}
+
+template #error(*) {
 	error!!
 }

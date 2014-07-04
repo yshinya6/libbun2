@@ -128,7 +128,7 @@ public abstract class BunType  {
 	}
 	public abstract boolean is(BunType nodeType);
 	protected final boolean checkCoercion(SymbolTable gamma, PegObject node, BunType nodeType, boolean hasNextChoice) {
-		String key = BunType.keyTypeRel("#coercion", nodeType, this);
+		String key = BunType.keyTypeRel("#cast", nodeType, this);
 		Functor f = gamma.getSymbol(key);
 		if(f != null) {
 			if(Main.EnableVerbose) {
@@ -148,7 +148,7 @@ public abstract class BunType  {
 	 **/
 
 	protected final boolean checkCoercion(SymbolTable gamma, PegObject node, BunType nodeType, boolean hasNextChoice) {
-		String key = BunType.keyTypeRel("#coercion", nodeType, this);
+		String key = BunType.keyTypeRel("#cast", nodeType, this);
 		Functor f = gamma.getSymbol(key);
 		if(f != null) {
 			if(Main.EnableVerbose) {

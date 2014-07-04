@@ -83,34 +83,8 @@ public class BunTypeChecker {
 		return defined;
 	}
 
-//
-//class DefinedGlobalNameFunctor extends DefinedNameFunctor {
-//	public DefinedGlobalNameFunctor(String name, BunType type, PegObject initValue) {
-//		super(name, type, initValue);
-//	}
-//	@Override
-//	public void build(PegObject node, BunDriver driver) {
-//		driver.pushGlobalName(node, this.name);
-//	}
-//}
-//
-//
-//
-//public Functor setName(String name, BunType type, PegObject initValue) {
-//	return this.setName(false, name, null, type, initValue);
-//}
-//
-//public Functor setName(PegObject nameNode, BunType type, PegObject initValue) {
-//	return this.setName(false, nameNode.getText(), nameNode, type, initValue);
-//}
-//
-//public Functor setGlobalName(PegObject nameNode, BunType type, PegObject initValue) {
-//	return this.setName(true, nameNode.getText(), nameNode, type, initValue);
-//}
-//
-//
-//
-
+	/***********************************************************************/
+	
 	abstract class TypeChecker {
 		public abstract PegObject check(SymbolTable gamma, PegObject node, boolean isStrongTyping);
 	}
@@ -228,9 +202,7 @@ public class BunTypeChecker {
 			return node;
 		}
 	}
-
-	
-	//	class ApplyChecker extends TypeChecker {
+//	class ApplyChecker extends TypeChecker {
 //		@Override
 //		public void check(PegObject node) {
 //			System.out.println("typeCheckApply: " + node);
@@ -280,7 +252,9 @@ public class BunTypeChecker {
 			this.set("#return:0", new Return0Checker());
 			this.set("#return:1", new Return1Checker());
 			this.set("#block:*",  new BlockChecker());
-			this.set("#params:*",  this.checkerMap.get("#block:*"));
+			
+			this.set("#toplevel:*",  this.checkerMap.get("#block:*"));
+			this.set("#params:*",    this.checkerMap.get("#block:*"));
 		}
 	}
 

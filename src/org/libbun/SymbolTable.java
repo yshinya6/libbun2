@@ -148,7 +148,7 @@ public class SymbolTable {
 	}
 		
 	private BunType getTypeCoersion(BunType sourceType, BunType targetType, boolean hasNextChoice) {
-		String key = BunType.keyTypeRel("#coercion", sourceType, targetType);
+		String key = BunType.keyTypeRel("#cast", sourceType, targetType);
 		Functor f = this.getSymbol(key);
 		if(f != null) {
 			if(Main.EnableVerbose) {
@@ -254,7 +254,7 @@ public class SymbolTable {
 	public void addUpcast(BunType fromType, BunType toType) {
 		class UpcastFunctor extends Functor {
 			public UpcastFunctor(BunType fromType, BunType toType) {
-				super(0, "#coercion", BunType.newFuncType(fromType, toType));
+				super(0, "#cast", BunType.newFuncType(fromType, toType));
 			}
 			@Override
 			public void build(PegObject node, BunDriver driver) {
