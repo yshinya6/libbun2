@@ -4,6 +4,7 @@ public class Functor {
 	public final static int _SymbolFunctor = 1;
 	public final static int _ReadOnlyFunctor = (1 << 1);
 	public final static int _LocalFunctor    = (1 << 2);
+	public final static Functor ErrorFunctor = new ErrorFunctor();
 	
 	public SymbolTable storedTable = null;
 	public int         flag;
@@ -93,12 +94,12 @@ public class Functor {
 }
 
 class ErrorFunctor extends Functor {
-	public ErrorFunctor() {
-		super(0, BunSymbol.PerrorFunctor, null);
+	ErrorFunctor() {
+		super(0, "#error", null);
 	}
 	@Override
 	public void build(PegObject node, BunDriver driver) {
-		driver.report(node, "error", "syntax error");
+		driver.pushErrorNode(node);
 	}
 }
 

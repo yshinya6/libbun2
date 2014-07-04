@@ -6,13 +6,10 @@ public abstract class BunDriver {
 
 	public abstract void startTransaction(String fileName);
 	public abstract void endTransaction();
-	
-	public abstract void pushGlobalName(PegObject node, String name);
-	public abstract void pushLocalName(PegObject node, String name);
-	public abstract void pushUndefinedName(PegObject node, String name);
-	public abstract void pushApplyNode(PegObject node, String name);
 
-	public abstract void pushType(BunType type);
+	public abstract void pushType(BunType type);   // deprecated
+	public abstract void pushName(PegObject nameNode, String name);
+	public abstract void pushApplyNode(String name, PegObject args);
 
 	// Template Engine
 	public void pushNode(PegObject node) {
@@ -28,14 +25,30 @@ public abstract class BunDriver {
 			this.pushUnknownNode(node);
 		}
 	}
-	
-	public void pushUnknownNode(PegObject node) {
-		Main._PrintLine("Driver pushed unknown node: " + node.tag + "\n" + node + "\n");
-	}
 
 	public void pushUpcastNode(BunType castType, PegObject node) {
 		this.pushNode(node);
 	}
+	
+	public void pushErrorNode(PegObject node) {
+		if(node.typed == null) {
+			node.typed = BunType.newErrorType(null);
+		}
+		this.report(node, "error", node.typed.getName());
+	}
+
+	public void pushUnknownNode(PegObject node) {
+		this.report(node, "error", "undefined tag: " + node.tag);
+		if(node.size() > 0) {
+			for(int i = 0; i < node.size(); i++) {
+				this.pushNode(node.get(i));
+			}
+		}
+		else {
+			this.pushCode(node.getText());
+		}
+	}
+
 	
 	protected UniMap<DriverCommand> commandMap = new UniMap<DriverCommand>();
 	
@@ -96,6 +109,22 @@ abstract class SourceDriver extends BunDriver {
 	@Override
 	public void pushCode(String text) {
 		this.builder.append(text);
+	}
+	
+	public final void pushNodeList(String openToken, PegObject args, String comma, String closeToken) {
+		this.builder.append(openToken);
+		for(int i = 0; i < args.size(); i++) {
+			if(i > 0) {
+				this.builder.append(comma);
+			}
+			this.pushNode(args.get(i));
+		}
+		this.builder.append(closeToken);
+	}
+
+	@Override
+	public void pushName(PegObject node, String name) {
+		this.builder.append(name);
 	}
 	
 	class PushCommand extends DriverCommand {

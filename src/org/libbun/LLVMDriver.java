@@ -28,17 +28,7 @@ public class LLVMDriver extends SourceDriver {
 	}
 
 	@Override
-	public void pushGlobalName(PegObject node, String name) {
-		this.pushCode(name);
-	}
-
-	@Override
-	public void pushLocalName(PegObject node, String name) {
-		this.pushCode(name);
-	}
-
-	@Override
-	public void pushUndefinedName(PegObject node, String name) {
+	public void pushName(PegObject node, String name) {
 		this.pushCode(name);
 	}
 
@@ -48,7 +38,7 @@ public class LLVMDriver extends SourceDriver {
 	}
 
 	@Override
-	public void pushApplyNode(PegObject node, String name) {
+	public void pushApplyNode(String name, PegObject args) {
 		// TODO Auto-generated method stub
 		
 	}

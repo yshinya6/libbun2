@@ -31,11 +31,7 @@ public class Debugger extends BunDriver {
 
 
 	@Override
-	public void pushGlobalName(PegObject node, String name) {
-	}
-
-	@Override
-	public void pushLocalName(PegObject node, String name) {
+	public void pushName(PegObject node, String name) {
 	}
 
 	@Override
@@ -47,17 +43,14 @@ public class Debugger extends BunDriver {
 	}
 
 	@Override
-	public void pushUndefinedName(PegObject node, String name) {
-	}
-
-	@Override
 	public boolean hasCommand(String cmd) {
 		return false;
 	}
 
 	@Override
-	public void pushApplyNode(PegObject node, String name) {
+	public void pushApplyNode(String name, PegObject args) {
 	}
+
 
 
 }

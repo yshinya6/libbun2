@@ -35,6 +35,16 @@ public abstract class ParserContext extends SourceContext {
 		this.objectCount = this.objectCount + 1;
 		return node;
 	}
+	
+	public final PegObject newErrorObject() {
+		PegObject node = newPegObject("#error");
+		node.createdPeg = this.storeFailurePeg();
+		node.startIndex = this.storeFailurePosition();
+		node.endIndex = this.storeFailurePosition();
+		node.matched = Functor.ErrorFunctor;
+		node.typed = BunType.newErrorType(null);
+		return node;
+	}
 
 	protected final PegObject foundFailureNode = new PegObject(null, this.source, null, 0);
 	

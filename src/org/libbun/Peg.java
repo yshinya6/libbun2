@@ -632,12 +632,11 @@ class PegChoice extends PegList {
 		for(int i = 0; i < this.size(); i++) {
 			Peg e  = this.get(i);
 			if(e instanceof PegCatch) {
-				node = context.newPegObject("#error");
-				node.createdPeg = context.storeFailurePeg();
-				node.startIndex = context.storeFailurePosition();
-				node.endIndex = context.storeFailurePosition();
-				if(Main.PegDebuggerMode) {
-					Main._PrintLine(node.formatSourceMessage("error: " + this.ruleName, " by " + node.createdPeg));
+				if(!context.isVerifyMode()) {
+					node = context.newErrorObject();
+					if(Main.PegDebuggerMode) {
+						Main._PrintLine(node.formatSourceMessage("error: " + this.ruleName, " by " + node.createdPeg));
+					}
 				}
 				context.restoreFailure(errorPeg, errorPosition);
 				return e.performMatch(node, context);

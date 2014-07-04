@@ -3,16 +3,14 @@ package org.libbun;
 public abstract class BunType  {
 	protected int         typeId    = -1;
 	protected Object      typeInfo  = null;  // used in Class<?> in JVM (for example)
-	protected String      label;
-	BunType(String label) {
-		this.label = label;
+	protected String      tag;
+	BunType(String tag) {
+		this.tag = tag;
 		this.typeInfo = null;
 	}
-
-	private final boolean isIssued() {
+	protected final boolean isIssued() {
 		return typeId != -1;
 	}
-
 	public final String getName() {
 		UniStringBuilder sb = new UniStringBuilder();
 		this.stringfy(sb);
@@ -23,6 +21,7 @@ public abstract class BunType  {
 		this.stringfy(sb);
 		return sb.toString();
 	}
+	
 	protected final void stringfy(UniStringBuilder sb, String openToken, String delimToken, String closeToken) {
 		sb.append(openToken);
 		for(int i = 0; i < this.size(); i++) {
@@ -33,9 +32,10 @@ public abstract class BunType  {
 		}
 		sb.append(closeToken);		
 	}
+	
 	public final PegObject peg() {
 		BunType type = this.getRealType();
-		PegObject o = new PegObject(type.label, null, null, 0);
+		PegObject o = new PegObject(type.tag, null, null, 0);
 		for(int i = 0; i < type.size(); i++) {
 			o.append(type.get(i).peg());
 		}
@@ -108,44 +108,6 @@ public abstract class BunType  {
 		}
 		return false;
 	}
-	
-//	public BunType getRealType() {
-//		return this;
-//	}
-//	public BunType newVarGreekType(GreekList list, BunType[] buffer) {
-//		return this;
-//	}
-//
-//
-	/**
-
-	public abstract void    stringfy(UniStringBuilder sb);
-	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
-		BunType nodeType = node.getType(BunType.UntypedType);
-		return this.is(nodeType) || this.checkCoercion(gamma, node, nodeType, hasNextChoice);
-	}
-	public void typed(SymbolTable gamma, PegObject node, boolean flag) {
-	}
-	public abstract boolean is(BunType nodeType);
-	protected final boolean checkCoercion(SymbolTable gamma, PegObject node, BunType nodeType, boolean hasNextChoice) {
-		String key = BunType.keyTypeRel("#cast", nodeType, this);
-		Functor f = gamma.getSymbol(key);
-		if(f != null) {
-			if(Main.EnableVerbose) {
-				Main._PrintLine("found type coercion from " + nodeType + " to " + this);
-			}
-			node.typed = BunType.newTransType(key, nodeType, this, f);
-			return true;
-		}
-		if(hasNextChoice) {
-			return false;
-		}
-		return false;  // stupid cast
-	}
-	public void build(PegObject node, BunDriver driver) {
-		node.matched.build(node, driver);
-	}
-	 **/
 
 	protected final boolean checkCoercion(SymbolTable gamma, PegObject node, BunType nodeType, boolean hasNextChoice) {
 		String key = BunType.keyTypeRel("#cast", nodeType, this);
@@ -365,7 +327,14 @@ public abstract class BunType  {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	private static BunType SyntaxErrorType = new ErrorType("syntax error", null, null);
+	public static BunType newErrorType(String message) {
+		if(message == null) {
+			return SyntaxErrorType;
+		}
+		return new ErrorType(message, null, null);
+	}
 }
 
 abstract class LangType extends BunType {
@@ -495,7 +464,7 @@ class GenericType extends LangType {
 	}
 	
 	public GenericType newCloneType(BunType[] typeParams) {
-		GenericType gt = new GenericType(this.label, this.baseName, this.genericId);
+		GenericType gt = new GenericType(this.tag, this.baseName, this.genericId);
 		gt.typeParams = typeParams;
 		return gt;
 	}
@@ -522,18 +491,18 @@ class GenericType extends LangType {
 
 	@Override
 	public BunType getRealType() {
-//		if(this.typeId == -1) {
-//			boolean noVarType = true;
-//			for(int i = 0; i < typeParams.length; i++) {
-//				typeParams[i] = typeParams[i].getRealType();
-//				if(typeParams[i].hasVarType()) {
-//					noVarType = false;
-//				}
-//			}
-//			if(noVarType) {
-//				return BunType.newGenericType(this, this.typeParams);
-//			}
-//		}
+		if(!this.isIssued()) {
+			boolean noVarType = true;
+			for(int i = 0; i < typeParams.length; i++) {
+				typeParams[i] = typeParams[i].getRealType();
+				if(typeParams[i].hasVarType()) {
+					noVarType = false;
+				}
+			}
+			if(noVarType) {
+				return BunType.newGenericType(this, this.typeParams);
+			}
+		}
 		return this;
 	}
 
@@ -844,7 +813,6 @@ class GreekType extends LangType {
 // Mutable<T>, Assignable<T> = T
 // T|null
 
-
 abstract class BunNodeType extends BunType {
 	String symbol;
 	BunNodeType(String label, String symbol) {
@@ -1041,3 +1009,50 @@ class BunAndType extends BunNodeType {
 		}
 	}
 }
+
+class ErrorType extends BunType {
+	String message;
+	BunType requestType;
+	BunType nodeType;
+	ErrorType(String message, BunType requestType, BunType nodeType) {
+		super("#Terror");
+		this.message = message;
+		this.requestType = requestType;
+		this.nodeType = nodeType;
+	}
+	@Override
+	public void stringfy(UniStringBuilder sb) {
+		sb.append(this.message);
+	}
+	@Override
+	public int size() {
+		return 0;
+	}
+	@Override
+	public BunType get(int index) {
+		return this.requestType;
+	}
+	@Override
+	public BunType getLangType(SymbolTable gamma) {
+		return this.requestType; // ?
+	}
+	@Override
+	public BunType getRealType() {
+		return this;
+	}
+	@Override
+	public BunType transformGreekTypeToVarType(BunType[] buffer) {
+		return this;
+	}
+	@Override
+	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		return true;
+	}
+	@Override
+	public void typed(SymbolTable gamma, PegObject node, boolean flag) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}
+

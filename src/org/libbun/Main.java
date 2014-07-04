@@ -185,9 +185,9 @@ public class Main {
 			ParseProfileStart();
 			PegObject node = context.parsePegObject(new PegObject(BunSymbol.TopLevelFunctor), startPoint);
 			if(node.isFailure()) {
-				node.tag = BunSymbol.PerrorFunctor;
+				node = context.newErrorObject();
 			}
-			gamma.set(node);
+			gamma.setNode(node);
 			if(PegDebuggerMode || EnableVerboseAst) {
 				System.out.println("parsed:\n" + node.toString());
 				if(context.hasChar()) {

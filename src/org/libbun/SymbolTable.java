@@ -10,9 +10,9 @@ public class SymbolTable {
 	}
 	SymbolTable(Namespace root, PegObject node) {
 		this.root = root;
-		this.set(node);
+		this.setNode(node);
 	}
-	public void set(PegObject node) {
+	public void setNode(PegObject node) {
 		node.gamma = this;
 		this.scope = node;
 	}
@@ -33,16 +33,18 @@ public class SymbolTable {
 		}
 		return null;
 	}
+	
 	public final void setSymbol(String key, Functor f) {
 		if(this.symbolTable == null) {
 			this.symbolTable = new UniMap<Functor>();
 		}
 		this.symbolTable.put(key, f);
 		f.storedTable = this;
-		if(Main.EnableVerbose) {
-			Main._PrintLine("SET @" + this + ", name = " + key + " as " + f.funcType);
-		}
+//		if(Main.EnableVerbose) {
+//			Main._PrintLine("SET @" + this + ", name = " + key + " as " + f.funcType);
+//		}
 	}
+	
 	public final Functor getLocalSymbol(String name) {
 		if(this.symbolTable != null) {
 			return this.symbolTable.get(name, null);
@@ -73,24 +75,28 @@ public class SymbolTable {
 	}
 	
 	public Functor getFunctor(PegObject node) {
-		String key = node.tag + ":" + node.size();
+		return this.getFunctor(node.tag, node.size());
+	}
+
+	public Functor getFunctor(String name, int size) {
+		String key = name + ":" + size;
 		Functor f = this.getSymbol(key);
 		if(f != null) {
 			return f;
 		}
-		key = node.tag + "*";
+		key = name + "*";
 		f = this.getSymbol(key);
 //		if(f == null && Main.EnableVerbose) {
 //			Main._PrintLine("SymbolTable.getFunctor(): not found " + node.name + ":" + node.size());
 //		}
 		return f;
 	}
-
+	
 	public final PegObject typeErrorNode(PegObject errorNode, String message, boolean isStrongTyping) {
 		if(isStrongTyping) {
 			PegObject o = new PegObject("#error", errorNode.source, null, errorNode.startIndex);
-			o.matched = this.getSymbol("#error");
-			//o.typed = BunType.newErrorType(message);
+			o.matched = Functor.ErrorFunctor;
+			o.typed = BunType.newErrorType(message);
 			if(Main.EnableVerbose) {
 				Main._PrintLine(errorNode.formatSourceMessage("debug", message));
 			}
@@ -107,23 +113,26 @@ public class SymbolTable {
 
 	public final PegObject tryMatch(PegObject node, boolean isStrongTyping) {
 		if(node.matched == null) {
-			Functor first = this.getFunctor(node);
-			Functor cur = first;
-			while(cur != null) {
-				boolean isStrongTyping2 = isStrongTyping;
-				if(cur.nextChoice != null) {
-					isStrongTyping2 = false;
-				}
-				//System.out.println("trying " + cur + ", cur.nextChoice=" + cur.nextChoice);
-				node = cur.matchSubNode(node, isStrongTyping2);
-				if(node.matched != null) {
-					return node;
-				}
-				cur = cur.nextChoice;
-			}
-			return this.typeErrorNode(node, "undefined tag: " + node.tag, isStrongTyping);
+			return this.tryMatchImpl("tag", node.tag, this.getFunctor(node), node, isStrongTyping);
 		}
 		return node;
+	}
+	
+	public final PegObject tryMatchImpl(String type, String name, Functor f, PegObject node, boolean isStrongTyping) {
+		Functor cur = f;
+		while(cur != null) {
+			boolean isStrongTyping2 = isStrongTyping;
+			if(cur.nextChoice != null) {
+				isStrongTyping2 = false;
+			}
+			node = cur.matchSubNode(node, isStrongTyping2);
+			if(node.matched != null) {
+				return node;
+			}
+			cur = cur.nextChoice;
+		}
+		String errorMessage = (f == null) ? "undefined " : "mismatched ";
+		return this.typeErrorNode(node, errorMessage + type + ": " + name, isStrongTyping);
 	}
 	
 	public final boolean checkTypeAt(PegObject node, int index, BunType type, boolean isStrongTyping) {
@@ -247,7 +256,6 @@ public class SymbolTable {
 		this.addFunctor(new TypeFunctor("#type"));
 		this.addFunctor(new BunTypeDefFunctor("#bun.typedef"));
 		this.addFunctor(new BunTemplateFunctor("#bun"));
-		this.addFunctor(new ErrorFunctor());
 		this.load(fileName, driver);
 	}
 	

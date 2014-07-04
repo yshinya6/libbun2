@@ -16,6 +16,7 @@ public class Namespace extends SymbolTable {
 //		this.ruleMap.put("main", ruleSet);
 		this.driver = driver;
 		this.checker = new BunTypeChecker();
+		this.addFunctor(Functor.ErrorFunctor);
 	}
 	
 	public final String toString() {

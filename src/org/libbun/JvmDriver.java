@@ -240,20 +240,11 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	@Override
-	public void pushGlobalName(PegObject node, String name) {
+	public void pushName(PegObject node, String name) {
 	}
 
 	@Override
-	public void pushLocalName(PegObject node, String name) {
-	}
-
-	@Override
-	public void pushUndefinedName(PegObject node, String name) {
-
-	}
-
-	@Override
-	public void pushApplyNode(PegObject node, String name) {
+	public void pushApplyNode(String name, PegObject args) {
 	}
 
 	@Override
@@ -1268,6 +1259,12 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		public DebuggableJvmDriver() {
 			JvmByteCodeLoader.setDebugMode(true);
 		}
+	}
+
+	@Override
+	public void pushErrorNode(PegObject errorNode) {
+		// TODO Auto-generated method stub
+		
 	}
 }
 

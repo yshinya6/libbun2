@@ -4,23 +4,8 @@ public class PythonDriver extends SourceDriver {
 
 	@Override
 	public void initTable(Namespace gamma) {
-		gamma.loadBunModel("lib/driver/python/konoha.bun", this);
-		gamma.loadBunModel("lib/driver/python/python_types.bun", this);
-	}
-
-	@Override
-	public void pushGlobalName(PegObject node, String name) {
-		this.pushCode(name);
-	}
-
-	@Override
-	public void pushLocalName(PegObject node, String name) {
-		this.pushCode(name);
-	}
-
-	@Override
-	public void pushUndefinedName(PegObject node, String name) {
-		this.pushCode(name);
+		gamma.loadBunModel("lib/driver/python/common.bun", this);
+		gamma.loadBunModel("lib/driver/python/pytypes.bun", this);
 	}
 
 	@Override
@@ -28,9 +13,9 @@ public class PythonDriver extends SourceDriver {
 		this.pushCode(type.getName());
 	}
 
-	@Override
-	public void pushApplyNode(PegObject node, String name) {
-		// TODO Auto-generated method stub
-		
+	public void pushApplyNode(String name, PegObject args) {
+		this.pushCode(name);
+		this.pushNodeList("(", args, ", ", ")");
 	}
+
 }

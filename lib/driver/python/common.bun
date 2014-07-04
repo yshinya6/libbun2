@@ -3,6 +3,7 @@
 typedef NullType;
 typedef bool;
 typedef int;
+typedef long;
 typedef float;
 typedef unicode;
 
@@ -85,7 +86,7 @@ template #int32(): int {
 	${textof this}
 }
 
-template #int64(): int {
+template #int64(): long {
 	${textof this}
 }
 
@@ -252,4 +253,12 @@ template #toplevel(*): void {
 
 template #error(*) {
 	error!!
+}
+
+template println(x: unicode) :void {
+	print ${x}
+}
+
+template<T> abs(x: T): T {
+	ABS(${x})
 }
