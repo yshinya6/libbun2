@@ -474,22 +474,22 @@ public class Main {
 		return jsb.toString();
 	}
 
-	public final static void _WriteFile(String fileName, UList<SourceBuilder> list) {
+	public final static void _WriteFile(String fileName, UList<UStringBuilder> list) {
 		if(fileName == null) {
 			for(int i = 0; i < list.size(); i++) {
-				SourceBuilder Builder = list.ArrayValues[i];
-				System.out.println(Builder.toString());
-				Builder.clear();
+				UStringBuilder sb = list.ArrayValues[i];
+				System.out.println(sb.toString());
+				sb.clear();
 			}
 		}
 		else {
 			try {
 				BufferedWriter w = new BufferedWriter(new FileWriter(fileName));
 				for(int i = 0; i < list.size(); i++) {
-					SourceBuilder Builder = list.ArrayValues[i];
-					w.write(Builder.toString());
+					UStringBuilder sb = list.ArrayValues[i];
+					w.write(sb.toString());
 					w.write("\n\n");
-					Builder.clear();
+					sb.clear();
 				}
 				w.close();
 			}

@@ -3,8 +3,10 @@ package org.libbun.drv;
 import org.libbun.BunDriver;
 import org.libbun.BunType;
 import org.libbun.DriverCommand;
+import org.libbun.Main;
 import org.libbun.PegObject;
 import org.libbun.UCharset;
+import org.libbun.UList;
 import org.libbun.UStringBuilder;
 
 abstract class SourceDriver extends BunDriver {
@@ -31,9 +33,9 @@ abstract class SourceDriver extends BunDriver {
 
 	@Override
 	public void endTransaction() {
-		if(this.fileName == null) {
-			System.out.println(this.builder.toString());
-		}
+		UList<UStringBuilder> list = new UList<UStringBuilder>(new UStringBuilder[1]);
+		list.add(this.builder);
+		Main._WriteFile(fileName, list);
 		this.builder = null;
 	}
 
