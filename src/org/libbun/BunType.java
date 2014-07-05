@@ -113,7 +113,7 @@ public abstract class BunType  {
 		String key = BunType.keyTypeRel("#cast", nodeType, this);
 		Functor f = gamma.getSymbol(key);
 		if(f != null) {
-			if(Main.EnableVerbose) {
+			if(Main.VerboseMode) {
 				Main._PrintLine("found type coercion from " + nodeType + " to " + this);
 			}
 			node.typed = BunType.newTransType(key, nodeType, this, f);

@@ -105,7 +105,7 @@ public abstract class Peg {
 		}
 	}
 	protected void warning(String msg) {
-		if(Main.PegDebuggerMode) {
+		if(Main.VerbosePegMode) {
 			Main._PrintLine("PEG warning: " + msg);
 		}
 	}
@@ -634,7 +634,7 @@ class PegChoice extends PegList {
 			if(e instanceof PegCatch) {
 				if(!context.isVerifyMode()) {
 					node = context.newErrorObject();
-					if(Main.PegDebuggerMode) {
+					if(Main.VerbosePegMode) {
 						Main._PrintLine(node.formatSourceMessage("error: " + this.ruleName, " by " + node.createdPeg));
 					}
 				}

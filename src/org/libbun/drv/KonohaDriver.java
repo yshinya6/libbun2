@@ -4,11 +4,11 @@ import org.libbun.BunType;
 import org.libbun.Namespace;
 import org.libbun.PegObject;
 
-public class PythonDriver extends SourceDriver {
+public class KonohaDriver extends SourceDriver {
 
 	@Override
 	public String getDesc() {
-		return "Python source generator 1.0 by Kimio Kuramitsu (YNU)";
+		return "Konoha source generator 1.0 by Kimio Kuramitsu (YNU)";
 	}
 
 	@Override
@@ -32,6 +32,5 @@ public class PythonDriver extends SourceDriver {
 			this.pushCode("\nif __name__ == '__main__':\n\tmain()\n");
 		}
 	}
-
 
 }

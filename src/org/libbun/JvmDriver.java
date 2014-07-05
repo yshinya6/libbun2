@@ -119,6 +119,11 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	@Override
+	public String getDesc() {
+		return "Java bytecode generator by Nagisa Sekiguchi (YNU)";
+	}
+
+	@Override
 	public void initTable(Namespace gamma) {
 		this.classMap.put("long", long.class);
 		this.classMap.put("int", int.class);

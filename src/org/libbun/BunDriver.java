@@ -2,6 +2,7 @@ package org.libbun;
 
 public abstract class BunDriver {
 
+	public abstract String getDesc();
 	public abstract void initTable(Namespace gamma);
 
 	public abstract void startTransaction(String fileName);
@@ -86,6 +87,7 @@ public abstract class BunDriver {
 	public void report(PegObject node, String errorType, String msg) {
 		System.err.println(node.formatSourceMessage(errorType, msg));
 	}
+
 
 
 

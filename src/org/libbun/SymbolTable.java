@@ -69,7 +69,7 @@ public class SymbolTable {
 		Functor parent = this.getSymbol(key);
 		f.nextChoice = parent;
 		this.setSymbol(key, f);
-		if(Main.EnableVerbose) {
+		if(Main.VerboseMode) {
 			Main._PrintLine("defined functor: " + f.name + ": " + f.funcType + " as " + key + " in " + this);
 		}
 	}
@@ -97,7 +97,7 @@ public class SymbolTable {
 			PegObject o = new PegObject("#error", errorNode.source, null, errorNode.startIndex);
 			o.matched = Functor.ErrorFunctor;
 			o.typed = BunType.newErrorType(message);
-			if(Main.EnableVerbose) {
+			if(Main.VerboseMode) {
 				Main._PrintLine(errorNode.formatSourceMessage("debug", message));
 			}
 			return o;
@@ -160,7 +160,7 @@ public class SymbolTable {
 		String key = BunType.keyTypeRel("#cast", sourceType, targetType);
 		Functor f = this.getSymbol(key);
 		if(f != null) {
-			if(Main.EnableVerbose) {
+			if(Main.VerboseMode) {
 				Main._PrintLine("found type coercion from " + sourceType + " to " + targetType);
 			}
 			return BunType.newTransType(key, sourceType, targetType, f);
@@ -200,7 +200,7 @@ public class SymbolTable {
 //		if(f instanceof DefinedTypeFunctor) {
 //			return f.getReturnType(defaultType);
 //		}
-		if(Main.EnableVerbose) {
+		if(Main.VerboseMode) {
 			Main._PrintLine("FIXME: undefined type: " + name);
 		}
 		return defaultType;

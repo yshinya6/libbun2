@@ -58,7 +58,7 @@ public final class PegRuleSet {
 			String ruleName = list.ArrayValues[i];
 			Peg e = this.pegMap.get(ruleName, null);
 			e.verify(ruleName, this);
-			if(Main.PegDebuggerMode) {
+			if(Main.VerbosePegMode) {
 				System.out.println(e.toPrintableString(ruleName, "\n  = ", "\n  / ", "\n  ;", true));
 			}
 		}
@@ -205,7 +205,7 @@ public final class PegRuleSet {
 //	}
 
 	void importRuleFromFile(String label, String fileName) {
-		if(Main.PegDebuggerMode) {
+		if(Main.VerbosePegMode) {
 			System.out.println("importing " + fileName);
 		}
 		PegRuleSet p = new PegRuleSet();

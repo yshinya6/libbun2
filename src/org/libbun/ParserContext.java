@@ -10,11 +10,6 @@ public abstract class ParserContext extends SourceContext {
 	
 	public abstract void setRuleSet(PegRuleSet ruleSet);
 
-//	@Override
-//	public SourceContext subContext(int startIndex, int endIndex) {
-//		return new PegParserContext(this.parser, this.source, startIndex, endIndex);
-//	}
-
 	public boolean hasNode() {
 		this.matchZeroMore(UCharset.WhiteSpaceNewLine);
 		return this.sourcePosition < this.endPosition;

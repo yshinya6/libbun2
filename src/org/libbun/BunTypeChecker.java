@@ -215,7 +215,7 @@ public class BunTypeChecker {
 
 		private PegObject checkFuncType(SymbolTable gamma, PegObject node, BunType funcType, boolean isStrongTyping) {
 			PegObject args = node.get(1);
-			if(Main.EnableVerbose) {
+			if(Main.VerboseMode) {
 				System.out.println("FirstClassFunction : " + funcType);
 			}
 			if(args.size() != funcType.getFuncParamSize()) {
@@ -316,12 +316,12 @@ public class BunTypeChecker {
 			c = this.checkerMap.get(node.tag+":*", null);
 		}
 		if(c != null) {
-			if(Main.EnableVerbose) {
+			if(Main.VerboseMode) {
 				System.out.println("Using extended type checker: " + nodeKey);
 			}
 			return c.check(gamma, node, isStrongTyping);
 		}
-		if(Main.EnableVerbose) {
+		if(Main.VerboseMode) {
 			System.out.println("Unusing extended type checker: '" + nodeKey + "' c =" + c);
 		}
 		return node;

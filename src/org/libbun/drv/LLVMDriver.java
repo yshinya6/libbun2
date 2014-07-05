@@ -16,6 +16,11 @@ public class LLVMDriver extends SourceDriver {
 	private final HashMap<PegObject, Integer> TempVarMap = new HashMap<PegObject, Integer>();
 
 	@Override
+	public String getDesc() {
+		return "LLVM IR generator by Kouhei Moriya (YNU)";
+	}
+
+	@Override
 	public void initTable(Namespace gamma) {
 		this.addCommand("begin",      new LLVMOpenIndentCommand());
 		this.addCommand("end",        new LLVMCloseIndentCommand());

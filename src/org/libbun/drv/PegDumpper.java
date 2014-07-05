@@ -1,16 +1,21 @@
-package org.libbun;
+package org.libbun.drv;
 
-public class Debugger extends BunDriver {
+import org.libbun.BunDriver;
+import org.libbun.BunType;
+import org.libbun.Main;
+import org.libbun.Namespace;
+import org.libbun.PegObject;
+
+public class PegDumpper extends BunDriver {
+
+	@Override
+	public String getDesc() {
+		return "PegDumpper 1.0 by Kimio Kuramitsu (YNU)";
+	}
 
 	// Template Engine
 	public void pushNode(PegObject node) {
-		if(node.isFailure() || node.is("#error")) {
-			String msg = node.textAt(0, "syntax error by peg " + node.createdPeg);
-			this.report(node, "error", msg);
-		}
-		else {
-			Main._PrintLine("Parsed: " + node.tag + "\n" + node + "\n");
-		}
+		Main._PrintLine(node);
 	}
 	
 	public void pushUnknownNode(PegObject node) {
