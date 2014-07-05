@@ -60,7 +60,7 @@ TypeAnno
   ;
 
 Block
-  = << '{' (NL? ( ';' / Stmt )@ )* NL? '}' #block>>
+  = << '{' (NL? ( ';' / Stmt@ ) )* NL? '}' #block>>
   ;
 
 BlockSkip
@@ -73,7 +73,13 @@ Stmt
   / << 'return' (Spacing Expr@)? #return >> EOS
   / << 'while' _? '(' _? Expr@ _? ')' NL? Block@ #while >>
   / << 'break' #break >> EOS
+  / << 'continue' #break >> EOS
+  / << 'try' NL? Block@ #try
+        << NL? 'catch' _? '(' _? Name@ _? ')' NL? Block@ >>?
+        (NL? 'finally' NL? Block@)? >> EOS
+  / << 'throw' _? Expr@ #throw >> 
   / Expr EOS
+  / '' EOS
   ;
 
 EOS   // End of Statement
@@ -81,7 +87,7 @@ EOS   // End of Statement
  ;
 
 IfStmt
-  = <<'if' _? '(' _? Expr@ _? ')' NL Block@ 
+  = <<'if' _? '(' _? Expr@ _? ')' NL? Block@ 
        (NL? 'else' NL? (IfStmt@ / Block@) )? #if>>
   ;
 

@@ -27,7 +27,7 @@ public class Main {
 	private static String LanguagePeg = "lib/peg/konoha.peg"; // default
 
 	// -d driver
-	private static String DriverName = "debug";  // default
+	private static String DriverName = "peg";  // default
 
 	// -i
 	private static boolean ShellMode = false;
@@ -137,6 +137,7 @@ public class Main {
 		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
 		driverMap.put("jvm-indy", JvmIndyDriver.class);
 		driverMap.put("jvm-indy-debug", JvmIndyDriver.DebuggableJvmIndyDriver.class);
+		driverMap.put("peg", org.libbun.drv.PegDumpper.class);
 	}
 
 	private static BunDriver loadDriverImpl(String driverName) {
