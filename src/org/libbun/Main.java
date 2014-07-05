@@ -224,6 +224,12 @@ public class Main {
 					node.matched.build(node, driver);
 					driver.endTopLevel();
 				}
+				if(node.is("#error")) {
+					if(OutputFileName != null) {
+						Main._Exit(1, "toplevel error was found");
+					}
+					break;
+				}
 			}
 			driver.generateMain();
 			driver.endTransaction();

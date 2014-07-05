@@ -9,7 +9,6 @@ public abstract class ParserContext extends SourceContext {
 	}
 	
 	public abstract void setRuleSet(PegRuleSet ruleSet);
-
 	public boolean hasNode() {
 		this.matchZeroMore(UCharset.WhiteSpaceNewLine);
 		return this.sourcePosition < this.endPosition;
