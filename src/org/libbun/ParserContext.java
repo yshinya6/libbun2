@@ -16,12 +16,12 @@ public abstract class ParserContext extends SourceContext {
 //	}
 
 	public boolean hasNode() {
-		this.matchZeroMore(UniCharset.WhiteSpaceNewLine);
+		this.matchZeroMore(UCharset.WhiteSpaceNewLine);
 		return this.sourcePosition < this.endPosition;
 	}
 
 	public PegObject parseNode(String key) {
-		return this.parsePegObject(new PegObject(BunSymbol.TopLevelFunctor), key);
+		return this.parsePegObject(new PegObject("#toplevel"), key);
 	}
 
 	public abstract void initMemo();

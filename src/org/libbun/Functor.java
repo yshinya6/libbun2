@@ -151,7 +151,7 @@ class BunTemplateFunctor extends Functor {
 		int isSymbol = 0;
 		String name = bunNode.textAt(0, null);
 		GreekList greekList = this.parseGreekList(gamma, bunNode.get(4, null));
-		UniMap<Integer> nameMap = new UniMap<Integer>();
+		UMap<Integer> nameMap = new UMap<Integer>();
 		if(bunNode.get(1).isEmptyToken()) {
 			isSymbol |= Functor._SymbolFunctor;
 		}
@@ -184,11 +184,11 @@ class BunTemplateFunctor extends Functor {
 		return listed;
 	}
 
-	private BunType parseFuncType(SymbolTable gamma, GreekList greekList, PegObject paramNode, PegObject returnTypeNode, UniMap<Integer> nameMap) {
+	private BunType parseFuncType(SymbolTable gamma, GreekList greekList, PegObject paramNode, PegObject returnTypeNode, UMap<Integer> nameMap) {
 		if(paramNode.size() == 0 && paramNode.getText().equals("(*)")) {
 			return null; // 
 		}
-		UniArray<BunType> typeList = new UniArray<BunType>(new BunType[paramNode.size()+1]);
+		UList<BunType> typeList = new UList<BunType>(new BunType[paramNode.size()+1]);
 		for(int i = 0; i < paramNode.size(); i++) {
 			PegObject p = paramNode.get(i);
 			String name = p.textAt(0, null);
@@ -244,21 +244,21 @@ class BunTemplateFunctor extends Functor {
 			return BunType.newGenericType("Array", this.parseType(gamma, greekList, node.get(0, null)));
 		}
 		if(node.is("#Tgeneric")) {
-			UniArray<BunType> list = new UniArray<BunType>(new BunType[node.size()]);
+			UList<BunType> list = new UList<BunType>(new BunType[node.size()]);
 			for(int i = 1; i < node.size(); i++) {
 				list.add(this.parseType(gamma, greekList, node.get(i, null)));
 			}
 			return BunType.newGenericType(node.textAt(0, ""), list);
 		}
 		if(node.is("#Tbun.and")) {
-			UniArray<BunType> list = new UniArray<BunType>(new BunType[node.size()]);
+			UList<BunType> list = new UList<BunType>(new BunType[node.size()]);
 			for(int i = 0; i < node.size(); i++) {
 				list.add(this.parseType(gamma, greekList, node.get(i, null)));
 			}
 			return BunType.newAndType(list);
 		}
 		if(node.is("#Tunion")) {
-			UniArray<BunType> list = new UniArray<BunType>(new BunType[node.size()]);
+			UList<BunType> list = new UList<BunType>(new BunType[node.size()]);
 			for(int i = 0; i < node.size(); i++) {
 				list.add(this.parseType(gamma, greekList, node.get(i, null)));
 			}
@@ -268,7 +268,7 @@ class BunTemplateFunctor extends Functor {
 		return BunType.UntypedType;
 	}
 
-	private TemplateEngine parseSection(PegObject sectionNode, UniMap<Integer> nameMap) {
+	private TemplateEngine parseSection(PegObject sectionNode, UMap<Integer> nameMap) {
 		TemplateEngine section = new TemplateEngine();
 		int line = 0;
 		for(int i = 0; i < sectionNode.size(); i++) {
@@ -285,14 +285,14 @@ class BunTemplateFunctor extends Functor {
 	}
 
 	private final static Integer NoneOfName = -2;
-	private int indexOfName(String name, UniMap<Integer> nameMap) {
+	private int indexOfName(String name, UMap<Integer> nameMap) {
 		if(name.equals("this")) {
 			return -1;
 		}
 		return nameMap.get(name, NoneOfName);
 	}
 	
-	private void parseLine(TemplateEngine sec, PegObject lineNode, UniMap<Integer> nameMap) {
+	private void parseLine(TemplateEngine sec, PegObject lineNode, UMap<Integer> nameMap) {
 		for(int j = 0; j < lineNode.size(); j++) {
 			PegObject chunkNode = lineNode.get(j);
 			if(chunkNode.is("#bun.chunk")) {

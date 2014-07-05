@@ -263,6 +263,10 @@ template #error(*) {
 	error!!
 }
 
+template assert(x: boolean) :void {
+	assert ${x}
+}
+
 template println(x: unicode) :void {
 	print ${x}
 }

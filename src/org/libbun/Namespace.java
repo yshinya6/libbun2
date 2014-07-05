@@ -1,15 +1,15 @@
 package org.libbun;
 
 public class Namespace extends SymbolTable {
-	public UniMap<PegRuleSet> ruleMap;
-	public UniArray<String>   exportSymbolList;
+	public UMap<PegRuleSet> ruleMap;
+	public UList<String>   exportSymbolList;
 	public BunDriver  driver;
 	public BunTypeChecker checker;
 
 	public Namespace(BunDriver driver) {
 		super(null);
 		this.root = this;
-		this.ruleMap = new UniMap<PegRuleSet>();
+		this.ruleMap = new UMap<PegRuleSet>();
 		PegRuleSet pegRule = new PegRuleSet();
 		pegRule.loadPegRule();
 		this.ruleMap.put("peg", pegRule);

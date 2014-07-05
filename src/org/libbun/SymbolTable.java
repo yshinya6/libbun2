@@ -3,7 +3,7 @@ package org.libbun;
 public class SymbolTable {
 	Namespace          root = null;
 	PegObject          scope     = null;
-	UniMap<Functor>    symbolTable = null;
+	UMap<Functor>    symbolTable = null;
 
 	public SymbolTable(Namespace namespace) {
 		this.root = namespace;
@@ -36,7 +36,7 @@ public class SymbolTable {
 	
 	public final void setSymbol(String key, Functor f) {
 		if(this.symbolTable == null) {
-			this.symbolTable = new UniMap<Functor>();
+			this.symbolTable = new UMap<Functor>();
 		}
 		this.symbolTable.put(key, f);
 		f.storedTable = this;

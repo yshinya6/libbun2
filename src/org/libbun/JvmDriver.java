@@ -50,7 +50,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	/**
 	 * used for bun type to java class translation.
 	 */
-	protected final UniMap<Class<?>> classMap;
+	protected final UMap<Class<?>> classMap;
 
 	/**
 	 * used for java class generation.
@@ -76,7 +76,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		this.bunModel = bunModel;
 		this.loader = new JvmByteCodeLoader();
 		this.typeStack = new Stack<BunType>();
-		this.classMap = new UniMap<Class<?>>();
+		this.classMap = new UMap<Class<?>>();
 		this.mBuilders = new Stack<MethodBuilder>();
 		this.addCommand("PUSH_AS_LONG", new PushAsLong());
 		this.addCommand("PUSH_AS_DOUBLE", new PushAsDouble());

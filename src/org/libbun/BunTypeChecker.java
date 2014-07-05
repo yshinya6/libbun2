@@ -160,7 +160,7 @@ public class BunTypeChecker {
 				SymbolTable blockgamma = block.getLocalSymbolTable();
 				blockgamma.checkTypeAt(node, 1, BunType.VoidType, isStrongTyping);
 				PegObject params = node.get(1, null);
-				UniArray<BunType> typeList = new UniArray<BunType>(new BunType[params.size()+1]);
+				UList<BunType> typeList = new UList<BunType>(new BunType[params.size()+1]);
 				for(int i = 0; i < params.size(); i++) {
 					PegObject p = params.get(i);
 					BunType ptype = p.typeAt(gamma, 1, null);
@@ -282,11 +282,11 @@ public class BunTypeChecker {
 //		}
 //	}
 	
-	private UniMap<TypeChecker> checkerMap = null;
+	private UMap<TypeChecker> checkerMap = null;
 	
 	public BunTypeChecker() {
 		if(this.checkerMap == null) {
-			this.checkerMap = new UniMap<TypeChecker>();
+			this.checkerMap = new UMap<TypeChecker>();
 			this.set("#Tvar:0", new TvarChecker());
 			this.set("#var:3",  new VarChecker());
 			this.set("#let:3",  new VarChecker());
