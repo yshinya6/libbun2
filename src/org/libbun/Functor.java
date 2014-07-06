@@ -54,8 +54,7 @@ public class Functor {
 		return defaultType;
 	}
 	
-	protected PegObject matchSubNode(PegObject node, boolean isStrongTyping) {
-		SymbolTable gamma = node.getSymbolTable();
+	protected PegObject matchSubNode(SymbolTable gamma, PegObject node, boolean isStrongTyping) {
 		BunType varFuncType = this.getVarFuncType();
 		for(int i = 0; i < node.size(); i++) {
 			BunType type = this.paramTypeAt(varFuncType, i);
@@ -114,8 +113,7 @@ class BunTypeDefFunctor extends Functor {
 		super(0, name, null);
 	}
 	@Override 
-	protected PegObject matchSubNode(PegObject node, boolean hasNextChoice) {
-		SymbolTable gamma = node.getSymbolTable();
+	protected PegObject matchSubNode(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
 		String name = node.getText();
 		gamma.setType(BunType.newValueType(name, null));
 		node.matched = this;
@@ -132,8 +130,7 @@ class BunTemplateFunctor extends Functor {
 	}
 
 	@Override 
-	protected PegObject matchSubNode(PegObject node, boolean hasNextChoice) {
-		SymbolTable gamma = node.getSymbolTable();
+	protected PegObject matchSubNode(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
 		Functor f = this.parseFunctor(gamma, node);
 		if(f != null) {
 			gamma.addFunctor(f);

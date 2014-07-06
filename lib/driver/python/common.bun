@@ -115,7 +115,7 @@ template<T> #group(expr :T) :T {
 }
 
 template #not(x: bool) :bool {
-	!${x}
+	not ${x}
 }
 
 template #plus(x: int) :int {
@@ -202,6 +202,15 @@ template<T> #gte(x: T, y: T): bool {
 	(${x} >= ${y})
 }
 
+template #field(o: any, name) {
+	${o}.${textof name}
+}
+
+template #index(o: any, index) {
+	${o}[${index}]
+}
+
+
 template<T> #let(name, type: T, value: T): void {
 	${name} = ${value}
 }
@@ -231,6 +240,14 @@ template #apply(f, args) {
 }
 
 
+template #return(): void {
+	return
+}
+
+template #return(expr): void {
+	return ${expr}
+}
+
 template #empty(): void {
 }
 
@@ -247,20 +264,30 @@ template #if(x: bool, then: void, else: void): void {
 	else: ${begin} ${statement else} ${end}
 }
 
-template #return(): void {
-	return
+template #while(x: bool, loop: void): void {
+	while ${x}: ${begin} ${statement loop} ${end}
 }
 
-template #return(expr): void {
-	return ${expr}
+template #break(): void {
+	break
 }
+
+template #continue(): void {
+	continue
+}
+
+template #throw(expr): void {
+	raise ${expr}
+}
+
+
 
 template #toplevel(*): void {
 	${statement this}
 }
 
 template #error(*) {
-	error!!
+	#error!!
 }
 
 template assert(x: boolean) :void {

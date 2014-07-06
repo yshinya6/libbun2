@@ -146,7 +146,7 @@ public class PegObject {
 				return node.typed;
 			}
 			if(node.matched == null && gamma != null) {
-				node = gamma.tryMatch(node, true);
+				node = gamma.tryMatch(null, node, true);
 			}
 			if(node.matched != null) {
 				return node.matched.getReturnType(defaultType);

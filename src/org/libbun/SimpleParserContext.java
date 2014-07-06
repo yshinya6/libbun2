@@ -43,14 +43,14 @@ public class SimpleParserContext extends ParserContext {
 			Peg e = pegMap.get(key, null);
 			this.checkLeftRecursion(key, e);
 		}
-		list = this.pegCache.keys();
-		for(int i = 0; i < list.size(); i++) {
-			String key = list.ArrayValues[i];
-			Peg e = this.pegCache.get(key, null);
+//		list = this.pegCache.keys();
+//		for(int i = 0; i < list.size(); i++) {
+//			String key = list.ArrayValues[i];
+//			Peg e = this.pegCache.get(key, null);
 //			if(Main.PegDebuggerMode) {
 //				System.out.println(e.toPrintableString(key, "\n  = ", "\n  / ", "\n  ;", true));
 //			}
-		}
+//		}
 	}
 	
 	private void checkLeftRecursion(String name, Peg e) {

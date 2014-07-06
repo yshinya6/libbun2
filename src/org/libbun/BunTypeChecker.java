@@ -175,14 +175,14 @@ public class BunTypeChecker {
 				if(!checkReturnStatement(block)) {
 					block.append(new PegObject("#return"));
 				}
-				block = blockgamma.tryMatch(block, false);
+				block = blockgamma.tryMatch(null, block, false);
 				node.set(3, block);
 				int flag = checkNameFlag(node, 0);
 				setFunctionName(gamma, flag, node.textAt(0, ""), node.typed, node);
 			}
 			else {
 				System.out.println("** second time");
-				node.set(3, block.gamma.tryMatch(block, isStrongTyping));
+				node.set(3, block.gamma.tryMatch(null, block, isStrongTyping));
 			}
 			return node;
 		}
@@ -202,7 +202,7 @@ public class BunTypeChecker {
 					String name = f.getText();
 					Functor fc = gamma.getFunctor(name, args.size());
 					//System.out.println("@@@@@@@@ fc = " + fc + ", isFirstClass=" + firstClassFunction);
-					gamma.tryMatchImpl("function", name, fc, args, isStrongTyping);
+					gamma.tryMatchImpl(gamma, "function", name, fc, args, isStrongTyping);
 					//System.out.println("@@@@@@@@ matched = " + args.matched + ", isFirstClass=" + firstClassFunction);
 					if(args.matched != null) {
 						args.tag = name; // for readability

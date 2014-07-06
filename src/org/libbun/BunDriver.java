@@ -18,7 +18,7 @@ public abstract class BunDriver {
 	public void pushNode(PegObject node) {
 		if(node.matched == null) {
 			SymbolTable gamma = node.getSymbolTable();
-			node = gamma.tryMatch(node, true);
+			node = gamma.tryMatch(null, node, true);
 		}
 		if(node.matched != null) {
 			BunType t = node.getType(BunType.UntypedType);

@@ -63,10 +63,6 @@ Block
   = << '{' (NL? ( ';' / Stmt@ ) )* NL? '}' #block>>
   ;
 
-BlockSkip
-  = (![{}] .)* ('{' BlockSkip '}')?
-  ;
-
 Stmt
   = IfStmt
   / VarDecl EOS / LetDecl EOS
@@ -77,10 +73,15 @@ Stmt
   / << 'try' NL? Block@ #try
         << NL? 'catch' _? '(' _? Name@ _? ')' NL? Block@ >>?
         (NL? 'finally' NL? Block@)? >> EOS
-  / << 'throw' _? Expr@ #throw >> 
+  / << 'throw' _? Expr@ #throw >> EOS
   / Expr EOS
-  / '' EOS
+  / << !'}' BlockSkip #error >>
   ;
+
+BlockSkip
+  = (![{}] .)* ('{' BlockSkip '}')?
+  ;
+
 
 EOS   // End of Statement
  = _? ('\n' / ';')

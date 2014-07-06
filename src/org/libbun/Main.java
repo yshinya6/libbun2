@@ -10,9 +10,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 
-import org.libbun.drv.LLVMDriver;
-import org.libbun.drv.PythonDriver;
-
 public class Main {
 	public final static String  ProgName  = "libbun";
 	public final static String  CodeName  = "yokohama";
@@ -217,7 +214,7 @@ public class Main {
 				}
 				ParseProfileStop();
 				if(!ParseOnlyMode && driver != null) {
-					node = gamma.tryMatch(node, true);
+					node = gamma.tryMatch(null, node, true);
 					if(VerboseMode) {
 						System.out.println("Typed node: \n" + node + "\n:untyped: " + node.countUnmatched(0));
 					}
