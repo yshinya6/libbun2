@@ -3,10 +3,10 @@ package org.libbun;
 public class BunTypeChecker {
 	// SymbolTable
 	private class NameFunctor extends Functor {
-		PegObject defNode = null;
+		//PegObject defNode = null;
 		public NameFunctor(int flag, String name, BunType type, PegObject defNode) {
 			super(flag, name, type);
-			this.defNode = defNode;
+			//this.defNode = defNode;
 		}
 		@Override
 		public void build(PegObject node, BunDriver driver) {
@@ -24,12 +24,9 @@ public class BunTypeChecker {
 		String name = nameNode.getText();
 		Functor defined = gamma.getLocalSymbol(name);
 		if(defined != null) {
-			gamma.report(nameNode, "notice", "duplicated name: " + name);
+			gamma.report(nameNode, "notice", "duplicated name: " + name + " @" + gamma);
 		}
-		//type = type.getRealType();
-//		if(type.hasVarType()) {
-//			gamma.report(nameNode, "notice", "ambigious variable: " + name + " :" + type.getName());
-//		}
+		type = type.getRealType();
 		if(nameNode.matched == null) {
 			nameNode.matched = gamma.getSymbol("#name:0");
 		}

@@ -1,11 +1,11 @@
 package org.libbun;
 
 public class PegObject {
-	PegSource    source = null;
+	public PegSource    source = null;
 	int          startIndex = 0;
 	int          endIndex = 0;
 	Peg          createdPeg = null;
-	String       tag = null;
+	public String       tag = null;
 	PegObject    parent = null;
 	PegObject    AST[] = null;
 	SymbolTable  gamma = null;
