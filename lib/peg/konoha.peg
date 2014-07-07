@@ -1,10 +1,9 @@
 // Bun's Peg example
 // / catch is an extended operator to catch error
 
-import Value from "value.peg";
-import Type  from "type.peg";
+//import Value from "value.peg";
+//import Type  from "type.peg";
 
-// TopLevel = Expr / _ ;
 
 // Preparation for whitespace control
 
@@ -27,6 +26,32 @@ Token
 Name
   = <<[A-Za-z_] [A-Za-z0-9_]* #name>> <<@ '::' _? Name@ #ns >>?
   ;
+
+Type 
+ = PrimaryType <<@ '[]' #TArray >>*
+ ;
+
+PrimaryType
+  = BasicType
+  / 'Func'  _? << '<' _? Type@ ( _? ',' _? Type@)*  _? '>' #TFunc >>
+  / 'Tuple' _? << '<' _? Type@ ( _? ',' _? Type@)*  _? '>' #TTuple >>
+  / 'Map'   _? << '<' _? Type@ _? '>' #TMap >>
+  / 'Array' _? << '<' _? Type@ _? '>' #TArray >>
+  / ObjectType
+  ;
+
+BasicType
+  = <<'void'    #Tvoid>>
+  / <<'boolean' #Tboolean>>
+  / <<'int'     #Tint64>>
+  / <<'float'   #Tdouble>>
+  / <<'String'  #TString>>
+  ;
+
+ObjectType
+  = << [A-Za-z] [A-Za-z0-9_]*   #type >>
+  ;
+
 
 TopLevel
   = (NL / ';')* TopLevelStmt EOL
@@ -66,14 +91,14 @@ Block
 Stmt
   = IfStmt
   / VarDecl EOS / LetDecl EOS
-  / << 'return' (Spacing Expr@)? #return >> EOS
+  / << 'return' Token (_ Expr@)? #return >> EOS
   / << 'while' _? '(' _? Expr@ _? ')' NL? Block@ #while >>
   / << 'break' #break >> EOS
   / << 'continue' #break >> EOS
   / << 'try' NL? Block@ #try
         << NL? 'catch' _? '(' _? Name@ _? ')' NL? Block@ >>?
         (NL? 'finally' NL? Block@)? >> EOS
-  / << 'throw' _? Expr@ #throw >> EOS
+  / << 'throw' Token _? Expr@ #throw >> EOS
   / Expr EOS
   / << !'}' BlockSkip #error >>
   ;
@@ -81,7 +106,6 @@ Stmt
 BlockSkip
   = (![{}] .)* ('{' BlockSkip '}')?
   ;
-
 
 EOS   // End of Statement
  = _? ('\n' / ';')
@@ -105,7 +129,7 @@ Expr
   ;
   
 Assignment
-  = Trinary <<@ _? AssignmentLabel Trinary@>>*
+  = Trinary <<@ _? AssignmentLabel Trinary@>>?
   ;
 
 AssignmentLabel
@@ -164,6 +188,42 @@ Selector
   
 Primary
   = << '(' _? Expr@ _? ')' #group >> 
-  / << '[' _? ( Expr@ ( _? ',' _? Expr@ )* )? #array >>
+  / << '[' (NL? Expr@ NL? ',')* NL? Expr@? NL? #array ']' >>
+  / << '{' NL? ( KeyValue@ ( NL? ',' NL? KeyValue@ )* )? #map '}' >>
+  / << '|' Expr@ '|' #size >>
+  / <<'function' Token _? Params@ _? TypeAnno@ NL? Block@  #lambda >>
   / Value / Name
   ;
+
+KeyValue 
+  = << (String@ / Name@) _? ':' _? Expr@ #keyvalue >>
+  ;
+
+Value
+  = << 'null'  Token #null >>
+  / << 'true'  Token #true >>
+  / << 'false' Token #false >>
+  / Number
+  / String
+  ;
+
+String
+//  = '"' << StringContent #stringexpr >> "'"
+  = '"' << ('\\"' / !'"' .)*  #string >> '"'
+  / "'" << ("\\'" / !"'" .)*  #string >> "'"
+  ;
+
+Number
+ = << [0-9]+ ('.' [0-9]+ 'f'? #double / 'L' #int64 / '' #int) >>
+ ;
+
+StringContent
+  = << ('\\"' / '$$' / (!"${" !'"' .))* #string >> StringExpr?
+  ;
+
+StringExpr
+  = '${' _? Expr@ _? '}' StringContent
+  ;
+
+  
+  

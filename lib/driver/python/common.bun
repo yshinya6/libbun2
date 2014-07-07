@@ -60,6 +60,10 @@ template #Treal(): float {
 	float
 }
 
+template #cast(x: int) : float {
+	float(${x})
+}
+
 template #TString(): unicode {
 	unicode
 }
@@ -154,12 +158,8 @@ template<T> #add(x: T, y: T) :T {
 	(${x} + ${y})
 }
 
-template #add(x: unicode, y: any): unicode {
+template #add(x: unicode, y: any !unicode): unicode {
 	(${x} + unicode(${y}))
-}
-
-template #add(x: unicode, y: unicode): unicode {
-	${x} + ${y}
 }
 
 template<T> #sub(x: T, y: T): T {
