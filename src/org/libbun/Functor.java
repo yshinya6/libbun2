@@ -261,6 +261,9 @@ class BunTemplateFunctor extends Functor {
 			}
 			return BunType.newUnionType(list);
 		}
+		if(node.is("#Tbun.token")) {
+			return BunType.newTokenType(node.getText());
+		}
 		System.out.println("#FIXME: " + node.tag);
 		return BunType.UntypedType;
 	}

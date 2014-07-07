@@ -111,24 +111,21 @@ public class SymbolTable {
 		return this.root.checker.check(this, node, isStrongTyping);
 	}
 
-	public final PegObject tryMatch(SymbolTable gamma, PegObject node, boolean isStrongTyping) {
+	public final PegObject tryMatch(PegObject node, boolean isStrongTyping) {
 		if(node.matched == null) {
-			if(gamma == null) {
-				gamma = node.getSymbolTable();
-			}
-			return this.tryMatchImpl(gamma, "tag", node.tag, this.getFunctor(node), node, isStrongTyping);
+			return this.tryMatchImpl("tag", node.tag, this.getFunctor(node), node, isStrongTyping);
 		}
 		return node;
 	}
 	
-	public final PegObject tryMatchImpl(SymbolTable gamma, String type, String name, Functor f, PegObject node, boolean isStrongTyping) {
+	public final PegObject tryMatchImpl(String type, String name, Functor f, PegObject node, boolean isStrongTyping) {
 		Functor cur = f;
 		while(cur != null) {
 			boolean isStrongTyping2 = isStrongTyping;
 			if(cur.nextChoice != null) {
 				isStrongTyping2 = false;
 			}
-			node = cur.matchSubNode(gamma, node, isStrongTyping2);
+			node = cur.matchSubNode(this, node, isStrongTyping2);
 			if(node.matched != null) {
 				return node;
 			}
@@ -145,7 +142,7 @@ public class SymbolTable {
 		}
 		if(index < node.size()) {
 			PegObject subnode = node.get(index);
-			subnode = this.tryMatch(null, subnode, isStrongTyping);
+			subnode = this.tryMatch(subnode, isStrongTyping);
 			node.AST[index] = subnode;
 			subnode.parent = node;
 			if(type.accept(this, subnode, isStrongTyping)) {
@@ -216,7 +213,7 @@ public class SymbolTable {
 			context.initMemo();
 			PegObject node = context.parseNode("TopLevel");
 			node.gamma = this;
-			node = this.tryMatch(null, node, true);
+			node = this.tryMatch(node, true);
 			driver.pushNode(node);
 		}
 	}

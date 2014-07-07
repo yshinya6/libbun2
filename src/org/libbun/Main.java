@@ -217,7 +217,7 @@ public class Main {
 				}
 				ParseProfileStop();
 				if(!ParseOnlyMode && driver != null) {
-					node = gamma.tryMatch(null, node, true);
+					node = gamma.tryMatch(node, true);
 					if(VerboseMode) {
 						System.out.println("Typed node: \n" + node + "\n:untyped: " + node.countUnmatched(0));
 					}

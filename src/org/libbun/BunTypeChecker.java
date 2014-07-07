@@ -138,6 +138,16 @@ public class BunTypeChecker {
 			return gamma.typeErrorNode(node, "undefined name: " + name, isStrongTyping);
 		}
 	}
+	class FieldChecker extends TypeChecker {
+		@Override
+		public PegObject check(SymbolTable gamma, PegObject node, boolean isStrongTyping) {
+			if(node.isUntyped()) {
+				node.matched = null;
+				return gamma.typeErrorNode(node, "undefined field: " + node.textAt(1, "") + " of " + node.get(0).typed, isStrongTyping);
+			}
+			return node;
+		}
+	}
 	class ParamChecker extends TypeChecker {
 		@Override
 		public PegObject check(SymbolTable gamma, PegObject node, boolean isStrongTyping) {
@@ -172,14 +182,14 @@ public class BunTypeChecker {
 				if(!checkReturnStatement(block)) {
 					block.append(new PegObject("#return"));
 				}
-				block = blockgamma.tryMatch(null, block, false);
+				block = blockgamma.tryMatch(block, false);
 				node.set(3, block);
 				int flag = checkNameFlag(node, 0);
 				setFunctionName(gamma, flag, node.textAt(0, ""), node.typed, node);
 			}
 			else {
 				System.out.println("** second time");
-				node.set(3, block.gamma.tryMatch(null, block, isStrongTyping));
+				node.set(3, block.gamma.tryMatch(block, isStrongTyping));
 			}
 			return node;
 		}
@@ -198,13 +208,23 @@ public class BunTypeChecker {
 				if(f.is("#name")) {
 					String name = f.getText();
 					Functor fc = gamma.getFunctor(name, args.size());
-					//System.out.println("@@@@@@@@ fc = " + fc + ", isFirstClass=" + firstClassFunction);
-					gamma.tryMatchImpl(gamma, "function", name, fc, args, isStrongTyping);
-					//System.out.println("@@@@@@@@ matched = " + args.matched + ", isFirstClass=" + firstClassFunction);
+					gamma.tryMatchImpl("function", name, fc, args, isStrongTyping);
 					if(args.matched != null) {
 						args.tag = name; // for readability
 						return args;
 					}
+				}
+				if(f.is("#field")) {
+					PegObject[] stackAST = args.AST;
+					args.insert(0, f.get(0));
+					String name = f.textAt(1, "");
+					Functor fc = gamma.getFunctor(name, args.size());
+					gamma.tryMatchImpl("method", name, fc, args, isStrongTyping);
+					if(args.matched != null) {
+						args.tag = name; // for readability
+						return args;
+					}
+					args.AST = stackAST;
 				}
 			}
 			return node;
@@ -288,6 +308,7 @@ public class BunTypeChecker {
 			this.set("#var:3",  new VarChecker());
 			this.set("#let:3",  new VarChecker());
 			this.set("#name:0", new NameChecker());
+			this.set("#field:2", new FieldChecker());
 			
 			this.set("#function:4", new FunctionChecker());
 			this.set("#param:2", new ParamChecker());

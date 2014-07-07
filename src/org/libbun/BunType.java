@@ -276,7 +276,7 @@ public abstract class BunType  {
 		BunType t = _TypeNameMap.get(key, null);
 		if(t == null) {
 			t = new TransType(sourceType, targetType, f);
-			_TypeNameMap.put(key, t);
+			issueType(key, t);
 		}
 		return t;
 	}
@@ -318,9 +318,24 @@ public abstract class BunType  {
 		return at;
 	}
 
+	public static BunType newTokenType(String text) {
+		String key = "`" + text;
+		BunType t = _TypeNameMap.get(key, null);
+		if(t == null) {
+			t = new TokenType(text);
+			issueType(key, t);
+		}
+		return t;
+	}
+
 	public static BunType newNodeType(String text) {
-		// TODO Auto-generated method stub
-		return null;
+		String key = "#" + text;
+		BunType t = _TypeNameMap.get(key, null);
+		if(t == null) {
+			t = new NodeType(text);
+			issueType(key, t);
+		}
+		return t;
 	}
 
 	public static BunType newOptionalType(String text) {
@@ -887,6 +902,7 @@ class TokenType extends BunNodeType {
 		sb.append("'");
 	}
 	public boolean accept(SymbolTable gamma, PegObject node, boolean hasNextChoice) {
+		//System.out.println("@@@@ matching " + this + "   "+ this.symbol + " " + node.getText() + " ... " + this.symbol.equals(node.getText()));
 		if(this.symbol.equals(node.getText())) {
 			return true;
 		}

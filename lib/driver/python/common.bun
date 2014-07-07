@@ -202,8 +202,8 @@ template<T> #gte(x: T, y: T): bool {
 	(${x} >= ${y})
 }
 
-template #field(o: any, name) {
-	${o}.${textof name}
+template #field(o: any, field) {
+	${o}->${textof field}
 }
 
 template #index(o: any, index) {
@@ -290,13 +290,92 @@ template #error(*) {
 	#error!!
 }
 
-template assert(x: boolean) :void {
+template assert(x: bool) :void {
 	assert ${x}
 }
 
 template println(x: unicode) :void {
 	print ${x}
 }
+
+template #conv(x: bool): unicode {
+	(u'true' if ${x} else u'false')
+}
+
+template #conv(x: int): unicode {
+	unicode(${x})
+}
+
+template #conv(x: float): unicode {
+	unicode(${x})
+}
+
+// String
+template size(x: unicode): int {
+	len(${x})
+}
+
+template #field(o: unicode, field: 'size'): int {
+	len(${o})
+}
+
+template equals(x: unicode, y: unicode): bool {
+	${x} == ${y}
+}
+
+template startsWith(x: unicode, y: unicode): bool {
+	${x}.startswith(${y})
+}
+
+template endsWith(x: unicode, y: unicode): bool {
+	${x}.endsswith(${y})
+}
+
+template substring(x: unicode, y: int): unicode {
+	${x}[${y}:]
+}
+
+template substring(x: unicode, y: int, z: int): unicode {
+	${x}[${y}:${z}]
+}
+
+template indexOf(x: unicode, y: unicode): int {
+	${x}.find(${y})
+}
+
+template lastIndexOf(x: unicode, y: unicode): int {
+	${x}.rfind(${y})
+}
+
+template toUpperCase(x: unicode): unicode {
+	${x}.upper()
+}
+
+template toLowerCase(x: unicode): unicode {
+	${x}.lower()
+}
+
+/**
+define _ "unicode($[0])": Func<α[],String>
+define size "len($[0])": Func<α[],int>
+define size "@arraysize~libbun_arraysize($[0], $[1], None)": Func<α[],int,void>
+define get "$[0][$[1]]": Func<α[],int,α>
+define set "$[0][$[1]] = $[2]": Func<α[],int,α,void>
+define add "$[0].append($[1])": Func<α[],α,void>
+define insert "$[0].insert($[1], $[2])": Func<α[],int,α,void>
+define remove "$[0].remove($[1])": Func<α[],int,α>
+define pop "$[0].pop($[1])": Func<α[],α>
+define size "@arraysize~libbun_arraysize($[0], $[1], False)": Func<boolean[],int,void>
+define size "@arraysize~libbun_arraysize($[0], $[1], 0)": Func<int[],int,void>
+define size "@arraysize~libbun_arraysize($[0], $[1], 0.0)": Func<float[],int,void>
+define _ "unicode($[0])": Func<Map<α>,String>
+define hasKey "$[0].has_key($[1])": Func<Map<α>,String,boolean>
+define get "$[0][$[1]]": Func<Map<α>,String,α>
+define get "@mapget~libbun_mapget($[0],$[1],$[2])": Func<Map<α>,String,α,α>
+define set "$[0][$[1]] = $[2]": Func<Map<α>,String,α,void>
+define keys "$[0].keys()": Func<Map<α>,String[]>
+define _ "unicode($[0])": Func<Object,String>
+**/
 
 template<T> abs(x: T): T {
 	ABS(${x})
