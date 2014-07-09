@@ -1,54 +1,54 @@
-parsed:
-#toplevel {            ## by peg : ( (Stmt^)+  ) defined in TopLevel
-   #function {            ## by peg : ( 'def' WS+ Symbol^ '(' Params^ ')' WS* ':' Block^  ) defined in DefineFunction
-      #name: hoge   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-      #params {            ## by peg : ( (Param^)? (_* ',' _* Param^)* _*  ) defined in Params
-         #param {            ## by peg : ( Symbol^ (WS* '=' WS* Expr^)?  ) defined in Param
-            #name: a   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+
+#toplevel: {
+   #function: {
+      #name: hoge
+      #params: {
+         #param: {
+            #name: a
          }
-         #param {            ## by peg : ( Symbol^ (WS* '=' WS* Expr^)?  ) defined in Param
-            #name: b   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+         #param: {
+            #name: b
          }
       }
-      #block {            ## by peg : ( (WS* EOS+ / indent WS+ Stmt^ EOS?)+  ) defined in Block
-         #if {            ## by peg : ( 'if' WS+ Expr^ WS* ':' Block^ (Elif^)* (indent 'else' WS* ':' Block^)?  ) defined in IfStmt
-            #lt {            ## by peg : ( WS* ('<' !'<'  / '<='  / '>' !'>'  / '>=' ) WS* Shift^ ) defined in Relation
-               #name: a   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-               #name: b   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+      #block: {
+         #if: {
+            #lt: {
+               #name: a
+               #name: b
             }
-            #block {            ## by peg : ( (WS* EOS+ / indent WS+ Stmt^ EOS?)+  ) defined in Block
-               #return {            ## by peg : ( 'return' WS+ Expr^  ) defined in ReturnStmt
-                  #add {            ## by peg : ( WS* ('+'  / '-' ) WS* Product^ ) defined in Sum
-                     #name: a   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-                     #name: b   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+            #block: {
+               #return: {
+                  #add: {
+                     #name: a
+                     #name: b
                   }
                }
-               #return {            ## by peg : ( 'return' WS+ Expr^  ) defined in ReturnStmt
-                  #sub {            ## by peg : ( WS* ('+'  / '-' ) WS* Product^ ) defined in Sum
-                     #name: a   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-                     #name: b   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+               #return: {
+                  #sub: {
+                     #name: a
+                     #name: b
                   }
                }
             }
          }
       }
    }
-   #function {            ## by peg : ( 'def' WS+ Symbol^ '(' Params^ ')' WS* ':' Block^  ) defined in DefineFunction
-      #name: f   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-      #params {            ## by peg : ( (Param^)? (_* ',' _* Param^)* _*  ) defined in Params
-         #param {            ## by peg : ( Symbol^ (WS* '=' WS* Expr^)?  ) defined in Param
-            #name: b   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+   #function: {
+      #name: f
+      #params: {
+         #param: {
+            #name: b
          }
-         #param {            ## by peg : ( Symbol^ (WS* '=' WS* Expr^)?  ) defined in Param
-            #name: c   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+         #param: {
+            #name: c
          }
-         #param {            ## by peg : ( Symbol^ (WS* '=' WS* Expr^)?  ) defined in Param
-            #name: f   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+         #param: {
+            #name: f
          }
       }
-      #block {            ## by peg : ( (WS* EOS+ / indent WS+ Stmt^ EOS?)+  ) defined in Block
-         #return {            ## by peg : ( 'return' WS+ Expr^  ) defined in ReturnStmt
-            #integer: 1   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
+      #block: {
+         #return: {
+            #integer: 1
          }
       }
    }

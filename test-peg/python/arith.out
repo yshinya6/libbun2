@@ -1,11 +1,11 @@
-parsed:
-#toplevel {            ## by peg : ( (Stmt^)+  ) defined in TopLevel
-   #add {            ## by peg : ( WS* ('+'  / '-' ) WS* Product^ ) defined in Sum
-      #integer: 1   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
-      #integer: 2   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
+
+#toplevel: {
+   #add: {
+      #integer: 1
+      #integer: 2
    }
-   #add {            ## by peg : ( WS* ('+'  / '-' ) WS* Product^ ) defined in Sum
-      #integer: 2   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
-      #integer: 3   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
+   #add: {
+      #integer: 2
+      #integer: 3
    }
 }
