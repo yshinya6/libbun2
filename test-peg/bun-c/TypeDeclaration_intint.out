@@ -1,0 +1,20 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #Tint: '''int '''
+      #assign{
+         #name: '''a '''
+         #integer: '''1'''
+      }
+      #assign{
+         #name: '''b '''
+         #integer: '''2'''
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

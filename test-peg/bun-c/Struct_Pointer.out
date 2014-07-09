@@ -1,0 +1,45 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #c.typedefname{
+         #name: '''Student '''
+      }
+      #assign{
+         #c.pointer: '''*'''
+         #name: '''a '''
+         #apply{
+            #name: '''new_Student'''
+         }
+      }
+      #c.expressionstatement{
+         #apply{
+            #name: '''printf'''
+            #c.argumentexpressionlist{
+               #string: '''"%d\n"'''
+               #ptr{
+                  #name: '''a'''
+                  #name: '''number'''
+               }
+            }
+         }
+      }
+      #c.expressionstatement{
+         #apply{
+            #name: '''printf'''
+            #c.argumentexpressionlist{
+               #string: '''"%s\n"'''
+               #ptr{
+                  #name: '''a'''
+                  #name: '''name'''
+               }
+            }
+         }
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

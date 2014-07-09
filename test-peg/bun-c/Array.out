@@ -1,0 +1,25 @@
+parsed:
+#function{
+   #Tvoid: '''void '''
+   #name: '''func'''
+   #Tvoid: '''void'''
+   #block{
+      #Tint: '''int '''
+      #assign{
+         #name: '''a'''
+         #arraysize{
+            #integer: '''10'''
+         }
+      }
+      #c.expressionstatement{
+         #assign{
+            #index{
+               #name: '''a'''
+               #integer: '''2'''
+            }
+            #c.assignmentoperator: '''= '''
+            #integer: '''3'''
+         }
+      }
+   }
+}

@@ -1,0 +1,29 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #Tint: '''int '''
+      #assign{
+         #name: '''i '''
+         #integer: '''0'''
+      }
+      #c.dowhile{
+         #block{
+            #c.expressionstatement{
+               #inc{
+                  #name: '''i'''
+               }
+            }
+         }
+         #lt{
+            #name: '''i '''
+            #integer: '''10'''
+         }
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

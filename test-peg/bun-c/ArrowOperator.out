@@ -1,0 +1,36 @@
+parsed:
+#function{
+   #Tvoid: '''void '''
+   #c.pointer: '''*'''
+   #name: '''new_Student'''
+   #c.parameterdeclaration{
+      #Tstructorunion{
+         #c.struct: '''struct '''
+         #name: '''Student '''
+      }
+      #c.pointer: '''*'''
+      #name: '''s'''
+   }
+   #block{
+      #c.expressionstatement{
+         #assign{
+            #ptr{
+               #name: '''s'''
+               #name: '''number '''
+            }
+            #c.assignmentoperator: '''= '''
+            #integer: '''10'''
+         }
+      }
+      #c.expressionstatement{
+         #assign{
+            #ptr{
+               #name: '''s'''
+               #name: '''name '''
+            }
+            #c.assignmentoperator: '''= '''
+            #string: '''"naruto"'''
+         }
+      }
+   }
+}

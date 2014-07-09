@@ -1,49 +1,49 @@
 parsed:
-#translationunit {            ## by peg : ( Spacing (ExternalDeclaration^)+ EOT  ) defined in TranslationUnit
-   #functiondefinition {            ## by peg : ( DeclarationSpecifiers^ Declarator^ (DeclarationList^)? CompoundStatement^  ) defined in FunctionDefinition
-      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-         #typespecifier {            ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
-            #struct: struct    ## by peg : ( STRUCT  ) defined in StructOrUnion
-            #identifier: student    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+#translationunit{
+   #functiondefinition{
+      #declarationspecifier{
+         #typespecifier{
+            #struct: '''struct '''
+            #identifier: '''student '''
          }
       }
-      #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-         #identifier: new_Student   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+      #declarator{
+         #identifier: '''new_Student'''
       }
-      #compoundstatement {            ## by peg : ( LWING ((Declaration / Statement)^)* RWING  ) defined in CompoundStatement
-         #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
-            #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-               #typespecifier {            ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
-                  #struct: struct    ## by peg : ( STRUCT  ) defined in StructOrUnion
-                  #identifier: student    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+      #compoundstatement{
+         #declaration{
+            #declarationspecifier{
+               #typespecifier{
+                  #struct: '''struct '''
+                  #identifier: '''student '''
                }
             }
-            #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-               #identifier: s   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+            #declarator{
+               #identifier: '''s'''
             }
          }
-         #expressionstatement {            ## by peg : ( (Expression^)? SEMI  ) defined in ExpressionStatement
-            #assignmentexpression {            ## by peg : ( UnaryExpression^ AssignmentOperator^ AssignmentExpression^  ) defined in AssignmentExpression
-               #field {            ## by peg : ( (FunctionCall  / Index  / DOT  Identifier^ / PTR  Identifier^ / INC  / DEC ) ) defined in PostfixExpression
-                  #identifier: s   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
-                  #identifier: number    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+         #expressionstatement{
+            #assignmentexpression{
+               #field{
+                  #identifier: '''s'''
+                  #identifier: '''number '''
                }
-               #assignmentoperator: =    ## by peg : ( (EQU / STAREQU / DIVEQU / MODEQU / PLUSEQU / MINUSEQU / LEFTEQU / RIGHTEQU / ANDEQU / HATEQU / OREQU)^  ) defined in AssignmentOperator
-               #integer: 10   ## by peg : ( (DecimalConstant / HexConstant / OctalConstant) IntegerSuffix?  ) defined in IntegerConstant
+               #assignmentoperator: '''= '''
+               #integer: '''10'''
             }
          }
-         #expressionstatement {            ## by peg : ( (Expression^)? SEMI  ) defined in ExpressionStatement
-            #assignmentexpression {            ## by peg : ( UnaryExpression^ AssignmentOperator^ AssignmentExpression^  ) defined in AssignmentExpression
-               #field {            ## by peg : ( (FunctionCall  / Index  / DOT  Identifier^ / PTR  Identifier^ / INC  / DEC ) ) defined in PostfixExpression
-                  #identifier: s   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
-                  #identifier: name    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+         #expressionstatement{
+            #assignmentexpression{
+               #field{
+                  #identifier: '''s'''
+                  #identifier: '''name '''
                }
-               #assignmentoperator: =    ## by peg : ( (EQU / STAREQU / DIVEQU / MODEQU / PLUSEQU / MINUSEQU / LEFTEQU / RIGHTEQU / ANDEQU / HATEQU / OREQU)^  ) defined in AssignmentOperator
-               #string: "naruto"   ## by peg : ( 'L'? (["] (StringChar^)* ["] Spacing)+  ) defined in StringLiteral
+               #assignmentoperator: '''= '''
+               #string: '''"naruto"'''
             }
          }
-         #returnstatement {            ## by peg : ( RETURN^ (Expression^)? SEMI  ) defined in JumpStatement
-            #identifier: s   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+         #returnstatement{
+            #identifier: '''s'''
          }
       }
    }

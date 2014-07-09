@@ -1,0 +1,41 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #Tint: '''int '''
+      #assign{
+         #name: '''i'''
+      }
+      #for{
+         #assign{
+            #name: '''i '''
+            #c.assignmentoperator: '''= '''
+            #integer: '''0'''
+         }
+         #lt{
+            #name: '''i '''
+            #integer: '''10'''
+         }
+         #inc{
+            #name: '''i'''
+         }
+         #block{
+            #if{
+               #gt{
+                  #name: '''i '''
+                  #integer: '''5'''
+               }
+               #block{
+                  #break: '''break;
+		'''
+               }
+            }
+         }
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}
