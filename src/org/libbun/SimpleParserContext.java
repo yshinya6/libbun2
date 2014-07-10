@@ -140,6 +140,8 @@ public class SimpleParserContext extends ParserContext {
 		this.memoMap2 = new HashMap<Integer, Memo2>();
 	}
 	
+	public void clearMemo() {}
+	
 	int memoHit = 0;
 	int memoMiss = 0;
 	int memoSize = 0;
