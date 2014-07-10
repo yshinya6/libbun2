@@ -366,6 +366,7 @@ class PegOneMore extends PegUnary {
 				break;
 			}
 			prevNode = node;
+			//System.out.println("startPostion=" + startPosition + ", current=" + context.getPosition() + ", count = " + count);
 			if(!(startPosition < context.getPosition())) {
 				break;
 			}
