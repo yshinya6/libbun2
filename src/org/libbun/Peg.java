@@ -10,6 +10,7 @@ public abstract class Peg {
 	boolean   debug    = false;
 	boolean   hasLeftRecursion = false;
 	boolean   memoizationMode = false;
+	int       clearMemoCounter = 0;
 
 	PegSource source = null;
 	int       sourcePosition = 0;
@@ -17,6 +18,7 @@ public abstract class Peg {
 	protected abstract Peg clone(String ns);
 	protected abstract void stringfy(UStringBuilder sb, boolean debugMode);
 	protected abstract void makeList(PegRuleSet parser, UList<String> list, UMap<String> set);
+	protected abstract PegObject fastMatch(PegObject inNode, ParserContext context);
 	protected abstract PegObject simpleMatch(PegObject inNode, ParserContext context);
 	protected abstract void verify(String ruleName, PegRuleSet rules);
 	public abstract void accept(PegVisitor visitor);
@@ -159,6 +161,13 @@ class PegString extends PegAtom {
 		visitor.visitPegString(this);
 	}
 	@Override
+	public PegObject fastMatch(PegObject inNode, ParserContext context) {
+		if(context.match(this.symbol)) {
+			return inNode;
+		}
+		return context.foundFailure(this);
+	}
+	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		if(context.match(this.symbol)) {
 			return inNode;
@@ -178,6 +187,14 @@ class PegAny extends PegAtom {
 	@Override
 	public void accept(PegVisitor visitor) {
 		visitor.visitPegAny(this);
+	}
+	@Override
+	public PegObject fastMatch(PegObject inNode, ParserContext context) {
+		if(context.hasChar()) {
+			context.consume(1);
+			return inNode;
+		}
+		return context.foundFailure(this);
 	}
 	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
@@ -208,6 +225,15 @@ class PegCharacter extends PegAtom {
 		visitor.visitPegCharacter(this);
 	}
 	@Override
+	public PegObject fastMatch(PegObject inNode, ParserContext context) {
+		char ch = context.getChar();
+		if(!this.charset.match(ch)) {
+			return context.foundFailure(this);
+		}
+		context.consume(1);
+		return inNode;
+	}
+	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		char ch = context.getChar();
 		if(!this.charset.match(ch)) {
@@ -228,6 +254,9 @@ class PegLabel extends PegAtom {
 			return new PegLabel(ns + this.symbol);
 		}
 		return this;
+	}
+	@Override protected PegObject fastMatch(PegObject parentNode, ParserContext context) {
+		return context.parsePegObject(parentNode, this.symbol);
 	}
 	@Override protected PegObject simpleMatch(PegObject parentNode, ParserContext context) {
 		return context.parsePegObject(parentNode, this.symbol);
@@ -319,6 +348,18 @@ class PegOptional extends PegUnary {
 	public void accept(PegVisitor visitor) {
 		visitor.visitPegOptional(this);
 	}
+	@Override protected PegObject fastMatch(PegObject innode, ParserContext context) {
+		int stackPosition = context.getStackPosition(this);
+		Peg errorPeg = context.storeFailurePeg();
+		int errorPosition = context.storeFailurePosition();
+		PegObject parsedNode = this.innerExpr.performMatch(innode, context);
+		if(parsedNode.isFailure()) {
+			context.popBack(stackPosition, Peg._BackTrack);
+			context.restoreFailure(errorPeg, errorPosition);
+			return innode;
+		}
+		return parsedNode;
+	}
 	@Override protected PegObject simpleMatch(PegObject innode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
 		Peg errorPeg = context.storeFailurePeg();
@@ -353,6 +394,30 @@ class PegOneMore extends PegUnary {
 	@Override
 	protected String getOperator() {
 		return "+";
+	}
+	@Override
+	public PegObject fastMatch(PegObject parentNode, ParserContext context) {
+		PegObject prevNode = parentNode;
+		Peg errorPeg = context.storeFailurePeg();
+		int errorPosition = context.storeFailurePosition();
+		int count = 0;
+		while(context.hasChar()) {
+			int startPosition = context.getPosition();
+			PegObject node = this.innerExpr.performMatch(prevNode, context);
+			if(node.isFailure()) {
+				break;
+			}
+			prevNode = node;
+			if(!(startPosition < context.getPosition())) {
+				break;
+			}
+			count = count + 1;
+		}
+		context.restoreFailure(errorPeg, errorPosition);
+		if(count < this.atleast) {
+			return context.foundFailure(this);
+		}
+		return prevNode;
 	}
 	@Override
 	public PegObject simpleMatch(PegObject parentNode, ParserContext context) {
@@ -424,6 +489,14 @@ class PegAnd extends PegUnary {
 		return "&";
 	}
 	@Override
+	protected PegObject fastMatch(PegObject parentNode, ParserContext context) {
+		PegObject node = parentNode;
+		int stackPosition = context.getStackPosition(this);
+		node = this.innerExpr.performMatch(node, context);
+		context.popBack(stackPosition, Peg._BackTrack);
+		return node;
+	}
+	@Override
 	protected PegObject simpleMatch(PegObject parentNode, ParserContext context) {
 		PegObject node = parentNode;
 		int stackPosition = context.getStackPosition(this);
@@ -452,6 +525,17 @@ class PegNot extends PegUnary {
 	@Override
 	protected String getOperator() {
 		return "!";
+	}
+	@Override
+	protected PegObject fastMatch(PegObject parentNode, ParserContext context) {
+		PegObject node = parentNode;
+		int stackPosition = context.getStackPosition(this);
+		node = this.innerExpr.performMatch(node, context);
+		context.popBack(stackPosition, Peg._BackTrack);
+		if(node.isFailure()) {
+			return parentNode;
+		}
+		return context.foundFailure(this);
 	}
 	@Override
 	protected PegObject simpleMatch(PegObject parentNode, ParserContext context) {
@@ -539,6 +623,26 @@ class PegSequence extends PegList {
 		}
 		return this;
 	}
+	
+	@Override
+	protected PegObject fastMatch(PegObject innode, ParserContext context) {
+		int stackPosition = context.getStackPosition(this);
+		for(int i = 0; i < this.size(); i++) {
+			Peg e  = this.get(i);
+			if(e.memoizationMode) {
+				innode.memoizationMode = true;
+			}
+			PegObject parsedNode = e.performMatch(innode, context);
+			if(parsedNode.isFailure()) {
+				context.popBack(stackPosition, Peg._BackTrack);
+				return parsedNode;
+			}
+			innode = parsedNode;
+		}
+		return innode;
+	}
+
+	
 	@Override
 	protected PegObject simpleMatch(PegObject innode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
@@ -610,6 +714,43 @@ class PegChoice extends PegList {
 			e.stringfy(sb, debugMode);
 		}
 	}
+	
+	@Override
+	protected PegObject fastMatch(PegObject inNode, ParserContext context) {
+		int stackPosition = context.getStackPosition(this);
+		PegObject node = inNode;
+		Peg errorPeg = context.storeFailurePeg();
+		int errorPosition = context.storeFailurePosition();
+		for(int i = 0; i < this.size(); i++) {
+			Peg e  = this.get(i);
+			if(e.memoizationMode) {
+				inNode.memoizationMode = true;
+			}
+			clearMemoCounter++;
+			if(e instanceof PegCatch) {
+				if(!context.isVerifyMode()) {
+					node = context.newErrorObject();
+					if(Main.VerbosePegMode) {
+						Main._PrintLine(node.formatSourceMessage("error: " + this.ruleName, " by " + node.createdPeg));
+					}
+				}
+				context.restoreFailure(errorPeg, errorPosition);
+				return e.performMatch(node, context);
+			}
+			node = e.performMatch(inNode, context);
+			inNode.memoizationMode = false;
+			if(!node.isFailure()) {
+				break;
+			}
+			context.popBack(stackPosition, Peg._BackTrack);
+		}
+		clearMemoCounter--;
+		if(clearMemoCounter == 0) {
+			context.clearMemo();
+		}
+		return node;
+	}
+	
 	@Override
 	protected PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
@@ -679,6 +820,18 @@ class PegSetter extends PegUnary {
 		visitor.visitSetter(this);
 	}
 	@Override
+	public PegObject fastMatch(PegObject parentNode, ParserContext context) {
+		PegObject node = this.innerExpr.performMatch(parentNode, context);
+		if(!context.isVerifyMode()) {
+			if(node.isFailure() || parentNode == node) {
+				return node;
+			}
+			context.push(this, parentNode, this.index, node);
+			return parentNode;
+		}
+		return node;
+	}
+	@Override
 	public PegObject simpleMatch(PegObject parentNode, ParserContext context) {
 		PegObject node = this.innerExpr.performMatch(parentNode, context);
 		if(!context.isVerifyMode()) {
@@ -705,6 +858,13 @@ class PegTag extends PegAtom {
 		if(debugMode) {
 			sb.append(this.symbol);
 		}
+	}
+	@Override
+	public PegObject fastMatch(PegObject inNode, ParserContext context) {
+		if(!context.isVerifyMode()) {
+			inNode.tag = this.symbol;
+		}
+		return inNode;
 	}
 	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
@@ -741,6 +901,15 @@ class PegMessage extends PegAtom {
 		}
 	}
 	@Override
+	public PegObject fastMatch(PegObject inNode, ParserContext context) {
+		if(!context.isVerifyMode()) {
+			inNode.optionalToken = this.symbol;
+			inNode.startIndex = context.getPosition();
+			//inNode.endIndex   = context.getPosition();
+		}
+		return inNode;
+	}
+	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		if(!context.isVerifyMode()) {
 			inNode.optionalToken = this.symbol;
@@ -773,6 +942,16 @@ class PegPipe extends PegAtom {
 			sb.append("|> ");
 			sb.append(this.symbol);
 		}
+	}
+	@Override
+	public PegObject fastMatch(PegObject inNode, ParserContext context) {
+		if(!context.isVerifyMode()) {
+			inNode.tag = "#lazy";
+			//inNode.optionalToken = this.symbol;
+			ParserContext sub = Main.newParserContext(inNode.source, inNode.startIndex, inNode.endIndex, context.ruleSet);
+			return sub.parseNode(this.symbol);
+		}
+		return inNode;
 	}
 	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
@@ -856,6 +1035,38 @@ class PegNewObject extends PegList {
 			sb.append(" )");
 		}
 	}
+	
+	@Override
+	public PegObject fastMatch(PegObject inNode, ParserContext context) {
+		PegObject leftNode = inNode;
+		int pos = context.getPosition();
+		int stack = context.getStackPosition(this);
+		PegObject newnode = context.newPegObject(this.nodeName);
+		newnode.setSource(this, context.source, pos, context.getPosition());
+		if(this.leftJoin) {
+			context.push(this, newnode, 0, leftNode);
+		}
+		for(int i = 0; i < this.size(); i++) {
+			Peg e = this.get(i);
+			PegObject node = e.performMatch(newnode, context);
+			if(node.isFailure()) {
+				//System.out.println("** failed[" + pos + "] " + this);
+				context.popBack(stack, true);
+				return node;
+			}
+			//			if(node != newnode) {
+			//				this.warning("dropping @" + newnode.name + " " + node);
+			//			}
+		}
+		int top = context.getStackPosition(this);
+		context.addSubObject(newnode, stack, top);
+		newnode.setSource(this, context.source, pos, context.getPosition());
+		newnode.checkNullEntry();
+		//System.out.println("** created[" + pos + "] " + newnode);
+		context.removeMemo(pos+1, context.getPosition());
+		return newnode;
+	}
+	
 	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		int startIndex = context.getPosition();
@@ -906,6 +1117,17 @@ class PegIndent extends PegAtom {
 		return this;
 	}
 	@Override
+	protected PegObject fastMatch(PegObject inNode, ParserContext context) {
+		if(inNode.source != null) {
+			String indent = inNode.source.getIndentText(inNode.startIndex);
+			//System.out.println("###" + indent + "###");
+			if(context.match(indent)) {
+				return inNode;
+			}
+		}
+		return inNode;
+	}
+	@Override
 	protected PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		if(inNode.source != null) {
 			String indent = inNode.source.getIndentText(inNode.startIndex);
@@ -941,6 +1163,11 @@ class PegCatch extends PegUnary {
 		return "catch ";
 	}
 	@Override
+	protected PegObject fastMatch(PegObject inNode, ParserContext context) {
+		this.innerExpr.performMatch(inNode, context);
+		return inNode;
+	}
+	@Override
 	protected PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		this.innerExpr.performMatch(inNode, context);
 		return inNode;
@@ -963,6 +1190,43 @@ class PegCType extends PegAtom {
 	protected Peg clone(String ns) {
 		return this;
 	}
+	
+	@Override
+	protected PegObject fastMatch(PegObject inNode, ParserContext context) {
+		if(inNode.source != null) {
+			if(AddType) {
+				if(inNode.tag.equals("#DeclarationNoAttribute") && inNode.AST.length >= 2) {
+					// inNode.AST = [typedef struct A, StructA]
+					PegObject first = inNode.AST[0];
+					if(first.AST.length >= 2) {
+						String firstText = first.AST[0].getText().trim();
+						// first is "typedef"
+						if(first.AST[0].tag.equals("#storageclassspecifier") && firstText.equals("typedef")) {
+							PegObject second = inNode.AST[1];
+							for (int i = 0; i < second.AST.length; i++) {
+								PegObject decl = second.get(i);
+								if(decl.tag.equals("#declarator")) {
+									// "typedef struct A StructA;"
+									// add new typename StructA
+									System.out.println(decl.get(decl.AST.length - 1).getText());
+									typedefs.add(decl.get(decl.AST.length - 1).getText());
+								}
+							}
+							return inNode;
+						}
+					}
+				}
+			}
+			else {
+				String name = inNode.getText().trim();
+				if (!typedefs.contains(name)) {
+					return new PegObject(null); //not match
+				}
+			}
+		}
+		return inNode;
+	}
+	
 	@Override
 	protected PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		if(inNode.source != null) {
