@@ -9,6 +9,7 @@ public abstract class Peg {
 	String    ruleName = null;
 	boolean   debug    = false;
 	boolean   hasLeftRecursion = false;
+	boolean   memoizationMode = false;
 
 	PegSource source = null;
 	int       sourcePosition = 0;
