@@ -22,12 +22,11 @@ public class LLVMDriver extends SourceDriver {
 
 	@Override
 	public void initTable(Namespace gamma) {
-		this.addCommand("begin",      new LLVMOpenIndentCommand());
-		this.addCommand("end",        new LLVMCloseIndentCommand());
 		this.addCommand("startstmt",  new StartStatementCommand());
 		this.addCommand("endstmt",    new EndStatementCommand());
 		this.addCommand("reservenum", new ReserveNumberCommand());
 		this.addCommand("getnum",     new GetNumberCommand());
+		this.addCommand("label",      new CreateLabelCommand());
 		gamma.loadBunModel("lib/driver/llvm/konoha.bun", this);
 		//gamma.loadBunModel("lib/driver/python/python_types.bun", this);
 	}
@@ -42,7 +41,8 @@ public class LLVMDriver extends SourceDriver {
 
 	@Override
 	public void pushName(PegObject node, String name) {
-		this.pushCode(name);
+		//FIXME
+		this.pushCode("%" + name);
 	}
 
 	@Override
@@ -54,20 +54,6 @@ public class LLVMDriver extends SourceDriver {
 	public void pushApplyNode(String name, PegObject args) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	class LLVMOpenIndentCommand extends OpenIndentCommand {
-		@Override
-		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			builder.openIndent("{");
-		}
-	}
-
-	class LLVMCloseIndentCommand extends CloseIndentCommand {
-		@Override
-		public void invoke(BunDriver driver, PegObject node, String[] param) {
-			builder.closeIndent("}");
-		}
 	}
 
 	class StartStatementCommand extends DriverCommand {
@@ -107,6 +93,32 @@ public class LLVMDriver extends SourceDriver {
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			if(param.length > 0) {
 				driver.pushCode("" + (TempVarMap.get(node).intValue() + (new Integer(param[0])).intValue()));
+			}
+		}
+	}
+
+	/* class IdentifierCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			if(node.is("#function")) {
+				builder.append("@");
+			}
+			else {
+				builder.append("%");
+			}
+		}
+	} */
+
+	class CreateLabelCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			if(param.length > 0) {
+				builder.slist.ArrayValues[builder.slist.size() - 1] = ""; //delete indent
+				builder.append(param[0]);
+				if(param.length > 1) {
+					driver.pushCode("__" + (TempVarMap.get(node).intValue() + (new Integer(param[1])).intValue()));
+				}
+				builder.append(":");
 			}
 		}
 	}

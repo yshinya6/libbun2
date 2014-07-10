@@ -2,64 +2,82 @@
 //typedef void;
 typedef NullType;
 typedef i1;
+typedef i16;
 typedef i32;
+typedef i64;
 typedef float;
 //typedef unicode;
 
-// type
 
-bun #Tvoid(): void {
+// type
+template #Tvar(): void {
+	opaque
+}
+
+template #Tvoid(): void {
 	void
 }
 
-bun #Tboolean(): i1 {
+template #Tboolean(): i1 {
 	i1
 }
 
-bun #Tint(): i32 {
+template #Tint16(): i16 {
+	i16
+}
+
+template #Tint32(): i32 {
 	i32
 }
 
-bun #Tdouble(): float {
+template #Tint64(): i64 {
+	i64
+}
+
+template #Tint(): i64 {
+	i64
+}
+
+template #Tdouble(): float {
 	float
 }
 
-//bun #TString(): unicode {
+//template #TString(): unicode {
 //	unicode
 //}
 
 // literal
 
-bun #null(): NullType {
+template #null(): NullType {
 	null
 }
 
-bun #true(): i1 {
+template #true(): i1 {
 	true
 }
 
-bun #false(): i1 {
+template #false(): i1 {
 	false
 }
 
-bun #integer(): i32 {
+template #int(): i64 {
 	${textof this}
 }
 
-bun #float(): float {
+template #float(): float {
 	${textof this}
 }
 
-//bun #string(): unicode {
+//template #string(): unicode {
 //	u"${textof this}"
 //}
 
-bun #conv(x: float): i32 {
+template #conv(x: float): i64 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fptosi ${typeof x} ${x} to ${typeof this}${endstmt}%Temp__${getnum 0}
 }
 
 
-bun #conv(x: i32): float {
+template #conv(x: i64): float {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = sitofp ${typeof x} ${x} to ${typeof this}${endstmt}%Temp__${getnum 0}
 }
 
@@ -67,94 +85,93 @@ bun<T> #group(expr :T) :T {
 	${expr}
 }
 
-bun #not(x: i1) :i1 {
+template #not(x: i1) :i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = xor ${typeof x} ${x}, 1${endstmt}%Temp__${getnum 0}
 }
 
-bun #plus(x: i32) :i32 {
+template #plus(x: i64) :i64 {
 	${x}
 }
 
-bun #plus(x: float) :float {
+template #plus(x: float) :float {
 	${x}
 }
 
-bun #minus(x: i32) :i32 {
-	${startstmt}${reservenum 1}%Temp__${getnum 0} = sub i32 0, ${x}${endstmt}%Temp__${getnum 0}
+template #minus(x: i64) :i64 {
+	${startstmt}${reservenum 1}%Temp__${getnum 0} = sub i64 0, ${x}${endstmt}%Temp__${getnum 0}
 }
 
-bun #minus(x: float) :float {
+template #minus(x: float) :float {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fsub float -0.0, ${x}${endstmt}%Temp__${getnum 0}
 }
 
-bun #compl(x: i32) :i32 {
+template #compl(x: i64) :i64 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = xor ${typeof x} ${x}, -1${endstmt}%Temp__${getnum 0}
 }//
 
 //TODO
-bun #and(x: i1, y: i1): i1 {
+template #and(x: i1, y: i1): i1 {
 	${x} and ${y}
 }
 
 //TODO
-bun #or(x: i1, y: i1): i1 {
+template #or(x: i1, y: i1): i1 {
 	${x} or ${y}
 }
 
-//TODO
 bun<T> #assign(x: T, y: T): void {
-	${x} = ${y}
+	${startstmt}store ${typeof y} ${y}, ${typeof x}* ${x}${endstmt}
 }
 
 //bun<T> #add(x: T, y: T) :T {
 //	(${x} + ${y})
 //}
 
-//bun #add(x: unicode, y: any): unicode {
+//template #add(x: unicode, y: any): unicode {
 //	(${x} + ustr(${y}))
 //}
 
-//bun #add(x: unicode, y: unicode): unicode {
+//template #add(x: unicode, y: unicode): unicode {
 //	${x} + ${y}
 //}
 
-bun #add(x: i32, y: i32): i32 {
+template #add(x: i64, y: i64): i64 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = add ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #add(x: float, y: float): float {
+template #add(x: float, y: float): float {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fadd ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #sub(x: i32, y: i32): i32 {
+template #sub(x: i64, y: i64): i64 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = sub ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #sub(x: float, y: float): float {
+template #sub(x: float, y: float): float {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fsub ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #mul(x: i32, y: i32): i32 {
+template #mul(x: i64, y: i64): i64 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = mul ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #mul(x: float, y: float): float {
+template #mul(x: float, y: float): float {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fmul ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #div(x: i32, y: i32): i32 {
+template #div(x: i64, y: i64): i64 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = sdiv ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #div(x: float, y: float): float {
+template #div(x: float, y: float): float {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fdiv ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #mod(x: i32, y: i32): i32 {
+template #mod(x: i64, y: i64): i64 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = srem ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #mod(x: float, y: float): float {
+template #mod(x: float, y: float): float {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = frem ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
@@ -162,15 +179,15 @@ bun #mod(x: float, y: float): float {
 //	(${x} == ${y})
 //}
 
-bun #eq(x: i1, y: i1): i1 {
+template #eq(x: i1, y: i1): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp eq ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #eq(x: i32, y: i32): i1 {
+template #eq(x: i64, y: i64): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp eq ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #eq(x: float, y: float): i1 {
+template #eq(x: float, y: float): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fcmp oeq ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
@@ -178,93 +195,104 @@ bun #eq(x: float, y: float): i1 {
 //	(${x} != ${y})
 //}
 
-bun #noteq(x: i1, y: i1): i1 {
+template #noteq(x: i1, y: i1): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp ne ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #noteq(x: i32, y: i32): i1 {
+template #noteq(x: i64, y: i64): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp ne ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #noteq(x: float, y: float): i1 {
+template #noteq(x: float, y: float): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fcmp one ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #lt(x: i32, y: i32): i1 {
+template #lt(x: i64, y: i64): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp slt ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #lt(x: float, y: float): i1 {
+template #lt(x: float, y: float): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fcmp olt ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #lte(x: i32, y: i32): i1 {
+template #lte(x: i64, y: i64): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp sle ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #lte(x: float, y: float): i1 {
+template #lte(x: float, y: float): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fcmp ole ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #gt(x: i32, y: i32): i1 {
+template #gt(x: i64, y: i64): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp sgt ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #gt(x: float, y: float): i1 {
+template #gt(x: float, y: float): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fcmp ogt ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #gte(x: i32, y: i32): i1 {
+template #gte(x: i64, y: i64): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = icmp sge ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
-bun #gte(x: float, y: float): i1 {
+template #gte(x: float, y: float): i1 {
 	${startstmt}${reservenum 1}%Temp__${getnum 0} = fcmp oge ${typeof x} ${x}, ${y}${endstmt}%Temp__${getnum 0}
 }
 
 //TODO
-bun #apply(f, args) && typecheck() {
+template #apply(f, args) {
 	${f}(${list args ", "})
 }
 
 //TODO
-bun #let(name, type, value): void && letvar() {
+template #let(name, type, value): void {
 	${value} ${name} = ${value}
 }
 
-//TODO
-bun #var(name, type, value): void && letvar() {
-	${name} = ${value}
+template #var(name, type, value): void {
+	%${name} = alloca ${type}
+	${startstmt}store ${typeof value} ${value}, ${type}* %${name}${endstmt}
 }
 
-bun #function(name, params, rtype, block): void && letvar() {
-	define ${rtype} @${name} (${list params ", "}) ${begin} ${block} ${end}
+template #function(name, params, rtype, block): void {
+	define ${rtype} @${name} (${list params ", "}) {
+	${begin}${label Entry}${block}${end}
+	}
 }
 
-bun #param(name, type): void {
+template #name(): any {
+	${textof this}
+}
+
+template #param(name, type): void {
 	${type} %${name}
 }
 
-bun #block(*): void && typecheck() {
+template #block(*): void {
 	${statement this}
 }
 
-//TODO
-bun #if(x: i1, then: void): void {
-	if ${x}: ${begin} ${statement then} ${end}
+template #if(x: i1, then: void): void {
+	${reservenum 1}${startstmt}br ${typeof x} ${x}, label %IfThen__${getnum 0}, label %IfEnd__${getnum 0}${endstmt}
+	${label IfThen 0}${then}
+	br label %IfEnd__${getnum 0}
+	${label IfEnd 0}
 }
 
-//TODO
-bun #if(x: i1, then: void, else: void): void {
-	if ${x}: ${begin} ${statement then} ${end}
-	else: ${begin} ${statement else} ${end}
+template #if(x: i1, then: void, else: void): void {
+	${reservenum 1}${startstmt}br ${typeof x} ${x}, label %IfThen__${getnum 0}, label %IfElse__${getnum 0}${endstmt}
+	${label IfThen 0}${then}
+	br label %IfEnd__${getnum 0}
+	${label IfElse 0}${else}
+	br label %IfEnd__${getnum 0}
+	${label IfEnd 0}
 }
 
-bun #return(): void && typecheck() {
+template #return(): void {
 	${startstmt}ret void${endstmt}
 }
 
-bun #return(expr): void && typecheck() {
+template #return(expr): void {
 	${startstmt}ret ${typeof expr} ${expr}${endstmt}
 }
 
