@@ -12,6 +12,7 @@ import java.text.DecimalFormat;
 
 import org.libbun.drv.JvmDriver;
 import org.libbun.drv.JvmIndyDriver;
+import org.libbun.drv.PegDumpper;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -223,7 +224,12 @@ public class Main {
 				}
 				ParseProfileStop();
 				if(!ParseOnlyMode && driver != null) {
-					node = gamma.tryMatch(node, true);
+					if(!(driver instanceof PegDumpper)) {
+						node = gamma.tryMatch(node, true);
+					}
+					else {
+						node.matched = Functor.ErrorFunctor;
+					}
 					if(VerboseMode) {
 						System.out.println("Typed node: \n" + node + "\n:untyped: " + node.countUnmatched(0));
 					}

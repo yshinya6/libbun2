@@ -56,7 +56,6 @@ class TestRunner:
 
     def run_once(self, root, peg, input_file):
         cmd = ['java', '-ea', '-jar', root + '/libbun2.jar',
-                '--parse-only', '--verbose:ast',
                 '-l', peg, input_file]
         print "# " + " ".join(cmd)
         p = subprocess.Popen(cmd,
