@@ -1,0 +1,32 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #Tint: '''int '''
+      #assign{
+         #name: '''n'''
+      }
+      #for{
+         #assign{
+            #name: '''n '''
+            #c.assignmentoperator: '''= '''
+            #integer: '''0'''
+         }
+         #lt{
+            #name: '''n '''
+            #integer: '''10'''
+         }
+         #inc{
+            #name: '''n'''
+         }
+         #block: '''{
+	}
+	'''
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

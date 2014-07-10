@@ -1,54 +1,54 @@
 parsed:
-#translationunit {            ## by peg : ( Spacing (ExternalDeclaration^)+ EOT  ) defined in TranslationUnit
-   #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
-      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-         #typespecifier: float    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+#translationunit{
+   #declaration{
+      #declarationspecifier{
+         #typespecifier: '''float '''
       }
-      #initdeclarator {            ## by peg : ( (EQU Initializer^)  ) defined in InitDeclarator
-         #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-            #identifier: c0    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+      #initdeclarator{
+         #declarator{
+            #identifier: '''c0 '''
          }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
-            #float: 1.   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
-         }
-      }
-   }
-   #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
-      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-         #typespecifier: float    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
-      }
-      #initdeclarator {            ## by peg : ( (EQU Initializer^)  ) defined in InitDeclarator
-         #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-            #identifier: c1    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
-         }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
-            #float: 2.0   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
+         #initializer{
+            #float: '''1.'''
          }
       }
    }
-   #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
-      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-         #typespecifier: float    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+   #declaration{
+      #declarationspecifier{
+         #typespecifier: '''float '''
       }
-      #initdeclarator {            ## by peg : ( (EQU Initializer^)  ) defined in InitDeclarator
-         #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-            #identifier: c2    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+      #initdeclarator{
+         #declarator{
+            #identifier: '''c1 '''
          }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
-            #float: .3   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
+         #initializer{
+            #float: '''2.0'''
          }
       }
    }
-   #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
-      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-         #typespecifier: float    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+   #declaration{
+      #declarationspecifier{
+         #typespecifier: '''float '''
       }
-      #initdeclarator {            ## by peg : ( (EQU Initializer^)  ) defined in InitDeclarator
-         #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-            #identifier: c2    ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
+      #initdeclarator{
+         #declarator{
+            #identifier: '''c2 '''
          }
-         #initializer {            ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
-            #float: 4.f   ## by peg : ( (DecimalFloatConstant / HexFloatConstant) FloatSuffix?  ) defined in FloatConstant
+         #initializer{
+            #float: '''.3'''
+         }
+      }
+   }
+   #declaration{
+      #declarationspecifier{
+         #typespecifier: '''float '''
+      }
+      #initdeclarator{
+         #declarator{
+            #identifier: '''c2 '''
+         }
+         #initializer{
+            #float: '''4.f'''
          }
       }
    }

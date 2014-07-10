@@ -19,6 +19,7 @@ public abstract class ParserContext extends SourceContext {
 	}
 
 	public abstract void initMemo();
+	public abstract void clearMemo();
 	public void removeMemo(int startIndex, int endIndex) {
 	}
 

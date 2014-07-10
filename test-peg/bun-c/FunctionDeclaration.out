@@ -1,0 +1,11 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

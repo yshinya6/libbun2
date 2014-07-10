@@ -12,6 +12,7 @@ import java.text.DecimalFormat;
 
 import org.libbun.drv.JvmDriver;
 import org.libbun.drv.JvmIndyDriver;
+import org.libbun.drv.PegDumpper;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -55,6 +56,9 @@ public class Main {
 
 	// --disable-memo
 	public static boolean NonMemoPegMode = false;
+	
+	// --fast
+	public static boolean FastMatchMode = false;
 
 	private static void parseCommandArguments(String[] args) {
 		int index = 0;
@@ -87,6 +91,9 @@ public class Main {
 			}
 			else if (argument.equals("--disable-memo")) {
 				NonMemoPegMode = true;
+			}
+			else if (argument.equals("--fast")) {
+				FastMatchMode = true;
 			}
 			else if (argument.equals("--profile")) {
 				ProfileMode = true;
@@ -167,13 +174,23 @@ public class Main {
 	}
 
 	public final static ParserContext newParserContext(PegSource source) {
+		if(FastMatchMode) {
+			return new PegParserContext(source);
+		}
 		return new SimpleParserContext(source);
 	}
 
 	public final static ParserContext newParserContext(PegSource source, int startIndex, int endIndex, PegRuleSet ruleSet) {
-		ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
-		p.setRuleSet(ruleSet);
-		return p;
+		if(FastMatchMode) {
+			ParserContext p = new PegParserContext(source, startIndex, endIndex);
+			p.setRuleSet(ruleSet);
+			return p;
+		}
+		else{
+			ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
+			p.setRuleSet(ruleSet);
+			return p;
+		}
 	}
 	
 	public final static void main(String[] args) {
@@ -223,7 +240,12 @@ public class Main {
 				}
 				ParseProfileStop();
 				if(!ParseOnlyMode && driver != null) {
-					node = gamma.tryMatch(node, true);
+					if(!(driver instanceof PegDumpper)) {
+						node = gamma.tryMatch(node, true);
+					}
+					else {
+						node.matched = Functor.ErrorFunctor;
+					}
 					if(VerboseMode) {
 						System.out.println("Typed node: \n" + node + "\n:untyped: " + node.countUnmatched(0));
 					}

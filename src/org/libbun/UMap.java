@@ -58,4 +58,8 @@ public final class UMap <T> {
 	public final int size() {
 		return this.m.size();
 	}
+	
+	public final void clear() {
+		this.m.clear();
+	}
 }

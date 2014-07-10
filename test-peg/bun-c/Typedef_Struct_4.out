@@ -1,0 +1,9 @@
+parsed:
+#error: ''''''      :: null by #error*
+** uncosumed: 'typedef struct {
+	int a;
+	union {
+		int b;
+	};
+} StructA;
+' **

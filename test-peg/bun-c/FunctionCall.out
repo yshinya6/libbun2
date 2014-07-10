@@ -1,0 +1,16 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #block{
+      #c.expressionstatement{
+         #apply{
+            #name: '''func'''
+            #integer: '''2'''
+         }
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

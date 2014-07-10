@@ -99,7 +99,7 @@
 //-------------------------------------------------------------------------
 
 TranslationUnit
-    = << Spacing ExternalDeclaration@+ EOT #toplevel >>
+    = Spacing ExternalDeclaration+ EOT
     ;
 
 ExternalDeclaration
@@ -108,11 +108,11 @@ ExternalDeclaration
     ;
 
 FunctionDefinition
-    = << DeclarationSpecifiers@ Declarator@ DeclarationList@? CompoundStatement@ #function >>
+    = << DeclarationSpecifiers@3 Declarator@0 DeclarationList@1? CompoundStatement@2 #function >>
     ;
 
 DeclarationList
-    = << Declaration@+ #c.declarationlist>>
+    = Declaration+
     ;
 
 
@@ -121,7 +121,7 @@ DeclarationList
 //-------------------------------------------------------------------------
 
 Declaration
-    = << DeclarationNoAttribute@ (Attribute / Assembler)@? SEMI #c.declaration >>
+    = DeclarationNoAttribute@ (Attribute / Assembler)@? SEMI
     ;
 
 DeclarationNoAttribute
@@ -129,32 +129,33 @@ DeclarationNoAttribute
     ;
 
 DeclarationSpecifiers
-    = << ( StorageClassSpecifier
+    = ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )@*
-       TypedefName@
+       )*
+       TypedefName
        ( StorageClassSpecifier
        / TypeQualifier
        / FunctionSpecifier
        / Attribute
-       )* #c.declarationspecifier >>
-    / << ( StorageClassSpecifier
+       )*
+    / ( StorageClassSpecifier
       / TypeSpecifier
       / TypeQualifier
       / FunctionSpecifier
       / Attribute
-      )@+ #c.declarationspecifier >>
+      )+
     ;
 
 InitDeclaratorList
-    = InitDeclarator <<@ (COMMA InitDeclarator@) #c.initdeclaratorlist >>*
+    = InitDeclarator@ (COMMA InitDeclarator@)*
     ;
 
 InitDeclarator
-    = Declarator <<@ (EQU Initializer@) #c.initdeclarator >>?
+    = << Pointer@? DirectDeclarator@ (EQU Initializer@)? #assign >>
     ;
+
 
 StorageClassSpecifier
     = << (TYPEDEF
@@ -165,19 +166,19 @@ StorageClassSpecifier
     ;
 
 TypeSpecifier
-    = << (VOID
-    / CHAR
-    / SHORT
-    / INT
-    / LONG
-    / FLOAT
-    / DOUBLE
-    / SIGNED
-    / UNSIGNED
-    / BOOL
-    / COMPLEX
-    / StructOrUnionSpecifier
-    / EnumSpecifier)@ #c.typespecifier >>
+    = << VOID      #Tvoid     >>
+    / << CHAR      #Tchar     >>
+    / << SHORT     #Tshort    >>
+    / << INT       #Tint      >>
+    / << LONG      #Tlong     >>
+    / << FLOAT     #Tfloat    >>
+    / << DOUBLE    #Tdouble   >>
+    / << SIGNED    #Tsigned   >>
+    / << UNSIGNED  #Tunsigned >>
+    / << BOOL      #Tbool     >>
+    / << COMPLEX   #Tcomplex  >>
+    / << StructOrUnionSpecifier #Tstructorunion >>
+    / << EnumSpecifier #Tenum >>
     ;
 
 StructOrUnionSpecifier
@@ -253,14 +254,14 @@ AttributeParamList = LPAR (AttributeParam@ (COMMA AttributeParam@)*)? RPAR;
 Assembler = ASM LPAR (StringLiteral (COMMA StringLiteral)*)? RPAR;
 
 Declarator
-    = << Pointer@? DirectDeclarator@ #c.declarator >>
+    = Pointer@? DirectDeclarator@
     ;
 
 DirectDeclarator
     = ( Identifier@
       / LPAR Declarator@ RPAR
       )
-      ( LBRK TypeQualifier@* AssignmentExpression@? RBRK
+      ( << LBRK TypeQualifier@* AssignmentExpression@? RBRK #arraysize >>
       / LBRK STATIC@ TypeQualifier@* AssignmentExpression@ RBRK
       / LBRK TypeQualifier@+ STATIC@ AssignmentExpression@ RBRK
       / LBRK TypeQualifier@* STAR@ RBRK
@@ -313,8 +314,8 @@ TypedefName
     ;
 
 Initializer
-    = << (AssignmentExpression@
-    / LWING InitializerList@* COMMA? RWING) #c.initializer>>
+    = (AssignmentExpression@
+    / LWING InitializerList@* COMMA? RWING)
     ;
 
 InitializerList

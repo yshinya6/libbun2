@@ -1,16 +1,16 @@
-parsed:
-#toplevel {            ## by peg : ( (Stmt^)+  ) defined in TopLevel
-   #import {            ## by peg : ( 'import' WS* ImportSymbol^ (WS* ',' WS* Symbol^)*  ) defined in ImportStmt
-      #name: os   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+
+#toplevel: {
+   #import: {
+      #name: os
    }
-   #fromImport {            ## by peg : ( 'from' WS* Symbol^ WS* 'import' WS* ImportSymbol^ (WS* ',' WS* ImportSymbol^)*  ) defined in ImportStmt
-      #name: sys   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-      #asterisk: *   ## by peg : ( '*'  ) defined in Asterisk
+   #fromImport: {
+      #name: sys
+      #asterisk: *
    }
-   #fromImport {            ## by peg : ( 'from' WS* Symbol^ WS* 'import' WS* ImportSymbol^ (WS* ',' WS* ImportSymbol^)*  ) defined in ImportStmt
-      #name: sys   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-      #name: a   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-      #name: b   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
-      #name: c   ## by peg : ( [a-zA-Z_] [a-zA-Z0-9_]*  ) defined in Symbol
+   #fromImport: {
+      #name: sys
+      #name: a
+      #name: b
+      #name: c
    }
 }

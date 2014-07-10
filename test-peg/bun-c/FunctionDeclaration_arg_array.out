@@ -1,0 +1,22 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #param{
+      #c.parameterdeclaration{
+         #Tint: '''int '''
+         #name: '''argc'''
+      }
+      #c.parameterdeclaration{
+         #Tchar: '''char '''
+         #c.pointer: '''*'''
+         #name: '''argv'''
+         #arraysize: '''[]'''
+      }
+   }
+   #block{
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

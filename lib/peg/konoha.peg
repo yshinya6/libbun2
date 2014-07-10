@@ -163,7 +163,7 @@ Equal
   ;
 
 Relation
-  = Shift <<@ _? ('<' !'<' #lt / '<=' #lte / '>' !'>' #gt / '>=' #gte) _? Shift@ >>*
+  = Shift <<@ _? ('<=' #lte / '<' !'<' #lt / '>=' #gte / '>' !'>' #gt) _? Shift@ >>*
   ;
 
 Shift

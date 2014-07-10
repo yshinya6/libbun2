@@ -1,14 +1,14 @@
-parsed:
-#toplevel {            ## by peg : ( (Stmt^)+  ) defined in TopLevel
-   #if {            ## by peg : ( 'if' WS+ Expr^ WS* ':' Block^ (Elif^)* (indent 'else' WS* ':' Block^)?  ) defined in IfStmt
-      #lt {            ## by peg : ( WS* ('<' !'<'  / '<='  / '>' !'>'  / '>=' ) WS* Shift^ ) defined in Relation
-         #integer: 5   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
-         #integer: 3   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
+
+#toplevel: {
+   #if: {
+      #lt: {
+         #integer: 5
+         #integer: 3
       }
-      #block {            ## by peg : ( (WS* EOS+ / indent WS+ Stmt^ EOS?)+  ) defined in Block
-         #add {            ## by peg : ( WS* ('+'  / '-' ) WS* Product^ ) defined in Sum
-            #integer: 4   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
-            #integer: 6   ## by peg : ( ('-' WS* / '+' WS*)? IntegerLiteral  ) defined in Number
+      #block: {
+         #add: {
+            #integer: 4
+            #integer: 6
          }
       }
    }
