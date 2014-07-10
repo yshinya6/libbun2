@@ -12,6 +12,7 @@ public class PegObject {
 	SymbolTable  gamma = null;
 	Functor      matched = null;
 	BunType      typed   = null;
+	boolean      memoizationMode = false;
 
 	PegObject(String tag) {
 		this.tag = tag;

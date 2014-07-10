@@ -56,6 +56,9 @@ public class Main {
 
 	// --disable-memo
 	public static boolean NonMemoPegMode = false;
+	
+	// --fast
+	public static boolean FastMatchMode = false;
 
 	private static void parseCommandArguments(String[] args) {
 		int index = 0;
@@ -88,6 +91,9 @@ public class Main {
 			}
 			else if (argument.equals("--disable-memo")) {
 				NonMemoPegMode = true;
+			}
+			else if (argument.equals("--fast")) {
+				FastMatchMode = true;
 			}
 			else if (argument.equals("--profile")) {
 				ProfileMode = true;
@@ -168,13 +174,23 @@ public class Main {
 	}
 
 	public final static ParserContext newParserContext(PegSource source) {
+		if(FastMatchMode) {
+			return new PegParserContext(source);
+		}
 		return new SimpleParserContext(source);
 	}
 
 	public final static ParserContext newParserContext(PegSource source, int startIndex, int endIndex, PegRuleSet ruleSet) {
-		ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
-		p.setRuleSet(ruleSet);
-		return p;
+		if(FastMatchMode) {
+			ParserContext p = new PegParserContext(source, startIndex, endIndex);
+			p.setRuleSet(ruleSet);
+			return p;
+		}
+		else{
+			ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
+			p.setRuleSet(ruleSet);
+			return p;
+		}
 	}
 	
 	public final static void main(String[] args) {
