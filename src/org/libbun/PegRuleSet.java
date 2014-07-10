@@ -40,7 +40,9 @@ public final class PegRuleSet {
 			for(int i = 0; i < e.size(); i++) {
 				newnode.add(this.checkPegRule(name, e.get(i)));
 			}
-			this.checkMemoMode(newnode, newnode, 0);
+			if(Main.FastMatchMode) {
+				this.checkMemoMode(newnode, newnode, 0);
+			}
 			if(newnode.size() == 1) {
 				return newnode.get(0);
 			}
