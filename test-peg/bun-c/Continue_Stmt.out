@@ -1,0 +1,49 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #Tint: '''int '''
+      #assign{
+         #name: '''i '''
+         #integer: '''0'''
+      }
+      #assign{
+         #name: '''c '''
+         #integer: '''0'''
+      }
+      #while{
+         #lt{
+            #name: '''i '''
+            #integer: '''10'''
+         }
+         #block{
+            #c.expressionstatement{
+               #inc{
+                  #name: '''i'''
+               }
+            }
+            #if{
+               #equequ{
+                  #mod{
+                     #name: '''i '''
+                     #integer: '''2'''
+                  }
+                  #integer: '''0'''
+               }
+               #continue: '''continue;
+		'''
+            }
+            #c.expressionstatement{
+               #inc{
+                  #name: '''c'''
+               }
+            }
+         }
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

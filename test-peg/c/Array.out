@@ -1,36 +1,36 @@
 parsed:
-#translationunit {            ## by peg : ( Spacing (ExternalDeclaration^)+ EOT  ) defined in TranslationUnit
-   #functiondefinition {            ## by peg : ( DeclarationSpecifiers^ Declarator^ (DeclarationList^)? CompoundStatement^  ) defined in FunctionDefinition
-      #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-         #typespecifier: void    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+#translationunit{
+   #functiondefinition{
+      #declarationspecifier{
+         #typespecifier: '''void '''
       }
-      #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-         #identifier: func   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
-         #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-            #typespecifier: void   ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+      #declarator{
+         #identifier: '''func'''
+         #declarationspecifier{
+            #typespecifier: '''void'''
          }
       }
-      #compoundstatement {            ## by peg : ( LWING ((Declaration / Statement)^)* RWING  ) defined in CompoundStatement
-         #declaration {            ## by peg : ( DeclarationNoAttribute^ ((Attribute / Assembler)^)? SEMI  ) defined in Declaration
-            #declarationspecifier {            ## by peg : ( ((StorageClassSpecifier / TypeSpecifier / TypeQualifier / FunctionSpecifier / Attribute)^)+  ) defined in DeclarationSpecifiers
-               #typespecifier: int    ## by peg : ( (VOID / CHAR / SHORT / INT / LONG / FLOAT / DOUBLE / SIGNED / UNSIGNED / BOOL / COMPLEX / StructOrUnionSpecifier / EnumSpecifier)^  ) defined in TypeSpecifier
+      #compoundstatement{
+         #declaration{
+            #declarationspecifier{
+               #typespecifier: '''int '''
             }
-            #initdeclarator {            ## by peg : ( (EQU Initializer^)  ) defined in InitDeclarator
-               #declarator {            ## by peg : ( (Pointer^)? DirectDeclarator^  ) defined in Declarator
-                  #identifier: a   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
-                  #integer: 10   ## by peg : ( (DecimalConstant / HexConstant / OctalConstant) IntegerSuffix?  ) defined in IntegerConstant
+            #initdeclarator{
+               #declarator{
+                  #identifier: '''a'''
+                  #integer: '''10'''
                }
-               #initializer: {}   ## by peg : ( (AssignmentExpression^ / LWING (InitializerList^)* COMMA? RWING)  ) defined in Initializer
+               #initializer: '''{}'''
             }
          }
-         #expressionstatement {            ## by peg : ( (Expression^)? SEMI  ) defined in ExpressionStatement
-            #assignmentexpression {            ## by peg : ( UnaryExpression^ AssignmentOperator^ AssignmentExpression^  ) defined in AssignmentExpression
-               #index {            ## by peg : ( (FunctionCall  / Index  / DOT  Identifier^ / PTR  Identifier^ / INC  / DEC ) ) defined in PostfixExpression
-                  #identifier: a   ## by peg : ( !Keyword IdNondigit^ (IdChar^)* Spacing  ) defined in Identifier
-                  #integer: 2   ## by peg : ( (DecimalConstant / HexConstant / OctalConstant) IntegerSuffix?  ) defined in IntegerConstant
+         #expressionstatement{
+            #assignmentexpression{
+               #index{
+                  #identifier: '''a'''
+                  #integer: '''2'''
                }
-               #assignmentoperator: =    ## by peg : ( (EQU / STAREQU / DIVEQU / MODEQU / PLUSEQU / MINUSEQU / LEFTEQU / RIGHTEQU / ANDEQU / HATEQU / OREQU)^  ) defined in AssignmentOperator
-               #integer: 3   ## by peg : ( (DecimalConstant / HexConstant / OctalConstant) IntegerSuffix?  ) defined in IntegerConstant
+               #assignmentoperator: '''= '''
+               #integer: '''3'''
             }
          }
       }

@@ -1,0 +1,30 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''main'''
+   #Tvoid: '''void'''
+   #block{
+      #Tint: '''int '''
+      #assign{
+         #name: '''n '''
+         #integer: '''1'''
+      }
+      #switch{
+         #name: '''n'''
+         #block{
+            #case{
+               #integer: '''1'''
+               #break: '''break;
+	'''
+            }
+            #default{
+               #break: '''break;
+	'''
+            }
+         }
+      }
+      #return{
+         #integer: '''0'''
+      }
+   }
+}

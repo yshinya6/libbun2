@@ -1,0 +1,4 @@
+parsed:
+#error: ''''''      :: null by #error*
+** uncosumed: 'char n = (char)(p);
+' **

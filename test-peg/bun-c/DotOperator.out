@@ -1,0 +1,40 @@
+parsed:
+#function{
+   #Tstructorunion{
+      #c.struct: '''struct '''
+      #name: '''student '''
+   }
+   #name: '''new_Student'''
+   #block{
+      #Tstructorunion{
+         #c.struct: '''struct '''
+         #name: '''student '''
+      }
+      #assign{
+         #name: '''s'''
+      }
+      #c.expressionstatement{
+         #assign{
+            #field{
+               #name: '''s'''
+               #name: '''number '''
+            }
+            #c.assignmentoperator: '''= '''
+            #integer: '''10'''
+         }
+      }
+      #c.expressionstatement{
+         #assign{
+            #field{
+               #name: '''s'''
+               #name: '''name '''
+            }
+            #c.assignmentoperator: '''= '''
+            #string: '''"naruto"'''
+         }
+      }
+      #return{
+         #name: '''s'''
+      }
+   }
+}

@@ -1,0 +1,27 @@
+parsed:
+#function{
+   #Tint: '''int '''
+   #name: '''func'''
+   #c.parameterdeclaration{
+      #Tint: '''int '''
+      #name: '''n'''
+   }
+   #block{
+      #if{
+         #gt{
+            #name: '''n '''
+            #integer: '''0'''
+         }
+         #block{
+            #return{
+               #name: '''n'''
+            }
+         }
+         #block{
+            #return{
+               #integer: '''0'''
+            }
+         }
+      }
+   }
+}
