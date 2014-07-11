@@ -18,7 +18,7 @@ public abstract class Peg {
 	boolean   memoizationMode = false;
 	int       clearMemoCounter = 0;
 
-	PegSource source = null;
+	ParserSource source = null;
 	int       sourcePosition = 0;
 	
 	protected abstract Peg clone(String ns);

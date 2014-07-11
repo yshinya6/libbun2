@@ -25,11 +25,11 @@ public class PegParserContext extends ParserContext {
 		PegObject childNode;
 	}
 	
-	public PegParserContext(PegSource source) {
-		this(source, 0, source.sourceText.length());
+	public PegParserContext(ParserSource source) {
+		this(source, 0, source.length());
 	}
 
-	public PegParserContext(PegSource source, int startIndex, int endIndex) {
+	public PegParserContext(ParserSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 	}
 	

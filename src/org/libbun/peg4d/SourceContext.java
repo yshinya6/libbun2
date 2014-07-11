@@ -5,14 +5,14 @@ import org.libbun.UCharset;
 
 
 public class SourceContext {
-	public final         PegSource source;
+	public final         ParserSource source;
 	protected int        sourcePosition = 0;
 	public int           endPosition;
 
 	int backtrackCount = 0;
 	int backtrackSize = 0;
 
-	public SourceContext(PegSource source, int startIndex, int endIndex) {
+	public SourceContext(ParserSource source, int startIndex, int endIndex) {
 		this.source = source;
 		this.sourcePosition = startIndex;
 		this.endPosition = endIndex;
@@ -55,7 +55,7 @@ public class SourceContext {
 	}
 
 	public final char charAt(int n) {
-		return Main._GetChar(this.source.sourceText, n);
+		return this.source.charAt(n);
 	}
 
 	public final char getChar() {
@@ -144,24 +144,24 @@ public class SourceContext {
 	//		}
 	//		return false;
 	//	}
-
-	public void skipIndent(int indentSize) {
-		int pos = this.sourcePosition;
-		//		this.showPosition("skip characters until indent="+indentSize + ", pos=" + pos, pos);
-		for(;pos < this.endPosition; pos = pos + 1) {
-			char ch = this.charAt(pos);
-			if(ch == '\n' && pos > this.sourcePosition) {
-				int posIndent = this.source.getIndentSize(pos+1);
-				if(posIndent <= indentSize) {
-					this.sourcePosition = pos + 1;
-					//					System.out.println("skip characters until indent="+indentSize + ", pos=" + this.sourcePosition);
-					return ;
-				}
-			}
-		}
-		//		System.out.println("skip characters until indent="+indentSize + ", pos = endPosition");
-		this.sourcePosition = this.endPosition;
-	}
+//
+//	public void skipIndent(int indentSize) {
+//		int pos = this.sourcePosition;
+//		//		this.showPosition("skip characters until indent="+indentSize + ", pos=" + pos, pos);
+//		for(;pos < this.endPosition; pos = pos + 1) {
+//			char ch = this.charAt(pos);
+//			if(ch == '\n' && pos > this.sourcePosition) {
+//				int posIndent = this.source.getIndentSize(pos+1);
+//				if(posIndent <= indentSize) {
+//					this.sourcePosition = pos + 1;
+//					//					System.out.println("skip characters until indent="+indentSize + ", pos=" + this.sourcePosition);
+//					return ;
+//				}
+//			}
+//		}
+//		//		System.out.println("skip characters until indent="+indentSize + ", pos = endPosition");
+//		this.sourcePosition = this.endPosition;
+//	}
 
 	public final boolean matchIndentSize(String text) {
 		int indentSize = 0;

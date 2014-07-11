@@ -8,7 +8,7 @@ import org.libbun.SymbolTable;
 
 public class PegObject {
 	Peg                 createdPeg = null;
-	public PegSource    source = null;
+	public ParserSource    source = null;
 	public int                 startIndex = 0;
 	public int                 endIndex = 0;
 	public String       tag = null;
@@ -24,7 +24,7 @@ public class PegObject {
 		this.tag = tag;
 	}
 
-	public PegObject(String tag, PegSource source, Peg createdPeg, int startIndex) {
+	public PegObject(String tag, ParserSource source, Peg createdPeg, int startIndex) {
 		this.tag        = tag;
 		this.source     = source;
 		this.createdPeg = createdPeg;
@@ -40,7 +40,7 @@ public class PegObject {
 		return this.tag.equals(functor);
 	}
 
-	public final void setSource(Peg createdPeg, PegSource source, int startIndex, int endIndex) {
+	public final void setSource(Peg createdPeg, ParserSource source, int startIndex, int endIndex) {
 		this.createdPeg = createdPeg;
 		this.source     = source;
 		this.startIndex = startIndex;

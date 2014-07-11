@@ -17,8 +17,9 @@ import org.libbun.peg4d.ParserContext;
 import org.libbun.peg4d.PegObject;
 import org.libbun.peg4d.PegParserContext;
 import org.libbun.peg4d.PegRuleSet;
-import org.libbun.peg4d.PegSource;
+import org.libbun.peg4d.ParserSource;
 import org.libbun.peg4d.SimpleParserContext;
+import org.libbun.peg4d.StringSource;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -180,14 +181,14 @@ public class Main {
 		return d;
 	}
 
-	public final static ParserContext newParserContext(PegSource source) {
+	public final static ParserContext newParserContext(ParserSource source) {
 		if(FastMatchMode) {
 			return new PegParserContext(source);
 		}
 		return new SimpleParserContext(source);
 	}
 
-	public final static ParserContext newParserContext(PegSource source, int startIndex, int endIndex, PegRuleSet ruleSet) {
+	public final static ParserContext newParserContext(ParserSource source, int startIndex, int endIndex, PegRuleSet ruleSet) {
 		if(FastMatchMode) {
 			ParserContext p = new PegParserContext(source, startIndex, endIndex);
 			p.setRuleSet(ruleSet);
@@ -219,11 +220,11 @@ public class Main {
 
 	private static void loadScript(Namespace gamma, BunDriver driver, String fileName) {
 		String startPoint = "TopLevel";
-		PegSource source = Main.loadSource(fileName);
+		ParserSource source = Main.loadSource(fileName);
 		parseLine(gamma, driver, startPoint, source);
 	}
 
-	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, PegSource source) {
+	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, ParserSource source) {
 		try {
 			ParserContext context = Main.newParserContext(source);
 			gamma.initParserRuleSet(context, "main");
@@ -334,7 +335,7 @@ public class Main {
 				}
 			}
 			if(startPoint != null) {
-				PegSource source = new PegSource("(stdin)", linenum, line);
+				ParserSource source = new StringSource("(stdin)", linenum, line);
 				parseLine(gamma, driver, startPoint, source);
 			}
 			linenum = linenum + 1;
@@ -414,7 +415,7 @@ public class Main {
 
 	// file
 
-	public final static PegSource loadSource(String fileName) {
+	public final static ParserSource loadSource(String fileName) {
 		//ZLogger.VerboseLog(ZLogger.VerboseFile, "loading " + FileName);
 		InputStream Stream = Main.class.getResourceAsStream("/" + fileName);
 		if (Stream == null) {
@@ -434,7 +435,7 @@ public class Main {
 				builder.append("\n");
 				line = reader.readLine();
 			}
-			return new PegSource(fileName, 1, builder.toString());
+			return new StringSource(fileName, 1, builder.toString());
 		}
 		catch(IOException e) {
 			e.printStackTrace();

@@ -7,7 +7,7 @@ public abstract class ParserContext extends SourceContext {
 	public PegRuleSet ruleSet = null;
 	public int objectCount = 0;
 
-	public ParserContext(PegSource source, int startIndex, int endIndex) {
+	public ParserContext(ParserSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 	}
 	
