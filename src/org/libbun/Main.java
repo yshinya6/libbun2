@@ -10,8 +10,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 
-import org.libbun.drv.JvmDriver;
-import org.libbun.drv.JvmIndyDriver;
 import org.libbun.drv.PegDumpper;
 import org.libbun.peg4d.FileSource;
 import org.libbun.peg4d.ParserContext;
@@ -43,6 +41,9 @@ public class Main {
 
 	//
 	private static String InputFileName = null;
+	
+	// --bigdata
+	private static boolean BigDataOption = false;
 
 	// -o
 	private static String OutputFileName = null;
@@ -97,6 +98,9 @@ public class Main {
 			else if (argument.equals("-i")) {
 				ShellMode = true;
 			}
+			else if (argument.equals("--bigdata")) {
+				BigDataOption = true;
+			}
 			else if (argument.equals("--disable-memo")) {
 				NonMemoPegMode = true;
 			}
@@ -135,6 +139,7 @@ public class Main {
 		System.out.println("  --lang|-l  FILE         Language file");
 		System.out.println("  --driver|-d  NAME       Driver");
 		System.out.println("  --out|-o  FILE          Output filename");
+		System.out.println("  --bigdata               Expecting BigData Processing");
 		System.out.println("  --verbose               Printing Debug infomation");
 		System.out.println("  --verbose:peg           Printing Peg/Debug infomation");
 		System.out.println("  --verbose:bun           Printing Peg/Bun infomation");
@@ -287,21 +292,22 @@ public class Main {
 
 	public static String getMemoryInfo() {
 		String info = "";
-		DecimalFormat format_mem =   new DecimalFormat("#,### KB");
+		DecimalFormat format_kib =   new DecimalFormat("#,### KiB");
+		DecimalFormat format_mib =   new DecimalFormat("#,### MiB");
 		DecimalFormat format_ratio = new DecimalFormat("##.#");
 		long free =  Runtime.getRuntime().freeMemory() / 1024;
 		long total = Runtime.getRuntime().totalMemory() / 1024;
 		long max =   Runtime.getRuntime().maxMemory() / 1024;
 		long used =  total - free;
 		double ratio = (used * 100 / (double)total);
-
-		info += "Total   = " + format_mem.format(total);
+//
+//		info += "Total   = " + format_mib.format(total / 1024);
+//		info += "\n";
+//		info += "Free    = " + format_mib.format(total / 1024);
+//		info += "\n";
+		info += "heap: " + format_mib.format(used / 1024) + " (" + format_ratio.format(ratio) + "%)";
 		info += "\n";
-		info += "Free    = " + format_mem.format(total);
-		info += "\n";
-		info += "use     = " + format_mem.format(used) + " (" + format_ratio.format(ratio) + "%)";
-		info += "\n";
-		info += "can use = " + format_mem.format(max);
+		info += "can use = " + format_mib.format(max / 1024);
 		return info;
 	}
 
@@ -421,8 +427,10 @@ public class Main {
 		InputStream Stream = Main.class.getResourceAsStream("/" + fileName);
 		if (Stream == null) {
 			try {
-				return new FileSource(fileName);
-				//Stream = new FileInputStream(fileName);
+				if(BigDataOption) {
+					return new FileSource(fileName);
+				}
+				Stream = new FileInputStream(fileName);
 			} catch (FileNotFoundException e) {
 				Main._Exit(1, "file not found: " + fileName);
 				return null;

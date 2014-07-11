@@ -27,6 +27,7 @@ public class SimpleParserContext extends ParserContext {
 	
 	public SimpleParserContext(ParserSource source) {
 		this(source, 0, source.length());
+		this.initMemo();
 	}
 
 	public SimpleParserContext(ParserSource source, long startIndex, long endIndex) {
@@ -47,14 +48,6 @@ public class SimpleParserContext extends ParserContext {
 			Peg e = pegMap.get(key, null);
 			this.checkLeftRecursion(key, e);
 		}
-//		list = this.pegCache.keys();
-//		for(int i = 0; i < list.size(); i++) {
-//			String key = list.ArrayValues[i];
-//			Peg e = this.pegCache.get(key, null);
-//			if(Main.PegDebuggerMode) {
-//				System.out.println(e.toPrintableString(key, "\n  = ", "\n  / ", "\n  ;", true));
-//			}
-//		}
 	}
 	
 	private void checkLeftRecursion(String name, Peg e) {
@@ -76,15 +69,6 @@ public class SimpleParserContext extends ParserContext {
 						this.appendPegCache(key, seq.cdr());
 						return;
 					}
-					// indirect left recursion has not supported
-//					else {
-//						Peg left = this.pegMap.get(label, null);
-//						if(this.hasLabel(name, left)) {
-//							String key = this.nameRightJoinName(label);  // indirect left recursion
-//							this.appendPegCache(key, seq.cdr());
-//							return;
-//						}
-//					}
 				}
 			}
 		}
@@ -129,7 +113,6 @@ public class SimpleParserContext extends ParserContext {
 		return left;
 	}
 	
-	
 	private class Memo2 {
 		Peg keypeg;
 		long pos;
@@ -137,7 +120,7 @@ public class SimpleParserContext extends ParserContext {
 		Memo2 next;
 	}
 	
-	private HashMap<Long, Memo2> memoMap2 = new HashMap<Long, Memo2>();
+	private HashMap<Long, Memo2> memoMap2;
 
 	public void initMemo() {
 		this.memoMap2 = new HashMap<Long, Memo2>();
@@ -161,15 +144,17 @@ public class SimpleParserContext extends ParserContext {
 	}
 
 	public void removeMemo(long startIndex, long endIndex) {
-		//System.out.println("remove = " + startIndex + ", " + endIndex);
-		for(long i = startIndex; i < endIndex; i++) {
-			Long key = i;
-			Memo2 m = this.memoMap2.get(key);
-			if(m != null) {
-				appendMemo2(m, this.UnusedMemo);
-				this.UnusedMemo = m;
-				this.memoMap2.remove(key);
-				//System.out.println("recycling pos=" + key);				
+		if(this.memoMap2 != null) {
+			//System.out.println("remove = " + startIndex + ", " + endIndex);
+			for(long i = startIndex; i < endIndex; i++) {
+				Long key = i;
+				Memo2 m = this.memoMap2.get(key);
+				if(m != null) {
+					appendMemo2(m, this.UnusedMemo);
+					this.UnusedMemo = m;
+					this.memoMap2.remove(key);
+					//System.out.println("recycling pos=" + key);				
+				}
 			}
 		}
 	}
@@ -205,41 +190,43 @@ public class SimpleParserContext extends ParserContext {
 	}
 	
 	public PegObject precheck(PegNewObject keypeg, PegObject inNode) {
-		long keypos = this.getPosition();
-		Memo2 m = this.getPreCheckCache(keypeg, keypos);
-		//System.out.println("cache? " + keypos + ", " + keypeg + ", m=" + m );
-		boolean verifyMode = this.startVerifyMode();
-		if(m != null) {
-			this.memoHit += 1;
-			this.endVerifyMode(verifyMode);
-			if(m.createdPeg == keypeg) {
-				this.setPosition(m.pos);  // comsume
-				if(verifyMode) {
-					return inNode;
-				}
-				//this.removePreCheckCache(keypos, m.pos);
-				return null;
-			}
-			return this.refoundFailure(m.createdPeg, m.pos);
-		}
-		PegObject vnode = inNode;
-		for(int i = 0; i < keypeg.size(); i++) {
-			Peg e = keypeg.get(i);
-			vnode = e.performMatch(vnode, this);
-			if(vnode.isFailure()) {
+		if(this.memoMap2 != null) { 
+			long keypos = this.getPosition();
+			Memo2 m = this.getPreCheckCache(keypeg, keypos);
+			//System.out.println("cache? " + keypos + ", " + keypeg + ", m=" + m );
+			boolean verifyMode = this.startVerifyMode();
+			if(m != null) {
+				this.memoHit += 1;
 				this.endVerifyMode(verifyMode);
-				this.rollback(keypos);
-				this.cachePreCheck(keypeg, keypos, vnode.createdPeg, vnode.startIndex);
+				if(m.createdPeg == keypeg) {
+					this.setPosition(m.pos);  // comsume
+					if(verifyMode) {
+						return inNode;
+					}
+					//this.removePreCheckCache(keypos, m.pos);
+					return null;
+				}
+				return this.refoundFailure(m.createdPeg, m.pos);
+			}
+			PegObject vnode = inNode;
+			for(int i = 0; i < keypeg.size(); i++) {
+				Peg e = keypeg.get(i);
+				vnode = e.performMatch(vnode, this);
+				if(vnode.isFailure()) {
+					this.endVerifyMode(verifyMode);
+					this.rollback(keypos);
+					this.cachePreCheck(keypeg, keypos, vnode.createdPeg, vnode.startIndex);
+					return vnode;
+				}
+			}
+			this.endVerifyMode(verifyMode);
+			if(verifyMode) {
+				this.cachePreCheck(keypeg, keypos, keypeg, this.getPosition());
 				return vnode;
 			}
+			//this.removePreCheckCache(keypos, this.getPosition());
+			//this.rollback(keypos);
 		}
-		this.endVerifyMode(verifyMode);
-		if(verifyMode) {
-			this.cachePreCheck(keypeg, keypos, keypeg, this.getPosition());
-			return vnode;
-		}
-		//this.removePreCheckCache(keypos, this.getPosition());
-		//this.rollback(keypos);
 		return null;
 	}
 	
@@ -315,9 +302,16 @@ public class SimpleParserContext extends ParserContext {
 	}
 	
 	public void showStatInfo(PegObject parsedObject) {
+		System.gc(); // meaningless ?
 		System.out.println("hit: " + this.memoHit + ", miss: " + this.memoMiss + ", consumed memo:" + this.memoSize);
-		System.out.println("created_object=" + this.objectCount + ", used_object=" + parsedObject.count());
+		System.out.println("created_object: " + this.objectCount + ", used_object: " + parsedObject.count());
 		System.out.println("backtrackCount: " + this.backtrackCount + ", backtrackLength: " + this.backtrackSize);
+		long length = this.source.length();
+		System.out.println("length: " + this.source.length() + ", length/backtrackLength: " + (double)length / this.backtrackSize);
+		long total = Runtime.getRuntime().totalMemory() / 1024;
+		long free =  Runtime.getRuntime().freeMemory() / 1024;
+		long used =  total - free;
+		System.out.println("heap: " + used + "KiB, " + (used/1024) + "MiB,  heap/length: " + (double) used / length * 1024);
 		System.out.println();
 	}
 

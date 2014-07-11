@@ -10,6 +10,7 @@ public abstract class ParserSource {
 	public abstract long length();
 	public abstract char charAt(long n);
 	public abstract String substring(long startIndex, long endIndex);
+	public abstract ParserSource trim(long startIndex, long endIndex);
 
 	private class LineMemo {
 		long pos;
@@ -167,4 +168,5 @@ public abstract class ParserSource {
 		}
 		return fileName;
 	}
+
 }

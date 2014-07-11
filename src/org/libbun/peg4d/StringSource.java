@@ -18,7 +18,12 @@ public class StringSource extends ParserSource {
 		return '\0';
 	}
 	public final String substring(long startIndex, long endIndex) {
+		//System.out.println("sourceText: " + this.sourceText + ", " + startIndex + ", " + endIndex);
 		return this.sourceText.substring((int)startIndex, (int)endIndex);
+	}
+	@Override
+	public final ParserSource trim(long startIndex, long endIndex) {
+		return this;
 	}
 }
 

@@ -970,7 +970,12 @@ class PegPipe extends PegAtom {
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
 		if(!context.isVerifyMode()) {
 			inNode.tag = "#lazy";
-			//inNode.optionalToken = this.symbol;
+			inNode.optionalToken = this.symbol;
+			if(context.source instanceof FileSource) {
+				inNode.source = context.source.trim(inNode.startIndex, inNode.startIndex + inNode.length);
+				inNode.startIndex = 0;
+				inNode.length = (int)inNode.source.length();
+			}
 			ParserContext sub = Main.newParserContext(inNode.source, inNode.startIndex, inNode.startIndex + inNode.length, context.ruleSet);
 			return sub.parseNode(this.symbol);
 		}
@@ -1107,6 +1112,8 @@ class PegNewObject extends PegList {
 			}
 			int top = context.getStackPosition(this);
 			context.addSubObject(newnode, stack, top);
+			endIndex = context.getPosition();
+			newnode.setSource(this, context.source, startIndex, endIndex);
 			newnode.checkNullEntry();
 			//System.out.println("** created[" + pos + "] " + newnode);
 			context.removeMemo(startIndex+1, endIndex);
