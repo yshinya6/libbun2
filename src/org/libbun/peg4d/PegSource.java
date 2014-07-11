@@ -1,8 +1,10 @@
-package org.libbun;
+package org.libbun.peg4d;
+
+import org.libbun.Main;
 
 public class PegSource {
 	public String fileName;
-	int    lineNumber;
+	public int    lineNumber;
 	public String  sourceText;
 
 	public PegSource(String fileName, int lineNumber, String sourceText) {

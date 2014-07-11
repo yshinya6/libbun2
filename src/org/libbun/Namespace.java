@@ -1,5 +1,8 @@
 package org.libbun;
 
+import org.libbun.peg4d.ParserContext;
+import org.libbun.peg4d.PegRuleSet;
+
 public class Namespace extends SymbolTable {
 	public UMap<PegRuleSet> ruleMap;
 	public UList<String>   exportSymbolList;

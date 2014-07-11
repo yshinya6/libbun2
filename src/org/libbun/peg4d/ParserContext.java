@@ -1,4 +1,7 @@
-package org.libbun;
+package org.libbun.peg4d;
+
+import org.libbun.Functor;
+import org.libbun.UCharset;
 
 public abstract class ParserContext extends SourceContext {
 	public PegRuleSet ruleSet = null;
@@ -23,7 +26,7 @@ public abstract class ParserContext extends SourceContext {
 	public void removeMemo(int startIndex, int endIndex) {
 	}
 
-	protected abstract PegObject parsePegObject(PegObject inNode, String key);
+	public abstract PegObject parsePegObject(PegObject inNode, String key);
 	
 	public final PegObject newPegObject(String name) {
 		PegObject node = new PegObject(name, this.source, null, this.sourcePosition);

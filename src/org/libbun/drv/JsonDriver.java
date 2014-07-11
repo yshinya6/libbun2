@@ -1,20 +1,23 @@
 package org.libbun.drv;
 
 import org.libbun.BunType;
+import org.libbun.Functor;
+import org.libbun.Main;
 import org.libbun.Namespace;
+import org.libbun.UMap;
 import org.libbun.peg4d.PegObject;
 
-public class KonohaDriver extends SourceDriver {
+public class JsonDriver extends SourceDriver {
 
 	@Override
 	public String getDesc() {
-		return "Konoha source generator 1.0 by Kimio Kuramitsu (YNU)";
+		return "JSON generator 1.0 by Kimio Kuramitsu (YNU)";
 	}
 
 	@Override
 	public void initTable(Namespace gamma) {
-		gamma.loadBunModel("lib/driver/python/common.bun", this);
-		gamma.loadBunModel("lib/driver/python/pytypes.bun", this);
+		gamma.loadBunModel("lib/driver/json/common.bun", this);
+		
 	}
 
 	@Override
@@ -29,7 +32,7 @@ public class KonohaDriver extends SourceDriver {
 
 	public void generateMain() {  // Override
 		if(this.hasMainFunction()) {
-			this.pushCode("\nif __name__ == '__main__':\n\tmain()\n");
+			this.pushCode("\nif __name__ == '__main__':\n   main()\n");
 		}
 	}
 

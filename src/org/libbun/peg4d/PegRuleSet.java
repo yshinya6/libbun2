@@ -1,4 +1,9 @@
-package org.libbun;
+package org.libbun.peg4d;
+
+import org.libbun.Main;
+import org.libbun.UCharset;
+import org.libbun.UList;
+import org.libbun.UMap;
 
 public final class PegRuleSet {
 	UMap<Peg>           pegMap;
@@ -348,7 +353,7 @@ public final class PegRuleSet {
 		return new PegSetter(e, -1);
 	}
 
-	PegRuleSet loadPegRule() {
+	public PegRuleSet loadPegRule() {
 		Peg Any = new PegAny();
 		Peg NewLine = c("\\r\\n");
 //		Comment

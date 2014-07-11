@@ -1,4 +1,5 @@
-package org.libbun;
+package org.libbun.peg4d;
+
 
 public interface PegVisitor {
 	public void visitPegString(PegString peg);

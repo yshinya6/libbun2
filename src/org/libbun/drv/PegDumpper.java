@@ -3,8 +3,8 @@ package org.libbun.drv;
 import org.libbun.BunType;
 import org.libbun.Main;
 import org.libbun.Namespace;
-import org.libbun.PegObject;
 import org.libbun.SourceBuilder;
+import org.libbun.peg4d.PegObject;
 
 public class PegDumpper extends SourceDriver {
 

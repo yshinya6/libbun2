@@ -13,6 +13,12 @@ import java.text.DecimalFormat;
 import org.libbun.drv.JvmDriver;
 import org.libbun.drv.JvmIndyDriver;
 import org.libbun.drv.PegDumpper;
+import org.libbun.peg4d.ParserContext;
+import org.libbun.peg4d.PegObject;
+import org.libbun.peg4d.PegParserContext;
+import org.libbun.peg4d.PegRuleSet;
+import org.libbun.peg4d.PegSource;
+import org.libbun.peg4d.SimpleParserContext;
 
 public class Main {
 	public final static String  ProgName  = "libbun";
@@ -140,11 +146,12 @@ public class Main {
 		driverMap.put("python", org.libbun.drv.PythonDriver.class);
 		driverMap.put("ll", org.libbun.drv.LLVMDriver.class);
 		driverMap.put("llvm", org.libbun.drv.LLVMDriver.class);
-		driverMap.put("jvm", JvmDriver.class);
-		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
-		driverMap.put("jvm-indy", JvmIndyDriver.class);
-		driverMap.put("jvm-indy-debug", JvmIndyDriver.DebuggableJvmIndyDriver.class);
+		driverMap.put("jvm", org.libbun.drv.JvmDriver.class);
+		driverMap.put("jvm-debug", org.libbun.drv.JvmDriver.DebuggableJvmDriver.class);
+		driverMap.put("jvm-indy", org.libbun.drv.JvmIndyDriver.class);
+		driverMap.put("jvm-indy-debug", org.libbun.drv.JvmIndyDriver.DebuggableJvmIndyDriver.class);
 		driverMap.put("peg", org.libbun.drv.PegDumpper.class);
+		driverMap.put("json", org.libbun.drv.JsonDriver.class);
 	}
 
 	private static BunDriver loadDriverImpl(String driverName) {

@@ -1,5 +1,7 @@
 package org.libbun;
 
+import org.libbun.peg4d.PegObject;
+
 public class BunTypeChecker {
 	// SymbolTable
 	private class NameFunctor extends Functor {

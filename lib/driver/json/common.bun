@@ -1,0 +1,66 @@
+
+//typedef void;
+typedef NullType;
+typedef boolean;
+typedef int;
+typedef float;
+typedef String;
+
+// type
+
+template #null() {
+	null
+}
+
+template #true() {
+	true
+}
+
+template #false() {
+	false
+}
+
+template #int() {
+	${textof this}
+}
+
+template #int32() {
+	${textof this}
+}
+
+template #int64() {
+	${textof this}
+}
+
+template #float() {
+	${textof this}
+}
+
+template #double() {
+	${textof this}
+}
+
+template #string() {
+	"${quote this}"
+}
+
+template #text() {
+	"${textof this}"
+}
+
+template #array(*) {
+	[${list this ", "}]
+}
+
+template #strings(*) {
+	"${textlist this ""}"
+}
+
+template #keyvalue(key, value) {
+	"${textof key}": ${value}
+}
+
+template #object(*) {
+	{${list this ", "}}
+}
+

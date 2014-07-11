@@ -1,8 +1,11 @@
-package org.libbun;
+package org.libbun.peg4d;
 
 import java.util.HashMap;
 
-public class PegParserContext extends ParserContext {
+import org.libbun.UList;
+import org.libbun.UMap;
+
+public class SimpleParserContext extends ParserContext {
 	private UMap<Peg>        pegCache;
 	
 	class SimpleMemo {
@@ -10,10 +13,10 @@ public class PegParserContext extends ParserContext {
 		int nextPosition;
 	}
 
-	final UList<PegLog> logStack = new UList<PegLog>(new PegLog[128]);
+	final UList<SimpleLog> logStack = new UList<SimpleLog>(new SimpleLog[128]);
 	private int stackTop = 0;
 
-	class PegLog {
+	class SimpleLog {
 		int sourcePosition;
 		Peg trace;
 		char type;
@@ -22,35 +25,36 @@ public class PegParserContext extends ParserContext {
 		PegObject childNode;
 	}
 	
-	public PegParserContext(PegSource source) {
+	public SimpleParserContext(PegSource source) {
 		this(source, 0, source.sourceText.length());
 	}
 
-	public PegParserContext(PegSource source, int startIndex, int endIndex) {
+	public SimpleParserContext(PegSource source, int startIndex, int endIndex) {
 		super(source, startIndex, endIndex);
 	}
 	
 	@Override
 	public void setRuleSet(PegRuleSet ruleSet) {
+		this.ruleSet = ruleSet;
 		this.loadPegDefinition(ruleSet.pegMap);
 	}
 
 	public final void loadPegDefinition(UMap<Peg> pegMap) {
-		this.pegCache = pegMap;	
-		/*UniArray<String> list = pegMap.keys();
+		this.pegCache = new UMap<Peg>();	
+		UList<String> list = pegMap.keys();
 		for(int i = 0; i < list.size(); i++) {
 			String key = list.ArrayValues[i];
 			Peg e = pegMap.get(key, null);
 			this.checkLeftRecursion(key, e);
 		}
-		list = this.pegCache.keys();
-		for(int i = 0; i < list.size(); i++) {
-			String key = list.ArrayValues[i];
-			Peg e = this.pegCache.get(key, null);
+//		list = this.pegCache.keys();
+//		for(int i = 0; i < list.size(); i++) {
+//			String key = list.ArrayValues[i];
+//			Peg e = this.pegCache.get(key, null);
 //			if(Main.PegDebuggerMode) {
 //				System.out.println(e.toPrintableString(key, "\n  = ", "\n  / ", "\n  ;", true));
 //			}
-		}*/
+//		}
 	}
 	
 	private void checkLeftRecursion(String name, Peg e) {
@@ -113,53 +117,18 @@ public class PegParserContext extends ParserContext {
 	}
 
 	public final PegObject parsePegObject(PegObject parentNode, String ruleName) {
-		int pos = this.getPosition();
-		String key = ruleName + ":" + pos;
-		Memo m = this.memoMap.get(key, null);
-		//boolean verifyMode = startVerifyMode();
-		if(m == null && parentNode.memoizationMode) {
-			m = new Memo();
-			this.memoMap.put(key, m);
-			Peg e = this.getRule(ruleName);
-			PegObject left = e.performMatch(parentNode, this);
-			this.memoMiss = this.memoMiss + 1;
-			m.result = left;
-			m.nextPosition = this.getPosition();
-			if(left.isFailure()) {
-				return left;
-			}
-			e = this.getRightJoinRule(ruleName);
-			if(e != null) {
-				return e.performMatch(left, this);
-			}
+		Peg e = this.getRule(ruleName);
+		PegObject left = e.performMatch(parentNode, this);
+		if(left.isFailure()) {
 			return left;
 		}
-		else if(m == null) {
-			Peg e = this.getRule(ruleName);
-			PegObject left = e.performMatch(parentNode, this);
-			if(left.isFailure()) {
-				return left;
-			}
-			e = this.getRightJoinRule(ruleName);
-			if(e != null) {
-				return e.performMatch(left, this);
-			}
-			return left;
+		e = this.getRightJoinRule(ruleName);
+		if(e != null) {
+			return e.performMatch(left, this);
 		}
-		else {
-			this.memoHit = this.memoHit + 1;
-			this.sourcePosition = m.nextPosition;
-			if(m.result == null) {
-				return parentNode;
-			}
-			return m.result;
-		}
+		return left;
 	}
 	
-	class Memo {
-		PegObject result;
-		int nextPosition;
-	}
 	
 	class Memo2 {
 		Peg keypeg;
@@ -168,24 +137,17 @@ public class PegParserContext extends ParserContext {
 		Memo2 next;
 	}
 	
-	private UMap<Memo> memoMap = new UMap<Memo>();
 	private HashMap<Integer, Memo2> memoMap2 = new HashMap<Integer, Memo2>();
 
 	public void initMemo() {
 		this.memoMap2 = new HashMap<Integer, Memo2>();
 	}
 	
-	public void clearMemo() {
-		this.memoDel += this.memoMap.size();
-		this.memoDelCount++;
-		this.memoMap.clear();
-	}
+	public void clearMemo() {}
 	
 	int memoHit = 0;
 	int memoMiss = 0;
 	int memoSize = 0;
-	int memoDel = 0;
-	int memoDelCount = 0;
 
 	private Memo2 getPreCheckCache(Peg keypeg, int keypos) {
 		Memo2 m = this.memoMap2.get(keypos);
@@ -251,8 +213,8 @@ public class PegParserContext extends ParserContext {
 			this.memoHit += 1;
 			this.endVerifyMode(verifyMode);
 			if(m.createdPeg == keypeg) {
+				this.setPosition(m.pos);  // comsume
 				if(verifyMode) {
-					this.setPosition(m.pos);  // comsume
 					return inNode;
 				}
 				//this.removePreCheckCache(keypos, m.pos);
@@ -277,7 +239,7 @@ public class PegParserContext extends ParserContext {
 			return vnode;
 		}
 		//this.removePreCheckCache(keypos, this.getPosition());
-		this.rollback(keypos);
+		//this.rollback(keypos);
 		return null;
 	}
 	
@@ -300,15 +262,15 @@ public class PegParserContext extends ParserContext {
 	}
 
 	private void pushImpl(Peg trace, String msg, char type, PegObject parentNode, int index, PegObject childNode) {
-		PegLog log = null;
+		SimpleLog log = null;
 		if(this.stackTop < this.logStack.size()) {
 			if(this.logStack.ArrayValues[this.stackTop] == null) {
-				this.logStack.ArrayValues[this.stackTop] = new PegLog();
+				this.logStack.ArrayValues[this.stackTop] = new SimpleLog();
 			}
 			log = this.logStack.ArrayValues[this.stackTop];
 		}
 		else {
-			log = new PegLog();
+			log = new SimpleLog();
 			this.logStack.add(log);
 		}
 		log.trace = trace;
@@ -327,7 +289,7 @@ public class PegParserContext extends ParserContext {
 	@Override
 	public void addSubObject(PegObject newnode, int stack, int top) {
 		for(int i = stack; i < top; i++) {
-			PegLog log = this.logStack.ArrayValues[i];
+			SimpleLog log = this.logStack.ArrayValues[i];
 			if(log.type == 'p' && log.parentNode == newnode) {
 				if(log.index == -1) {
 					newnode.append(log.childNode);
@@ -342,7 +304,7 @@ public class PegParserContext extends ParserContext {
 
 	public void popBack(int stackPostion, boolean backtrack) {
 		this.stackTop = stackPostion-1;
-		PegLog log = this.logStack.ArrayValues[stackPostion-1];
+		SimpleLog log = this.logStack.ArrayValues[stackPostion-1];
 		if(backtrack) {
 			this.rollback(log.sourcePosition);
 		}
@@ -353,7 +315,7 @@ public class PegParserContext extends ParserContext {
 	}
 	
 	public void showStatInfo(PegObject parsedObject) {
-		System.out.println("hit: " + this.memoHit + ", miss: " + this.memoMiss + ", consumed memo:" + this.memoSize + ", delete memo: " + this.memoDel + ", delete memo count: " + this.memoDelCount);
+		System.out.println("hit: " + this.memoHit + ", miss: " + this.memoMiss + ", consumed memo:" + this.memoSize);
 		System.out.println("created_object=" + this.objectCount + ", used_object=" + parsedObject.count());
 		System.out.println("backtrackCount: " + this.backtrackCount + ", backtrackLength: " + this.backtrackSize);
 		System.out.println();

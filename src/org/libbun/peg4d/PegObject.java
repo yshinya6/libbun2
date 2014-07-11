@@ -1,24 +1,30 @@
-package org.libbun;
+package org.libbun.peg4d;
+
+import org.libbun.BunType;
+import org.libbun.Functor;
+import org.libbun.Main;
+import org.libbun.SourceBuilder;
+import org.libbun.SymbolTable;
 
 public class PegObject {
-	Peg          createdPeg = null;
+	Peg                 createdPeg = null;
 	public PegSource    source = null;
-	int          startIndex = 0;
-	int          endIndex = 0;
+	public int                 startIndex = 0;
+	public int                 endIndex = 0;
 	public String       tag = null;
 	public String       optionalToken = null;
-	PegObject    parent = null;
-	PegObject    AST[] = null;
-	SymbolTable  gamma = null;
-	Functor      matched = null;
-	BunType      typed   = null;
+	public PegObject    parent = null;
+	public PegObject    AST[] = null;
+	public SymbolTable  gamma = null;
+	public Functor      matched = null;
+	public BunType      typed   = null;
 	boolean      memoizationMode = false;
 
-	PegObject(String tag) {
+	public PegObject(String tag) {
 		this.tag = tag;
 	}
 
-	PegObject(String tag, PegSource source, Peg createdPeg, int startIndex) {
+	public PegObject(String tag, PegSource source, Peg createdPeg, int startIndex) {
 		this.tag        = tag;
 		this.source     = source;
 		this.createdPeg = createdPeg;
