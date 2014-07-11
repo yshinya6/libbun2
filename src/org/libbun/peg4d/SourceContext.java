@@ -3,34 +3,33 @@ package org.libbun.peg4d;
 import org.libbun.Main;
 import org.libbun.UCharset;
 
-
 public class SourceContext {
-	public final         ParserSource source;
-	protected int        sourcePosition = 0;
-	public int           endPosition;
+	public final          ParserSource source;
+	protected long        sourcePosition = 0;
+	public    long        endPosition;
 
-	int backtrackCount = 0;
-	int backtrackSize = 0;
+	long backtrackCount = 0;
+	long backtrackSize = 0;
 
-	public SourceContext(ParserSource source, int startIndex, int endIndex) {
+	public SourceContext(ParserSource source, long startIndex, long endIndex) {
 		this.source = source;
 		this.sourcePosition = startIndex;
 		this.endPosition = endIndex;
 	}
 
-	public SourceContext subContext(int startIndex, int endIndex) {
+	public SourceContext subContext(long startIndex, long endIndex) {
 		return new SourceContext(this.source, startIndex, endIndex);
 	}
 
-	public final int getPosition() {
+	public final long getPosition() {
 		return this.sourcePosition;
 	}
 	
-	public void setPosition(int pos) {
+	public void setPosition(long pos) {
 		this.sourcePosition = pos;
 	}
 
-	public final void rollback(int pos) {
+	public final void rollback(long pos) {
 		if(this.sourcePosition > pos) {
 			this.backtrackCount = this.backtrackCount + 1;
 			this.backtrackSize = this.backtrackSize + (this.sourcePosition - pos);
@@ -38,7 +37,7 @@ public class SourceContext {
 		this.sourcePosition = pos;
 	}
 	
-	public String substring(int startIndex, int endIndex) {
+	public String substring(long startIndex, long endIndex) {
 		return this.source.substring(startIndex, endIndex);
 	}
 
@@ -54,7 +53,7 @@ public class SourceContext {
 		return this.sourcePosition < this.endPosition;
 	}
 
-	public final char charAt(int n) {
+	public final char charAt(long n) {
 		return this.source.charAt(n);
 	}
 
@@ -65,17 +64,16 @@ public class SourceContext {
 		return '\0';
 	}
 
-	public final char getChar(int n) {
-		int pos = this.sourcePosition + n;
+	public final char getChar(long n) {
+		long pos = this.sourcePosition + n;
 		if(pos >= 0 && pos < this.endPosition) {
 			return this.charAt(pos);
 		}
 		return '\0';
 	}
 
-	public final int consume(int plus) {
+	public final void consume(long plus) {
 		this.sourcePosition = this.sourcePosition + plus;
-		return this.sourcePosition;
 	}
 
 	public final boolean match(char ch) {
@@ -107,7 +105,7 @@ public class SourceContext {
 		return false;
 	}
 	
-	public final int matchZeroMore(UCharset charset) {
+	public final long matchZeroMore(UCharset charset) {
 		for(;this.hasChar(); this.consume(1)) {
 			char ch = this.charAt(this.sourcePosition);
 			if(!charset.match(ch)) {
@@ -117,70 +115,45 @@ public class SourceContext {
 		return this.sourcePosition;
 	}
 
-	public final void skipComment(UCharset skipChars) {
-		while(this.hasChar()) {
-			this.matchZeroMore(skipChars);
-			int pos = this.getPosition();
-			if(this.match('/') && this.match('/')) {
-				while(this.hasChar()) {
-					char ch = this.getChar();
-					this.consume(1);
-					if(ch == '\n') {
-						break;
-					}
-				}
-			}
-			else {
-				this.rollback(pos);
-				return;
-			}
-		}
-	}
-	
-	//	public boolean checkSymbolLetter(int plus) {
-	//		char ch = this.getChar(plus);
-	//		if(this.isSymbolLetter(ch)) {
-	//			return true;
-	//		}
-	//		return false;
-	//	}
-//
-//	public void skipIndent(int indentSize) {
-//		int pos = this.sourcePosition;
-//		//		this.showPosition("skip characters until indent="+indentSize + ", pos=" + pos, pos);
-//		for(;pos < this.endPosition; pos = pos + 1) {
-//			char ch = this.charAt(pos);
-//			if(ch == '\n' && pos > this.sourcePosition) {
-//				int posIndent = this.source.getIndentSize(pos+1);
-//				if(posIndent <= indentSize) {
-//					this.sourcePosition = pos + 1;
-//					//					System.out.println("skip characters until indent="+indentSize + ", pos=" + this.sourcePosition);
-//					return ;
+//	public final void skipComment(UCharset skipChars) {
+//		while(this.hasChar()) {
+//			this.matchZeroMore(skipChars);
+//			int pos = this.getPosition();
+//			if(this.match('/') && this.match('/')) {
+//				while(this.hasChar()) {
+//					char ch = this.getChar();
+//					this.consume(1);
+//					if(ch == '\n') {
+//						break;
+//					}
 //				}
 //			}
+//			else {
+//				this.rollback(pos);
+//				return;
+//			}
 //		}
-//		//		System.out.println("skip characters until indent="+indentSize + ", pos = endPosition");
-//		this.sourcePosition = this.endPosition;
 //	}
+	
 
-	public final boolean matchIndentSize(String text) {
-		int indentSize = 0;
-		if(this.endPosition - this.sourcePosition >= text.length()) {
-			for(int i = this.sourcePosition; i < this.endPosition; i++) {
-				char ch = this.charAt(i);
-				if(ch != ' ' && ch != '\t') {
-					break;
-				}
-				indentSize++;
-			}
-			if(indentSize != text.length()) {
-				return false;
-			}
-			this.consume(indentSize);
-			return true;
-		}
-		return false;
-	}
+//	public final boolean matchIndentSize(String text) {
+//		int indentSize = 0;
+//		if(this.endPosition - this.sourcePosition >= text.length()) {
+//			for(int i = this.sourcePosition; i < this.endPosition; i++) {
+//				char ch = this.charAt(i);
+//				if(ch != ' ' && ch != '\t') {
+//					break;
+//				}
+//				indentSize++;
+//			}
+//			if(indentSize != text.length()) {
+//				return false;
+//			}
+//			this.consume(indentSize);
+//			return true;
+//		}
+//		return false;
+//	}
 
 	public final String formatErrorMessage(String msg1, String msg2) {
 		return this.source.formatErrorMessage(msg1, this.sourcePosition, msg2);
@@ -190,7 +163,7 @@ public class SourceContext {
 		showPosition(msg, this.getPosition());
 	}
 
-	public final void showPosition(String msg, int pos) {
+	public final void showPosition(String msg, long pos) {
 		System.out.println(this.source.formatErrorMessage("debug", pos, msg));
 	}
 

@@ -7,29 +7,29 @@ import org.libbun.SourceBuilder;
 import org.libbun.SymbolTable;
 
 public class PegObject {
-	Peg                 createdPeg = null;
+	Peg                    createdPeg = null;
 	public ParserSource    source = null;
-	public int                 startIndex = 0;
-	public int                 endIndex = 0;
-	public String       tag = null;
-	public String       optionalToken = null;
-	public PegObject    parent = null;
-	public PegObject    AST[] = null;
-	public SymbolTable  gamma = null;
-	public Functor      matched = null;
-	public BunType      typed   = null;
-	boolean      memoizationMode = false;
+	public long            startIndex = 0;
+	public int             length = 0;
+	public String          tag = null;
+	public String          optionalToken = null;
+	public PegObject       parent = null;
+	public PegObject       AST[] = null;
+	public SymbolTable     gamma = null;
+	public Functor         matched = null;
+	public BunType         typed   = null;
+	boolean                memoizationMode = false;
 
 	public PegObject(String tag) {
 		this.tag = tag;
 	}
 
-	public PegObject(String tag, ParserSource source, Peg createdPeg, int startIndex) {
+	public PegObject(String tag, ParserSource source, Peg createdPeg, long startIndex) {
 		this.tag        = tag;
 		this.source     = source;
 		this.createdPeg = createdPeg;
 		this.startIndex = startIndex;
-		this.endIndex   = startIndex;
+		this.length     = 0;
 	}
 
 	public final boolean isFailure() {
@@ -40,11 +40,11 @@ public class PegObject {
 		return this.tag.equals(functor);
 	}
 
-	public final void setSource(Peg createdPeg, ParserSource source, int startIndex, int endIndex) {
+	public final void setSource(Peg createdPeg, ParserSource source, long startIndex, long endIndex) {
 		this.createdPeg = createdPeg;
 		this.source     = source;
 		this.startIndex = startIndex;
-		this.endIndex   = endIndex;
+		this.length     = (int)(endIndex - startIndex);
 	}
 
 	public final String formatSourceMessage(String type, String msg) {
@@ -52,7 +52,7 @@ public class PegObject {
 	}
 	
 	public final boolean isEmptyToken() {
-		return this.startIndex == this.endIndex;
+		return this.length == 0;
 	}
 	
 	public final String getText() {
@@ -60,7 +60,7 @@ public class PegObject {
 			return this.optionalToken;
 		}
 		if(this.source != null) {
-			return this.source.substring(this.startIndex, this.endIndex);
+			return this.source.substring(this.startIndex, this.startIndex + this.length);
 		}
 		return "";
 	}

@@ -13,6 +13,7 @@ import java.text.DecimalFormat;
 import org.libbun.drv.JvmDriver;
 import org.libbun.drv.JvmIndyDriver;
 import org.libbun.drv.PegDumpper;
+import org.libbun.peg4d.FileSource;
 import org.libbun.peg4d.ParserContext;
 import org.libbun.peg4d.PegObject;
 import org.libbun.peg4d.PegParserContext;
@@ -188,7 +189,7 @@ public class Main {
 		return new SimpleParserContext(source);
 	}
 
-	public final static ParserContext newParserContext(ParserSource source, int startIndex, int endIndex, PegRuleSet ruleSet) {
+	public final static ParserContext newParserContext(ParserSource source, long startIndex, long endIndex, PegRuleSet ruleSet) {
 		if(FastMatchMode) {
 			ParserContext p = new PegParserContext(source, startIndex, endIndex);
 			p.setRuleSet(ruleSet);
@@ -272,7 +273,7 @@ public class Main {
 			driver.endTransaction();
 		}
 		catch (Exception e) {
-			PrintStackTrace(e, source.lineNumber);
+			PrintStackTrace(e, source.getLineNumber(0));
 		}
 	}
 
@@ -383,14 +384,14 @@ public class Main {
 		return line;
 	}
 
-	private static void PrintStackTrace(Exception e, int linenum) {
+	private static void PrintStackTrace(Exception e, long linenum) {
 		StackTraceElement[] elements = e.getStackTrace();
 		int size = elements.length + 1;
 		StackTraceElement[] newElements = new StackTraceElement[size];
 		int i = 0;
 		for(; i < size; i++) {
 			if(i == size - 1) {
-				newElements[i] = new StackTraceElement("<TopLevel>", "TopLevelEval", "stdin", linenum);
+				newElements[i] = new StackTraceElement("<TopLevel>", "TopLevelEval", "stdin", (int)linenum);
 				break;
 			}
 			newElements[i] = elements[i];
@@ -420,7 +421,8 @@ public class Main {
 		InputStream Stream = Main.class.getResourceAsStream("/" + fileName);
 		if (Stream == null) {
 			try {
-				Stream = new FileInputStream(fileName);
+				return new FileSource(fileName);
+				//Stream = new FileInputStream(fileName);
 			} catch (FileNotFoundException e) {
 				Main._Exit(1, "file not found: " + fileName);
 				return null;

@@ -7,7 +7,7 @@ public abstract class ParserContext extends SourceContext {
 	public PegRuleSet ruleSet = null;
 	public int objectCount = 0;
 
-	public ParserContext(ParserSource source, int startIndex, int endIndex) {
+	public ParserContext(ParserSource source, long startIndex, long endIndex) {
 		super(source, startIndex, endIndex);
 	}
 	
@@ -23,7 +23,7 @@ public abstract class ParserContext extends SourceContext {
 
 	public abstract void initMemo();
 	public abstract void clearMemo();
-	public void removeMemo(int startIndex, int endIndex) {
+	public void removeMemo(long startIndex, long endIndex) {
 	}
 
 	public abstract PegObject parsePegObject(PegObject inNode, String key);
@@ -38,7 +38,6 @@ public abstract class ParserContext extends SourceContext {
 		PegObject node = newPegObject("#error");
 		node.createdPeg = this.storeFailurePeg();
 		node.startIndex = this.storeFailurePosition();
-		node.endIndex = this.storeFailurePosition();
 		node.matched = Functor.ErrorFunctor;
 		return node;
 	}
@@ -46,17 +45,15 @@ public abstract class ParserContext extends SourceContext {
 	protected final PegObject foundFailureNode = new PegObject(null, this.source, null, 0);
 	
 	public final PegObject foundFailure(Peg created) {
-		if(this.sourcePosition >= this.foundFailureNode.endIndex) {  // adding error location
+		if(this.sourcePosition >= this.foundFailureNode.startIndex) {  // adding error location
 			this.foundFailureNode.startIndex = this.sourcePosition;
-			this.foundFailureNode.endIndex = this.sourcePosition;
 			this.foundFailureNode.createdPeg = created;
 		}
 		return this.foundFailureNode;
 	}
 
-	public final PegObject refoundFailure(Peg created, int pos) {
+	public final PegObject refoundFailure(Peg created, long pos) {
 		this.foundFailureNode.startIndex = pos;
-		this.foundFailureNode.endIndex   = pos;
 		this.foundFailureNode.createdPeg = created;
 		return this.foundFailureNode;
 	}
@@ -64,13 +61,12 @@ public abstract class ParserContext extends SourceContext {
 	public final Peg storeFailurePeg() {
 		return this.foundFailureNode.createdPeg;
 	}
-	public final int storeFailurePosition() {
-		return this.foundFailureNode.endIndex;
+	public final long storeFailurePosition() {
+		return this.foundFailureNode.startIndex;
 	}
-	public final void restoreFailure(Peg created, int pos) {
+	public final void restoreFailure(Peg created, long pos) {
 		this.foundFailureNode.createdPeg = created;
 		this.foundFailureNode.startIndex   = pos;
-		this.foundFailureNode.endIndex   = pos;
 	}
 
 	public abstract int getStackPosition(Peg peg);

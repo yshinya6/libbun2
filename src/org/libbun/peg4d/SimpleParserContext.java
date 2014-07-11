@@ -17,7 +17,7 @@ public class SimpleParserContext extends ParserContext {
 	private int stackTop = 0;
 
 	class SimpleLog {
-		int sourcePosition;
+		long sourcePosition;
 		Peg trace;
 		char type;
 		PegObject parentNode;
@@ -29,7 +29,7 @@ public class SimpleParserContext extends ParserContext {
 		this(source, 0, source.length());
 	}
 
-	public SimpleParserContext(ParserSource source, int startIndex, int endIndex) {
+	public SimpleParserContext(ParserSource source, long startIndex, long endIndex) {
 		super(source, startIndex, endIndex);
 	}
 	
@@ -104,7 +104,7 @@ public class SimpleParserContext extends ParserContext {
 	}
 		
 	@Override
-	public SourceContext subContext(int startIndex, int endIndex) {
+	public SourceContext subContext(long startIndex, long endIndex) {
 		return new SimpleParserContext(this.source, startIndex, endIndex);
 	}
 		
@@ -130,17 +130,17 @@ public class SimpleParserContext extends ParserContext {
 	}
 	
 	
-	class Memo2 {
+	private class Memo2 {
 		Peg keypeg;
-		int pos;
+		long pos;
 		Peg createdPeg;
 		Memo2 next;
 	}
 	
-	private HashMap<Integer, Memo2> memoMap2 = new HashMap<Integer, Memo2>();
+	private HashMap<Long, Memo2> memoMap2 = new HashMap<Long, Memo2>();
 
 	public void initMemo() {
-		this.memoMap2 = new HashMap<Integer, Memo2>();
+		this.memoMap2 = new HashMap<Long, Memo2>();
 	}
 	
 	public void clearMemo() {}
@@ -149,7 +149,7 @@ public class SimpleParserContext extends ParserContext {
 	int memoMiss = 0;
 	int memoSize = 0;
 
-	private Memo2 getPreCheckCache(Peg keypeg, int keypos) {
+	private Memo2 getPreCheckCache(Peg keypeg, long keypos) {
 		Memo2 m = this.memoMap2.get(keypos);
 		while(m != null) {
 			if(m.keypeg == keypeg) {
@@ -160,10 +160,10 @@ public class SimpleParserContext extends ParserContext {
 		return m;
 	}
 
-	public void removeMemo(int startIndex, int endIndex) {
+	public void removeMemo(long startIndex, long endIndex) {
 		//System.out.println("remove = " + startIndex + ", " + endIndex);
-		for(int i = startIndex; i < endIndex; i++) {
-			Integer key = i;
+		for(long i = startIndex; i < endIndex; i++) {
+			Long key = i;
 			Memo2 m = this.memoMap2.get(key);
 			if(m != null) {
 				appendMemo2(m, this.UnusedMemo);
@@ -183,7 +183,7 @@ public class SimpleParserContext extends ParserContext {
 	
 	private Memo2 UnusedMemo = null;
 	
-	private void cachePreCheck(Peg keypeg, int keypos, Peg peg, int pos) {
+	private void cachePreCheck(Peg keypeg, long keypos, Peg peg, long pos) {
 		Memo2 m = null;
 		if(UnusedMemo != null) {
 			m = this.UnusedMemo;
@@ -205,7 +205,7 @@ public class SimpleParserContext extends ParserContext {
 	}
 	
 	public PegObject precheck(PegNewObject keypeg, PegObject inNode) {
-		int keypos = this.getPosition();
+		long keypos = this.getPosition();
 		Memo2 m = this.getPreCheckCache(keypeg, keypos);
 		//System.out.println("cache? " + keypos + ", " + keypeg + ", m=" + m );
 		boolean verifyMode = this.startVerifyMode();

@@ -152,7 +152,7 @@ public final class PegRuleSet {
 	private Peg toPeg(PegObject node) {
 		Peg e = this.toPegImpl(node);
 		e.source = node.source;
-		e.sourcePosition = node.startIndex;
+		e.sourcePosition = (int)node.startIndex;
 		return e;
 	}	
 	private Peg toPegImpl(PegObject node) {

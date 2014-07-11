@@ -363,7 +363,7 @@ class PegOptional extends PegUnary {
 	@Override protected PegObject fastMatch(PegObject innode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
 		Peg errorPeg = context.storeFailurePeg();
-		int errorPosition = context.storeFailurePosition();
+		long errorPosition = context.storeFailurePosition();
 		PegObject parsedNode = this.innerExpr.performMatch(innode, context);
 		if(parsedNode.isFailure()) {
 			context.popBack(stackPosition, Peg._BackTrack);
@@ -375,7 +375,7 @@ class PegOptional extends PegUnary {
 	@Override protected PegObject simpleMatch(PegObject innode, ParserContext context) {
 		int stackPosition = context.getStackPosition(this);
 		Peg errorPeg = context.storeFailurePeg();
-		int errorPosition = context.storeFailurePosition();
+		long errorPosition = context.storeFailurePosition();
 		PegObject parsedNode = this.innerExpr.performMatch(innode, context);
 		if(parsedNode.isFailure()) {
 			context.popBack(stackPosition, Peg._BackTrack);
@@ -411,10 +411,10 @@ class PegOneMore extends PegUnary {
 	public PegObject fastMatch(PegObject parentNode, ParserContext context) {
 		PegObject prevNode = parentNode;
 		Peg errorPeg = context.storeFailurePeg();
-		int errorPosition = context.storeFailurePosition();
+		long errorPosition = context.storeFailurePosition();
 		int count = 0;
 		while(context.hasChar()) {
-			int startPosition = context.getPosition();
+			long startPosition = context.getPosition();
 			PegObject node = this.innerExpr.performMatch(prevNode, context);
 			if(node.isFailure()) {
 				break;
@@ -435,10 +435,10 @@ class PegOneMore extends PegUnary {
 	public PegObject simpleMatch(PegObject parentNode, ParserContext context) {
 		PegObject prevNode = parentNode;
 		Peg errorPeg = context.storeFailurePeg();
-		int errorPosition = context.storeFailurePosition();
+		long errorPosition = context.storeFailurePosition();
 		int count = 0;
 		while(context.hasChar()) {
-			int startPosition = context.getPosition();
+			long startPosition = context.getPosition();
 			PegObject node = this.innerExpr.performMatch(prevNode, context);
 			if(node.isFailure()) {
 				break;
@@ -733,7 +733,7 @@ class PegChoice extends PegList {
 		int stackPosition = context.getStackPosition(this);
 		PegObject node = inNode;
 		Peg errorPeg = context.storeFailurePeg();
-		int errorPosition = context.storeFailurePosition();
+		long errorPosition = context.storeFailurePosition();
 		for(int i = 0; i < this.size(); i++) {
 			Peg e  = this.get(i);
 			if(e.memoizationMode) {
@@ -769,7 +769,7 @@ class PegChoice extends PegList {
 		int stackPosition = context.getStackPosition(this);
 		PegObject node = inNode;
 		Peg errorPeg = context.storeFailurePeg();
-		int errorPosition = context.storeFailurePosition();
+		long errorPosition = context.storeFailurePosition();
 		for(int i = 0; i < this.size(); i++) {
 			Peg e  = this.get(i);
 			if(e instanceof PegCatch) {
@@ -961,7 +961,7 @@ class PegPipe extends PegAtom {
 		if(!context.isVerifyMode()) {
 			inNode.tag = "#lazy";
 			//inNode.optionalToken = this.symbol;
-			ParserContext sub = Main.newParserContext(inNode.source, inNode.startIndex, inNode.endIndex, context.ruleSet);
+			ParserContext sub = Main.newParserContext(inNode.source, inNode.startIndex, inNode.startIndex + inNode.length, context.ruleSet);
 			return sub.parseNode(this.symbol);
 		}
 		return inNode;
@@ -971,7 +971,7 @@ class PegPipe extends PegAtom {
 		if(!context.isVerifyMode()) {
 			inNode.tag = "#lazy";
 			//inNode.optionalToken = this.symbol;
-			ParserContext sub = Main.newParserContext(inNode.source, inNode.startIndex, inNode.endIndex, context.ruleSet);
+			ParserContext sub = Main.newParserContext(inNode.source, inNode.startIndex, inNode.startIndex + inNode.length, context.ruleSet);
 			return sub.parseNode(this.symbol);
 		}
 		return inNode;
@@ -1052,7 +1052,7 @@ class PegNewObject extends PegList {
 	@Override
 	public PegObject fastMatch(PegObject inNode, ParserContext context) {
 		PegObject leftNode = inNode;
-		int pos = context.getPosition();
+		long pos = context.getPosition();
 		int stack = context.getStackPosition(this);
 		PegObject newnode = context.newPegObject(this.nodeName);
 		newnode.setSource(this, context.source, pos, context.getPosition());
@@ -1082,9 +1082,9 @@ class PegNewObject extends PegList {
 	
 	@Override
 	public PegObject simpleMatch(PegObject inNode, ParserContext context) {
-		int startIndex = context.getPosition();
+		long startIndex = context.getPosition();
 		PegObject checkedNode = context.precheck(this, inNode);
-		int endIndex = context.getPosition();
+		long endIndex = context.getPosition();
 		if(checkedNode == null) {
 			context.rollback(startIndex);
 			PegObject leftNode = inNode;
