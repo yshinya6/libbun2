@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 
 import org.libbun.drv.JvmDriver;
-import org.libbun.drv.JvmIndyDriver;
 import org.libbun.drv.PegDumpper;
 
 public class Main {
@@ -142,8 +141,6 @@ public class Main {
 		driverMap.put("llvm", org.libbun.drv.LLVMDriver.class);
 		driverMap.put("jvm", JvmDriver.class);
 		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
-		driverMap.put("jvm-indy", JvmIndyDriver.class);
-		driverMap.put("jvm-indy-debug", JvmIndyDriver.DebuggableJvmIndyDriver.class);
 		driverMap.put("peg", org.libbun.drv.PegDumpper.class);
 	}
 

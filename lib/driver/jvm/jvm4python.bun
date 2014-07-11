@@ -7,177 +7,173 @@ typedef Double
 typedef Boolean
 
 // statement definition
-bun #toplevel(*)  {
-	${TOP_LEVEL this}
-}
-
-bun #block(*): void {
+template #block(*): void {
 	${BLOCK this}
 }
 
 
-bun #if(cond : untyped, then : void) : void {
+template #if(cond : untyped, then : void) : void {
 	${IF}
 }
 
-bun #if(cond : untyped, then : void, else) : void {
+template #if(cond : untyped, then : void, else) : void {
 	${IF}
 }
 
-bun #while(cond : untyped, block : void) : void {
+template #while(cond : untyped, block : void) : void {
 	${WHILE}
 }
 
 // expression definition.
-bun #group(x : untyped) : untyped {
-	${x}
+template #group(x : untyped) : untyped {
+	${x} ${IsStmtEnd}
 }
 
-bun #integer(): untyped {
-	${PUSH_AS_LONG} ${BOX long}
+template #integer(): untyped {
+	${PUSH_AS_LONG} ${BOX long} ${IsStmtEnd}
 }
 
-bun #float() : untyped {
-	${PUSH_AS_DOUBLE} ${BOX double}
+template #float() : untyped {
+	${PUSH_AS_DOUBLE} ${BOX double} ${IsStmtEnd}
 }
 
-bun #true() : untyped {
-	${PUSH_AS_BOOLEAN true} ${BOX boolean}
+template #true() : untyped {
+	${PUSH_AS_BOOLEAN true} ${BOX boolean} ${IsStmtEnd}
 }
 
-bun #false() : untyped {
-	${PUSH_AS_BOOLEAN false} ${BOX boolean}
+template #false() : untyped {
+	${PUSH_AS_BOOLEAN false} ${BOX boolean} ${IsStmtEnd}
 }
 
-bun #string() : untyped {
-	${PUSH_AS_STRING}
+template #string() : untyped {
+	${PUSH_AS_STRING} ${IsStmtEnd}
 }
 
 // binary op definition
 // ADD
-bun #add(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY add bsmBinaryOp Object Object Object}
+template #add(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY add bsmBinaryOp Object Object Object} ${IsStmtEnd}
 }
 
 //SUB
-bun #sub(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY sub bsmBinaryOp Object Object Object}
+template #sub(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY sub bsmBinaryOp Object Object Object} ${IsStmtEnd}
 }
 
 // MUL
-bun #mul(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY mul bsmBinaryOp Object Object Object}
+template #mul(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY mul bsmBinaryOp Object Object Object} ${IsStmtEnd}
 }
 
 // DIV
-bun #div(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY div bsmBinaryOp Object Object Object}
+template #div(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY div bsmBinaryOp Object Object Object} ${IsStmtEnd}
 }
 
 // MOD
-bun #mod(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY mod bsmBinaryOp Object Object Object}
+template #mod(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY mod bsmBinaryOp Object Object Object} ${IsStmtEnd}
 }
 
 // EQ
-bun #eq(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY eq bsmCompOp Boolean Object Object}
+template #eq(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY eq bsmCompOp Boolean Object Object} ${IsStmtEnd}
 }
 
 // NOTEQ
-bun #noteq(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY noteq bsmCompOp Boolean Object Object}
+template #noteq(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY noteq bsmCompOp Boolean Object Object} ${IsStmtEnd}
 }
 
 // LT
-bun #lt(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY lt bsmCompOp Boolean Object Object}
+template #lt(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY lt bsmCompOp Boolean Object Object} ${IsStmtEnd}
 }
 
 // LTE
-bun #lte(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY lte bsmCompOp Boolean Object Object}
+template #lte(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY lte bsmCompOp Boolean Object Object} ${IsStmtEnd}
 }
 
 // GT
-bun #gt(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY gt bsmCompOp Boolean Object Object}
+template #gt(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY gt bsmCompOp Boolean Object Object} ${IsStmtEnd}
 }
 
 // GTE
-bun #gte(x : untyped, y : untyped) : untyped {
-	${x} ${y} ${INDY gte bsmCompOp Boolean Object Object}
+template #gte(x : untyped, y : untyped) : untyped {
+	${x} ${y} ${INDY gte bsmCompOp Boolean Object Object} ${IsStmtEnd}
 }
 
 // unary op definition
 // NOT
-bun #not(x : untyped) : untyped {
-	${x} ${INDY not bsmUnaryOp Object Object}
+template #not(x : untyped) : untyped {
+	${x} ${INDY not bsmUnaryOp Object Object} ${IsStmtEnd}
 }
 
 // PLUS
-bun #plus(x : untyped) : untyped {
-	${x} ${INDY plus bsmUnaryOp Object Object}
+template #plus(x : untyped) : untyped {
+	${x} ${INDY plus bsmUnaryOp Object Object} ${IsStmtEnd}
 }
 
 // MINUS
-bun #minus(x : untyped) : untyped {
-	${x} ${INDY minus bsmUnaryOp Object Object}
+template #minus(x : untyped) : untyped {
+	${x} ${INDY minus bsmUnaryOp Object Object} ${IsStmtEnd}
 }
 
 // COMPL
-bun #compl(x : untyped) : untyped {
-	${x} ${INDY compl bsmUnaryOp Object Object}
+template #compl(x : untyped) : untyped {
+	${x} ${INDY compl bsmUnaryOp Object Object} ${IsStmtEnd}
 }
 
 // conditional operator
 // And
-bun #and(x : untyped, y : untyped) : untyped {
-	${AND} ${BOX boolean}
+template #and(x : untyped, y : untyped) : untyped {
+	${AND} ${BOX boolean} ${IsStmtEnd}
 }
 
 // Or
-bun #or(x : untyped, y : untyped) : untyped {
-	${OR} ${BOX boolean}
+template #or(x : untyped, y : untyped) : untyped {
+	${OR} ${BOX boolean} ${IsStmtEnd}
 }
 
 // collection
-bun #array(*) : untyped {
-	${NEW_ARRAY}
+template #array(*) : untyped {
+	${NEW_ARRAY} ${IsStmtEnd}
 }
 
-bun #map(*) : untyped {
-	${NEW_MAP}
+template #map(*) : untyped {
+	${NEW_MAP} ${IsStmtEnd}
 }
 
-bun #index(recv : untyped, index : untyped) :untyped {
-	${recv} ${index} ${INDY get bsmMethod Object Object Object}
+template #index(recv : untyped, index : untyped) :untyped {
+	${recv} ${index} ${INDY get bsmMethod Object Object Object} ${IsStmtEnd}
 }
 
-bun #apply(t : untyped, arg : untyped) : untyped {
-	${APPLY}
+template #apply(t : untyped, arg : untyped) : untyped {
+	${APPLY} ${IsStmtEnd}
 }
 
-bun #name() : untyped {
-	${NAME}
+template #name() : untyped {
+	${NAME} ${IsStmtEnd}
 }
 
-bun #assign(left : untyped, right : untyped) : void {
+template #assign(left : untyped, right : untyped) : void {
 	${PY_ASSIGN}
 }
 
-bun #trinary(cond : untyped, then : untyped, else : untyped) : untyped {
-	${TRINARY}
+template #trinary(cond : untyped, then : untyped, else : untyped) : untyped {
+	${TRINARY} ${IsStmtEnd}
 }
 
-bun #print(x) : void {
+template #print(x) : void {
 	${x} ${PRINT}
 }
 
-bun #function(name, params, block : void) : void {
+template #function(name, params, block : void) : void {
 	${DEFUNC}
 }
 
-bun #return(expr : untyped) : void {
+template #return(expr : untyped) : void {
 	${expr} ${RETURN_STATEMENT}
 }
