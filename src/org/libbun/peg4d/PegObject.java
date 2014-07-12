@@ -40,13 +40,19 @@ public class PegObject {
 		return this.tag.equals(functor);
 	}
 
-	public final void setSource(Peg createdPeg, ParserSource source, long startIndex, long endIndex) {
+	public final void setSource(Peg createdPeg, ParserSource source, long startIndex) {
 		this.createdPeg = createdPeg;
 		this.source     = source;
+		this.startIndex = startIndex;
+		this.length     = 0;
+	}
+
+	public final void setSource(long startIndex, long endIndex) {
 		this.startIndex = startIndex;
 		this.length     = (int)(endIndex - startIndex);
 	}
 
+	
 	public final String formatSourceMessage(String type, String msg) {
 		return this.source.formatErrorMessage(type, this.startIndex, msg);
 	}
@@ -158,6 +164,14 @@ public class PegObject {
 		}
 	}
 	
+	public void replace(PegObject oldone, PegObject newone) {
+		for(int i = 0; i < this.size(); i++) {
+			if(this.AST[i] == oldone) {
+				this.AST[i] = newone;
+				newone.parent = this;
+			}
+		}
+	}
 	
 	public final int count() {
 		int count = 1;
@@ -303,5 +317,6 @@ public class PegObject {
 	public final boolean isUntyped() {
 		return this.typed == null || this.typed == BunType.UntypedType;
 	}
+
 
 }

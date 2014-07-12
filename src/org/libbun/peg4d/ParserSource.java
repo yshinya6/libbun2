@@ -2,6 +2,8 @@ package org.libbun.peg4d;
 
 public abstract class ParserSource {
 	public String fileName;
+	long statIOCount = 0;
+	
 	public ParserSource(String fileName, long linenum) {
 		this.fileName = fileName;
 		this.pushLineMemo(0, linenum);

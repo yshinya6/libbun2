@@ -134,6 +134,7 @@ public final class PegRuleSet {
 	}
 	
 	private void parse(ParserContext context, PegObject node) {
+		//System.out.println("DEBUG? parsed: " + node);		
 		if(node.is("#rule")) {
 			String ruleName = node.textAt(0, "");
 			Peg e = toPeg(node.get(1));
@@ -189,10 +190,10 @@ public final class PegRuleSet {
 			return new PegAnd(toPeg(node.get(0)));
 		}
 		if(node.is("#one")) {
-			return new PegOneMore(null, toPeg(node.get(0)));
+			return new PegRepeat(toPeg(node.get(0)), 1);
 		}
 		if(node.is("#zero")) {
-			return new PegZeroMore(toPeg(node.get(0)));
+			return new PegRepeat(toPeg(node.get(0)), 0);
 		}
 		if(node.is("#option")) {
 			return new PegOptional(toPeg(node.get(0)));
@@ -304,16 +305,16 @@ public final class PegRuleSet {
 		return new PegOptional(e);
 	}
 	private final static Peg zero(Peg e) {
-		return new PegZeroMore(e);
+		return new PegRepeat(e, 0);
 	}
 	private final static Peg zero(Peg ... elist) {
-		return new PegZeroMore(seq(elist));
+		return new PegRepeat(seq(elist), 0);
 	}
 	private final static Peg one(Peg e) {
-		return new PegOneMore(null, e);
+		return new PegRepeat(e, 1);
 	}
 	private final static Peg one(Peg ... elist) {
-		return new PegOneMore(null, seq(elist));
+		return new PegRepeat(seq(elist), 1);
 	}
 	private final static Peg seq(Peg ... elist) {
 		PegSequence l = new PegSequence();

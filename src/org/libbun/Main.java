@@ -12,16 +12,16 @@ import java.text.DecimalFormat;
 
 import org.libbun.drv.PegDumpper;
 import org.libbun.peg4d.FileSource;
+import org.libbun.peg4d.ObjectParserContext;
 import org.libbun.peg4d.ParserContext;
 import org.libbun.peg4d.PegObject;
-import org.libbun.peg4d.PegParserContext;
 import org.libbun.peg4d.PegRuleSet;
 import org.libbun.peg4d.ParserSource;
 import org.libbun.peg4d.SimpleParserContext;
 import org.libbun.peg4d.StringSource;
 
 public class Main {
-	public final static String  ProgName  = "libbun";
+	public final static String  ProgName  = "peg4d";
 	public final static String  CodeName  = "yokohama";
 	public final static int     MajorVersion = 2;
 	public final static int     MinerVersion = 0;
@@ -188,24 +188,13 @@ public class Main {
 	}
 
 	public final static ParserContext newParserContext(ParserSource source) {
-		if(FastMatchMode) {
-			return new PegParserContext(source);
-		}
+//		if(FastMatchMode) {
+//			return new PegParserContext(source);
+//		}
 		return new SimpleParserContext(source);
+		//return new ObjectParserContext(source);
 	}
 
-	public final static ParserContext newParserContext(ParserSource source, long startIndex, long endIndex, PegRuleSet ruleSet) {
-		if(FastMatchMode) {
-			ParserContext p = new PegParserContext(source, startIndex, endIndex);
-			p.setRuleSet(ruleSet);
-			return p;
-		}
-		else{
-			ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
-			p.setRuleSet(ruleSet);
-			return p;
-		}
-	}
 	
 	public final static void main(String[] args) {
 		parseCommandArguments(args);
@@ -236,23 +225,10 @@ public class Main {
 			gamma.initParserRuleSet(context, "main");
 			driver.startTransaction(OutputFileName);
 			while(context.hasNode()) {
-				ParseProfileStart();
-				PegObject node = context.parsePegObject(new PegObject("#toplevel"), startPoint);
-				if(node.isFailure()) {
-					node = context.newErrorObject();
-				}
+				context.beginStatInfo();
+				PegObject node = context.parseNode(startPoint);
+				context.endStatInfo(node);
 				gamma.setNode(node);
-				if(VerbosePegMode) {
-					System.out.println("parsed:\n" + node.toString());
-					if(context.hasChar()) {
-						System.out.println("** uncosumed: '" + context + "' **");
-					}
-				}
-				if(VerbosePegMode || VerboseMode) {
-					System.out.println();
-					context.showStatInfo(node);
-				}
-				ParseProfileStop();
 				if(!ParseOnlyMode && driver != null) {
 					if(!(driver instanceof PegDumpper)) {
 						node = gamma.tryMatch(node, true);
@@ -279,43 +255,6 @@ public class Main {
 		}
 		catch (Exception e) {
 			PrintStackTrace(e, source.getLineNumber(0));
-		}
-	}
-
-	static long Timer = 0;
-
-	private static void ParseProfileStart() {
-		if(ProfileMode) {
-			Timer = System.currentTimeMillis();
-		}
-	}
-
-	public static String getMemoryInfo() {
-		String info = "";
-		DecimalFormat format_kib =   new DecimalFormat("#,### KiB");
-		DecimalFormat format_mib =   new DecimalFormat("#,### MiB");
-		DecimalFormat format_ratio = new DecimalFormat("##.#");
-		long free =  Runtime.getRuntime().freeMemory() / 1024;
-		long total = Runtime.getRuntime().totalMemory() / 1024;
-		long max =   Runtime.getRuntime().maxMemory() / 1024;
-		long used =  total - free;
-		double ratio = (used * 100 / (double)total);
-//
-//		info += "Total   = " + format_mib.format(total / 1024);
-//		info += "\n";
-//		info += "Free    = " + format_mib.format(total / 1024);
-//		info += "\n";
-		info += "heap: " + format_mib.format(used / 1024) + " (" + format_ratio.format(ratio) + "%)";
-		info += "\n";
-		info += "can use = " + format_mib.format(max / 1024);
-		return info;
-	}
-
-	private static void ParseProfileStop() {
-		if(ProfileMode) {
-			System.out.println("Time    = " + (System.currentTimeMillis() - Timer) + " msec");
-			System.gc();
-			System.out.println(getMemoryInfo());
 		}
 	}
 

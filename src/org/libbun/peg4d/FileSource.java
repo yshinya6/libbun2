@@ -8,12 +8,16 @@ import java.io.UnsupportedEncodingException;
 import org.libbun.Main;
 
 public class FileSource extends ParserSource {
+	private final static int PageSize = 4096;
+	
 	private RandomAccessFile file;
 	private long buffer_offset;
 	private byte[] buffer;
 	public FileSource(String fileName) throws FileNotFoundException {
 		super(fileName, 1);
-		System.out.println("random access file: " + fileName);
+		if(Main.VerbosePegMode) {
+			System.out.println("random access file: " + fileName);
+		}
 		this.file = new RandomAccessFile(fileName, "r");
 		this.buffer = new byte[4096];
 		this.buffer_offset = 0;
@@ -27,20 +31,32 @@ public class FileSource extends ParserSource {
 		}
 		return 0;
 	}
+
+	private long buffer_alignment(long pos) {
+		return (pos / PageSize) * PageSize;
+	}
+
 	public final char charAt(long n) {
 		long buffer_pos = (n - this.buffer_offset);
-		if(!(buffer_pos >= 0 && buffer_pos < 4096)) {
-			this.buffer_offset = (n / 4096) * 4096;
+		if(!(buffer_pos >= 0 && buffer_pos < PageSize)) {
+			this.buffer_offset = buffer_alignment(n);
 			this.readBuffer(this.buffer_offset, this.buffer);
 			buffer_pos = (n - this.buffer_offset);
 		}
 		return (char)this.buffer[(int)buffer_pos];
 	}
+	
 	public final String substring(long startIndex, long endIndex) {
 		if(endIndex > startIndex) {
 			try {
-				if(this.buffer_offset <= startIndex && endIndex < this.buffer_offset + 4096) {
-						return new String(this.buffer, (int)(startIndex - this.buffer_offset), (int)(endIndex - startIndex), "UTF8");
+				long off_s = buffer_alignment(startIndex);
+				long off_e = buffer_alignment(endIndex);
+				if(off_s == off_e) {
+					if(this.buffer_offset != off_s) {
+						this.buffer_offset = off_s;
+						this.readBuffer(this.buffer_offset, this.buffer);
+					}
+					return new String(this.buffer, (int)(startIndex - this.buffer_offset), (int)(endIndex - startIndex), "UTF8");
 				}
 				else {
 					byte[] b = new byte[(int)(endIndex - startIndex)];
@@ -53,15 +69,20 @@ public class FileSource extends ParserSource {
 		}
 		return "";
 	}
+
 	private void readBuffer(long pos, byte[] b) {
 		try {
-			System.out.println("read buffer: " + pos + ", size = " + b.length);
+//			if(Main.VerbosePegMode) {
+//				System.out.println("read buffer: " + pos + ", size = " + b.length);
+//			}
 			this.file.seek(pos);
 			this.file.read(b);
+			this.statIOCount += 1;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+	
 	@Override
 	public final ParserSource trim(long startIndex, long endIndex) {
 		//long pos = this.getLineStartPosition(startIndex);
