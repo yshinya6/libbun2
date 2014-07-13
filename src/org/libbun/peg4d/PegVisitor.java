@@ -8,7 +8,6 @@ public interface PegVisitor {
 	public void visitPegLabel(PegLabel peg);
 	public void visitPegOptional(PegOptional peg);
 	public void visitOneMore(PegRepeat peg);
-	public void visitZeroMore(PegZeroMore peg);
 	public void visitPegAnd(PegAnd peg);
 	public void visitPegNot(PegNot peg);
 	public void visitSequence(PegSequence peg);

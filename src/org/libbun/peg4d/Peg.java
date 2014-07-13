@@ -9,24 +9,16 @@ import org.libbun.UMap;
 import org.libbun.UStringBuilder;
 
 public abstract class Peg {
-	public final static boolean _BackTrack = true;
-
 	int       flag     = 0;
 	String    ruleName = null;
 	boolean   debug    = false;
-//	boolean   hasLeftRecursion = false;
-//	boolean   memoizationMode = false;
-//	int       clearMemoCounter = 0;
 
 	ParserSource source = null;
 	int       sourcePosition = 0;
 	
-	protected abstract Peg clone(String ns);
+	protected abstract Peg clone(PegTransformer tr);
 	protected abstract void stringfy(UStringBuilder sb, boolean debugMode);
 	protected abstract void makeList(PegRuleSet parser, UList<String> list, UMap<String> set);
-	protected final PegObject fastMatch(PegObject left, ParserContext context) {
-		return null;
-	}
 	protected abstract PegObject simpleMatch(PegObject left, ParserContext context);
 	protected abstract void verify(String ruleName, PegRuleSet rules);
 	public abstract void accept(PegVisitor visitor);
@@ -114,7 +106,17 @@ public abstract class Peg {
 			Main._PrintLine("PEG warning: " + msg);
 		}
 	}
-	
+}
+
+abstract class PegTransformer {
+	public abstract Peg transform(Peg e);
+}
+
+class PegNoTransformer extends PegTransformer {
+	@Override
+	public Peg transform(Peg e) {
+		return e;
+	}
 }
 
 abstract class PegAtom extends Peg {
@@ -150,8 +152,12 @@ class PegString extends PegAtom {
 		super(symbol);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		return this;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegString(this.symbol);
+		}
+		return ne;
 	}
 	public final static String quoteString(String s) {
 		char quote = '\'';
@@ -179,8 +185,12 @@ class PegAny extends PegAtom {
 		super(".");
 	}
 	@Override
-	protected Peg clone(String ns) {
-		return this;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegAny();
+		}
+		return ne;
 	}
 	@Override
 	public void accept(PegVisitor visitor) {
@@ -199,8 +209,12 @@ class PegCharacter extends PegAtom {
 		this.charset = new UCharset(token);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		return this;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegCharacter(this.symbol);
+		}
+		return ne;
 	}
 	@Override
 	protected void stringfy(UStringBuilder sb, boolean debugMode) {
@@ -221,11 +235,12 @@ class PegLabel extends PegAtom {
 		super(token);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		if(ns != null && ns.length() > 0) {
-			return new PegLabel(ns + this.symbol);
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegLabel(this.symbol);
 		}
-		return this;
+		return ne;
 	}
 	@Override protected PegObject simpleMatch(PegObject left, ParserContext context) {
 		return context.matchLabel(left, this);
@@ -302,12 +317,12 @@ class PegOptional extends PegUnary {
 		super(e, false);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		Peg e = this.innerExpr.clone(ns);
-		if(e != this) {
-			return new PegOptional(e);
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegOptional(this.innerExpr.clone(tr));
 		}
-		return this;
+		return ne;
 	}
 	@Override
 	protected String getOperator() {
@@ -329,12 +344,12 @@ class PegRepeat extends PegUnary {
 		this.atleast = atLeast;
 	}
 	@Override
-	protected Peg clone(String ns) {
-		Peg e = this.innerExpr.clone(ns);
-		if(e != this) {
-			return new PegRepeat(e, this.atleast);
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegRepeat(this.innerExpr.clone(tr), this.atleast);
 		}
-		return this;
+		return ne;
 	}
 	@Override
 	protected String getOperator() {
@@ -351,39 +366,39 @@ class PegRepeat extends PegUnary {
 	}
 }
 
-class PegZeroMore extends PegRepeat {
-	public PegZeroMore(Peg e) {
-		super(e, 0);
-	}
-	@Override
-	protected Peg clone(String ns) {
-		Peg e = this.innerExpr.clone(ns);
-		if(e != this) {
-			return new PegZeroMore(e);
-		}
-		return this;
-	}
-	@Override
-	protected String getOperator() {
-		return "*";
-	}
-	@Override
-	public void accept(PegVisitor visitor) {
-		visitor.visitZeroMore(this);
-	}
-}
+//class PegZeroMore extends PegRepeat {
+//	public PegZeroMore(Peg e) {
+//		super(e, 0);
+//	}
+//	@Override
+//	protected Peg clone(PegTransformer tr) {
+//		Peg e = this.innerExpr.clone(tr);
+//		if(e != this) {
+//			return new PegZeroMore(e);
+//		}
+//		return this;
+//	}
+//	@Override
+//	protected String getOperator() {
+//		return "*";
+//	}
+//	@Override
+//	public void accept(PegVisitor visitor) {
+//		visitor.visitZeroMore(this);
+//	}
+//}
 
 class PegAnd extends PegUnary {
 	PegAnd(Peg e) {
 		super(e, true);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		Peg e = this.innerExpr.clone(ns);
-		if(e != this) {
-			return new PegAnd(e);
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegAnd(this.innerExpr.clone(tr));
 		}
-		return this;
+		return ne;
 	}
 	@Override
 	protected String getOperator() {
@@ -404,12 +419,12 @@ class PegNot extends PegUnary {
 		super(e, true);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		Peg e = this.innerExpr.clone(ns);
-		if(e != this) {
-			return new PegNot(e);
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegNot(this.innerExpr.clone(tr));
 		}
-		return this;
+		return ne;
 	}
 	@Override
 	protected String getOperator() {
@@ -477,22 +492,16 @@ class PegSequence extends PegList {
 		super();
 	}
 	@Override
-	protected Peg clone(String ns) {
-		boolean hasClone = false;
-		for(int i = 0; i < this.list.size(); i++) {
-			Peg e  = this.list.ArrayValues[i].clone(ns);
-			if(e != this.list.ArrayValues[i]) {
-				hasClone = true;
-			}
-		}
-		if(hasClone) {
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
 			PegList l = new PegSequence();
 			for(int i = 0; i < this.list.size(); i++) {
-				l.list.add(this.get(i).clone(ns));
+				l.list.add(this.get(i).clone(tr));
 			}
 			return l;
 		}
-		return this;
+		return ne;
 	}
 	@Override
 	protected PegObject simpleMatch(PegObject left, ParserContext context) {
@@ -518,23 +527,16 @@ class PegChoice extends PegList {
 		super();
 	}
 	@Override
-	protected Peg clone(String ns) {
-		boolean hasClone = false;
-		for(int i = 0; i < this.size(); i++) {
-			Peg e  = this.get(i).clone(ns);
-			if(e != this.get(i)) {
-				hasClone = true;
-			}
-		}
-		if(hasClone) {
-			PegChoice l = new PegChoice();
-			l.hasCatch = this.hasCatch;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			PegList l = new PegChoice();
 			for(int i = 0; i < this.list.size(); i++) {
-				l.list.add(this.get(i).clone(ns));
+				l.list.add(this.get(i).clone(tr));
 			}
 			return l;
 		}
-		return this;
+		return ne;
 	}
 	public void extend(Peg e) {
 		if(e instanceof PegChoice) {
@@ -620,12 +622,12 @@ class PegSetter extends PegUnary {
 		this.index = index;
 	}
 	@Override
-	protected Peg clone(String ns) {
-		Peg e = this.innerExpr.clone(ns);
-		if(e != this) {
-			return new PegSetter(e, this.index);
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegSetter(this.innerExpr.clone(tr), this.index);
 		}
-		return this;
+		return ne;
 	}
 	@Override
 	protected String getOperator() {
@@ -649,8 +651,12 @@ class PegTag extends PegAtom {
 		super(tag);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		return this;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegTag(this.symbol);
+		}
+		return ne;
 	}
 	@Override
 	protected final void stringfy(UStringBuilder sb, boolean debugMode) {
@@ -678,8 +684,12 @@ class PegMessage extends PegAtom {
 		super(message);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		return this;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegMessage(this.symbol);
+		}
+		return ne;
 	}
 	@Override
 	protected final void stringfy(UStringBuilder sb, boolean debugMode) {
@@ -708,8 +718,12 @@ class PegPipe extends PegAtom {
 		super(ruleName);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		return this;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegPipe(this.symbol);
+		}
+		return ne;
 	}
 	@Override
 	protected final void stringfy(UStringBuilder sb, boolean debugMode) {
@@ -744,22 +758,16 @@ class PegNewObject extends PegList {
 		this.leftJoin = leftJoin;
 	}
 	@Override
-	protected Peg clone(String ns) {
-		boolean hasClone = false;
-		for(int i = 0; i < this.list.size(); i++) {
-			Peg e  = this.list.ArrayValues[i].clone(ns);
-			if(e != this.list.ArrayValues[i]) {
-				hasClone = true;
-			}
-		}
-		if(hasClone) {
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
 			PegList l = new PegNewObject(this.leftJoin);
 			for(int i = 0; i < this.list.size(); i++) {
-				l.list.add(this.get(i).clone(ns));
+				l.list.add(this.get(i).clone(tr));
 			}
 			return l;
 		}
-		return this;
+		return ne;
 	}
 
 	public void add(Peg e) {
@@ -806,12 +814,16 @@ class PegNewObject extends PegList {
 }
 
 class PegIndent extends PegAtom {
-	PegIndent(String ruleName) {
+	PegIndent() {
 		super("indent");
 	}
 	@Override
-	protected Peg clone(String ns) {
-		return this;
+	protected Peg clone(PegTransformer tr) {
+		Peg ne = tr.transform(this);
+		if(ne == null) {
+			ne = new PegIndent();
+		}
+		return ne;
 	}
 	@Override
 	protected PegObject simpleMatch(PegObject left, ParserContext context) {
@@ -830,8 +842,8 @@ class PegCatch extends PegUnary {
 		super(first, true);
 	}
 	@Override
-	protected Peg clone(String ns) {
-		Peg e = this.innerExpr.clone(ns);
+	protected Peg clone(PegTransformer tr) {
+		Peg e = this.innerExpr.clone(tr);
 		if(e != this) {
 			return new PegCatch(this.ruleName, e);
 		}
@@ -849,6 +861,33 @@ class PegCatch extends PegUnary {
 	public void accept(PegVisitor visitor) {
 		visitor.visitCatch(this);
 	}
+}
+
+abstract class PegOptimized extends Peg {
+	Peg orig;
+	PegOptimized (Peg orig) {
+		super();
+		this.orig = orig;
+		this.ruleName = orig.ruleName;
+	}
+	@Override
+	protected Peg clone(PegTransformer tr) {
+		return this;
+	}
+	@Override
+	protected void stringfy(UStringBuilder sb, boolean debugMode) {
+		this.orig.stringfy(sb, debugMode);
+	}
+	@Override
+	protected void makeList(PegRuleSet parser, UList<String> list, UMap<String> set) {
+	}
+	@Override
+	protected void verify(String ruleName, PegRuleSet rules) {
+	}
+	@Override
+	public void accept(PegVisitor visitor) {
+	}
+
 }
 
 //class PegCType extends PegAtom {

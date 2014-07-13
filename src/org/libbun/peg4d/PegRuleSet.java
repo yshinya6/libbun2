@@ -21,7 +21,7 @@ public final class PegRuleSet {
 	
 	public PegRuleSet() {
 		this.pegMap = new UMap<Peg>();
-		this.pegMap.put("indent", new PegIndent(null));  // default rule
+		this.pegMap.put("indent", new PegIndent());  // default rule
 	}
 
 	public final boolean hasRule(String ruleName) {
@@ -265,7 +265,7 @@ public final class PegRuleSet {
 		for(int i = 0; i < list.size(); i++) {
 			String l = list.ArrayValues[i];
 			Peg e = p.getRule(l);
-			this.pegMap.put(prefix + l, e.clone(prefix));
+			this.pegMap.put(prefix + l, e.clone(new PegNoTransformer()));
 		}
 	}
 

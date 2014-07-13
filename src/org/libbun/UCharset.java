@@ -19,6 +19,10 @@ public class UCharset {
 		this.parse(charSet);
 	}
 
+	public final String toString() {
+		return this.charSet;
+	}
+	
 	public final boolean match(char ch) {
 		if(ch < 128) {
 			return this.asciiSet[ch];

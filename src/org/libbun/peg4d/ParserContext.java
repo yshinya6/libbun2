@@ -55,6 +55,13 @@ public abstract class ParserContext {
 		return this.sourcePosition < this.endPosition;
 	}
 
+	protected final char charAt(long pos) {
+		if(pos < this.endPosition) {
+			return this.source.charAt(pos);
+		}
+		return '\0';
+	}
+
 	protected final char getChar() {
 		if(this.hasChar()) {
 			return this.source.charAt(this.sourcePosition);
@@ -552,7 +559,7 @@ public abstract class ParserContext {
 		}
 		timer = (System.currentTimeMillis() - timer);
 		System.gc(); // meaningless ?
-		if(Main.VerbosePegMode) {
+		if(Main.VerboseMode) {
 //			System.out.println("parsed:\n" + parsedObject);
 //			if(this.hasChar()) {
 //				System.out.println("** uncosumed: '" + this.source + "' **");
