@@ -18,7 +18,7 @@ public class PegObject {
 	public SymbolTable     gamma = null;
 	public Functor         matched = null;
 	public BunType         typed   = null;
-	boolean                memoizationMode = false;
+	//boolean                memoizationMode = false;
 
 	public PegObject(String tag) {
 		this.tag = tag;
@@ -317,6 +317,5 @@ public class PegObject {
 	public final boolean isUntyped() {
 		return this.typed == null || this.typed == BunType.UntypedType;
 	}
-
-
 }
+

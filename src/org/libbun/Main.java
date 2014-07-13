@@ -12,7 +12,8 @@ import java.text.DecimalFormat;
 
 import org.libbun.drv.PegDumpper;
 import org.libbun.peg4d.FileSource;
-import org.libbun.peg4d.ObjectParserContext;
+import org.libbun.peg4d.PackratParserContext;
+import org.libbun.peg4d.PrefetchParserContext;
 import org.libbun.peg4d.ParserContext;
 import org.libbun.peg4d.PegObject;
 import org.libbun.peg4d.PegRuleSet;
@@ -66,8 +67,8 @@ public class Main {
 	// --disable-memo
 	public static boolean NonMemoPegMode = false;
 	
-	// --fast
-	public static boolean FastMatchMode = false;
+	// --E:engine
+	public static String ParserType = "--parser:Simple";
 
 	private static void parseCommandArguments(String[] args) {
 		int index = 0;
@@ -101,15 +102,6 @@ public class Main {
 			else if (argument.equals("--bigdata")) {
 				BigDataOption = true;
 			}
-			else if (argument.equals("--disable-memo")) {
-				NonMemoPegMode = true;
-			}
-			else if (argument.equals("--fast")) {
-				FastMatchMode = true;
-			}
-			else if (argument.equals("--profile")) {
-				ProfileMode = true;
-			}
 			else if (argument.equals("--parse-only")) {
 				ParseOnlyMode = true;
 			}
@@ -120,6 +112,9 @@ public class Main {
 				else {
 					VerboseMode = true;
 				}
+			}
+			else if(argument.startsWith("--parser:")) {
+				ParserType = argument;
 			}
 			else {
 				ShowUsage("unknown option: " + argument);
@@ -140,10 +135,10 @@ public class Main {
 		System.out.println("  --driver|-d  NAME       Driver");
 		System.out.println("  --out|-o  FILE          Output filename");
 		System.out.println("  --bigdata               Expecting BigData Processing");
+		System.out.println("  --parser:NAME           (Option) Alternative parser");
 		System.out.println("  --verbose               Printing Debug infomation");
 		System.out.println("  --verbose:peg           Printing Peg/Debug infomation");
 		System.out.println("  --verbose:bun           Printing Peg/Bun infomation");
-		System.out.println("  --profile               Show memory usage and parse time");
 		Main._Exit(0, Message);
 	}
 
@@ -188,11 +183,13 @@ public class Main {
 	}
 
 	public final static ParserContext newParserContext(ParserSource source) {
-//		if(FastMatchMode) {
-//			return new PegParserContext(source);
-//		}
-		return new SimpleParserContext(source);
-		//return new ObjectParserContext(source);
+		if(ParserType.equalsIgnoreCase("--parser:packrat")) {
+			return new PackratParserContext(source);
+		}
+		if(ParserType.equalsIgnoreCase("--parser:simple")) {
+			return new SimpleParserContext(source);
+		}
+		return new PrefetchParserContext(source);  // best parser
 	}
 
 	

@@ -70,9 +70,6 @@ public abstract class Peg {
 	}
 	protected PegObject performMatch(PegObject left, ParserContext context) {
 		if(this.debug) {
-			if(Main.FastMatchMode) {
-				PegObject node2 = this.fastMatch(left, context);
-			}
 			PegObject node2 = this.simpleMatch(left, context);
 			String msg = "matched";
 			if(node2.isFailure()) {
@@ -81,9 +78,6 @@ public abstract class Peg {
 			String line = context.formatErrorMessage(msg, this.toString());
 			System.out.println(line + "\n\tnode #" + left + "# => #" + node2 + "#");
 			return node2;
-		}
-		if(Main.FastMatchMode) {
-			return this.fastMatch(left, context);
 		}
 		return this.simpleMatch(left, context);
 	}

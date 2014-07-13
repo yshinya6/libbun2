@@ -6,14 +6,14 @@ import org.libbun.Main;
 import org.libbun.UList;
 import org.libbun.UMap;
 
-public class ObjectParserContext extends SimpleParserContext {
+public class PrefetchParserContext extends SimpleParserContext {
 	
-	public ObjectParserContext(ParserSource source) {
+	public PrefetchParserContext(ParserSource source) {
 		this(source, 0, source.length());
 		this.initMemo();
 	}
 
-	public ObjectParserContext(ParserSource source, long startIndex, long endIndex) {
+	public PrefetchParserContext(ParserSource source, long startIndex, long endIndex) {
 		super(source, startIndex, endIndex);
 	}
 

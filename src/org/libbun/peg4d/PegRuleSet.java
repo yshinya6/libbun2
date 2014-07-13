@@ -45,9 +45,9 @@ public final class PegRuleSet {
 			for(int i = 0; i < e.size(); i++) {
 				newnode.add(this.checkPegRule(name, e.get(i)));
 			}
-			if(Main.FastMatchMode) {
-				this.checkMemoMode(newnode, newnode, 0);
-			}
+//			if(Main.FastMatchMode) {
+//				this.checkMemoMode(newnode, newnode, 0);
+//			}
 			if(newnode.size() == 1) {
 				return newnode.get(0);
 			}
@@ -66,35 +66,35 @@ public final class PegRuleSet {
 		return e;
 	}
 	
-	@SuppressWarnings("null")
-	private void checkMemoMode(Peg e, Peg content, int pos) {
-		for(int i = 0; i < content.size(); i++) {
-			if(content.get(i) instanceof PegLabel) {
-				pos += i;
-				PegLabel Label = (PegLabel) content.get(i); 
-				if(checkMemoModeMap.hasKey(Label.symbol)) {
-					CheckData checkData = checkMemoModeMap.get(Label.symbol); 
-					if (checkMemoModeMap.get(Label.symbol).pos == pos) {
-						content.get(i).memoizationMode = true;
-						checkData.e.memoizationMode = true;
-					}
-				}
-				else{
-					CheckData index = new CheckData();
-					index.e = content.get(i);
-					index.pos = pos;
-					checkMemoModeMap.put(Label.symbol, index);
-				}
-				pos -= i;
-			}
-			else if(content.get(i) instanceof PegChoice || content.get(i) instanceof PegSequence) {
-				checkMemoMode(e, content.get(i), pos);
-			}
-			else if(content.get(i) instanceof PegNewObject) {
-				checkMemoMode(e, content.get(i), pos);
-			}
-		}
-	}
+//	@SuppressWarnings("null")
+//	private void checkMemoMode(Peg e, Peg content, int pos) {
+//		for(int i = 0; i < content.size(); i++) {
+//			if(content.get(i) instanceof PegLabel) {
+//				pos += i;
+//				PegLabel Label = (PegLabel) content.get(i); 
+//				if(checkMemoModeMap.hasKey(Label.symbol)) {
+//					CheckData checkData = checkMemoModeMap.get(Label.symbol); 
+//					if (checkMemoModeMap.get(Label.symbol).pos == pos) {
+//						content.get(i).memoizationMode = true;
+//						checkData.e.memoizationMode = true;
+//					}
+//				}
+//				else{
+//					CheckData index = new CheckData();
+//					index.e = content.get(i);
+//					index.pos = pos;
+//					checkMemoModeMap.put(Label.symbol, index);
+//				}
+//				pos -= i;
+//			}
+//			else if(content.get(i) instanceof PegChoice || content.get(i) instanceof PegSequence) {
+//				checkMemoMode(e, content.get(i), pos);
+//			}
+//			else if(content.get(i) instanceof PegNewObject) {
+//				checkMemoMode(e, content.get(i), pos);
+//			}
+//		}
+//	}
 	
 	public final void check() {
 		this.objectLabelMap = new UMap<String>();

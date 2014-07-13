@@ -196,34 +196,36 @@ public abstract class ParserContext {
 	}
 
 	public PegObject matchOptional(PegObject left, PegOptional e) {
-		ObjectLog marker = this.pushNewMarker();
+		long pos = this.getPosition();
+		int markerId = this.pushNewMarker();
 		PegObject parsedNode = e.innerExpr.performMatch(left, this);
 		if(parsedNode.isFailure()) {
-			this.disposeObjectAndEraseFailure(marker);
+			this.popBack(markerId);
+			this.rollback(pos);
 			return left;
 		}
-		this.popBack(marker);
 		return parsedNode;
 	}
 
 	public PegObject matchRepeat(PegObject left, PegRepeat e) {
 		PegObject prevNode = left;
 		int count = 0;
+		int markerId = this.pushNewMarker();
 		while(this.hasChar()) {
-			ObjectLog marker = this.pushNewMarker();
+			long pos = this.getPosition();
+			markerId = this.pushNewMarker();
 			PegObject node = e.innerExpr.performMatch(prevNode, this);
 			if(node.isFailure()) {
-				if(count < e.atleast) {					
-					this.popBack(marker);			
+				assert(pos == this.getPosition());
+				if(count < e.atleast) {
+					this.popBack(markerId);
 					return node;
 				}
-				this.disposeObjectAndEraseFailure(marker);
 				break;
 			}
 			prevNode = node;
-			this.popBack(marker);			
 			//System.out.println("startPostion=" + startPosition + ", current=" + this.getPosition() + ", count = " + count);
-			if(!(marker.pos < this.getPosition())) {
+			if(!(pos < this.getPosition())) {
 				if(count < e.atleast) {
 					return this.foundFailure(e);
 				}
@@ -231,22 +233,27 @@ public abstract class ParserContext {
 			}
 			count = count + 1;
 		}
+		this.popBack(markerId);
 		return prevNode;
 	}
 
 	public PegObject matchAnd(PegObject left, PegAnd e) {
 		PegObject node = left;
-		ObjectLog marker = this.pushNewMarker();
+		long pos = this.getPosition();
+		int markerId = this.pushNewMarker();
 		node = e.innerExpr.performMatch(node, this);
-		this.disposeObject(marker);
+		this.popBack(markerId);
+		this.rollback(pos);
 		return node;
 	}
 
 	public PegObject matchNot(PegObject left, PegNot e) {
 		PegObject node = left;
-		ObjectLog marker = this.pushNewMarker();
+		long pos = this.getPosition();
+		int markerId = this.pushNewMarker();
 		node = e.innerExpr.performMatch(node, this);
-		this.disposeObject(marker);
+		this.popBack(markerId);
+		this.rollback(pos);
 		if(node.isFailure()) {
 			return left;
 		}
@@ -254,42 +261,44 @@ public abstract class ParserContext {
 	}
 
 	public PegObject matchSequence(PegObject left, PegSequence e) {
-		ObjectLog marker = this.pushNewMarker();
+		long pos = this.getPosition();
+		int markerId = this.pushNewMarker();
 		for(int i = 0; i < e.size(); i++) {
 			PegObject parsedNode = e.get(i).performMatch(left, this);
 			if(parsedNode.isFailure()) {
-				this.disposeObject(marker);
+				this.popBack(markerId);
+				this.rollback(pos);
 				return parsedNode;
 			}
 			left = parsedNode;
 		}
-		this.popBack(marker);
 		return left;
 	}
 
 	public PegObject matchChoice(PegObject left, PegChoice e) {
 		PegObject node = left;
+		long pos = this.getPosition();
 		for(int i = 0; i < e.size(); i++) {
-			ObjectLog marker = this.pushNewMarker();
+			int markerId = this.pushNewMarker();
 			node = e.get(i).performMatch(left, this);
 			if(!node.isFailure()) {
-				this.popBack(marker);
 				break;
 			}
-			this.disposeObject(marker);
+			this.popBack(markerId);
+			this.rollback(pos);
 		}
 		return node;
 	}
 	
 	private class ObjectLog {
 		ObjectLog next;
-		long pos;
-		Object leftNodeOrErrorPeg;
+		int  id;
+		PegObject parentNode;
 		int  index;
 		PegObject childNode;
 	}
 
-	ObjectLog logStack = null;
+	ObjectLog logStack = new ObjectLog();  // needs first logs
 	ObjectLog unusedLog = null;
 	int usedLog = 0;
 	int maxLog  = 0;
@@ -305,118 +314,104 @@ public abstract class ParserContext {
 		return l;
 	}
 	
-	private void push(ObjectLog l) {
-		l.next = this.logStack;
-		this.logStack = l;
+	protected final int pushNewMarker() {
+		return this.logStack.id;
 	}
-	
-	protected final ObjectLog pushNewMarker() {
-		ObjectLog l = this.newLog();
-		l.pos = this.sourcePosition;
-		l.leftNodeOrErrorPeg = this.foundFailureNode.createdPeg;
-		l.index = (int)(this.foundFailureNode.startIndex - l.pos);
-		l.childNode  = null;
-		this.push(l);
-		return l;
+
+	protected final void popBack(int markerId) {
+		ObjectLog cur = this.logStack;
+		if(cur.id > markerId) {
+			ObjectLog unused = this.logStack;
+			while(cur != null) {
+				//System.out.println("pop cur.id="+cur.id + ", marker="+markerId);
+				if(cur.id == markerId + 1) {
+					this.logStack = cur.next;
+					cur.next = this.unusedLog;
+					this.unusedLog = unused;
+					break;
+				}
+				cur.parentNode = null;
+				cur.childNode = null;
+				cur = cur.next;
+			}
+		}
 	}
 	
 	protected final void pushSetter(PegObject parentNode, int index, PegObject childNode) {
 		ObjectLog l = this.newLog();
-		l.pos = this.sourcePosition;
-		l.index = index;
-		l.leftNodeOrErrorPeg = parentNode;
+		l.parentNode = parentNode;
 		l.childNode  = childNode;
-		this.push(l);
+		l.index = index;
+		l.id = this.logStack.id + 1;
+		l.next = this.logStack;
+		this.logStack = l;
+		//System.out.println("push " + l.id + ", index= " + index);
 	}
 
-	protected final void popBack(ObjectLog marker, boolean isDispose) {
-		ObjectLog unused = this.logStack;
+	protected final void popNewObject(PegObject newnode, long startIndex, int marker) {
 		ObjectLog cur = this.logStack;
-		while(cur != null) {
-			if(cur == marker) {
-				this.logStack = marker.next; 
-				marker.next = this.unusedLog;
-				this.unusedLog = unused;
-				break;
+		if(cur.id > marker) {
+			UList<ObjectLog> entryList = new UList<ObjectLog>(new ObjectLog[8]);
+			ObjectLog unused = this.logStack;
+			while(cur != null) {
+				//System.out.println("object cur.id="+cur.id + ", marker="+marker);
+				if(cur.parentNode == newnode) {
+					entryList.add(cur);
+				}
+				if(cur.id == marker + 1) {
+					this.logStack = cur.next; 
+					cur.next = this.unusedLog;
+					this.unusedLog = unused;
+					break;
+				}
+				cur = cur.next;
 			}
-			if(!isDispose && cur.childNode != null) {
-				return;
+			if(entryList.size() > 0) {
+				newnode.expandAstToSize(entryList.size());
+				int index = 0;
+				for(int i = entryList.size() - 1; i >= 0; i--) {
+					ObjectLog l = entryList.ArrayValues[i];
+					if(l.index == -1) {
+						l.index = index;
+					}
+					index += 1;
+				}
+				for(int i = entryList.size() - 1; i >= 0; i--) {
+					ObjectLog l = entryList.ArrayValues[i];
+					newnode.set(l.index, l.childNode);
+					if(l.childNode.is("#lazy")) {
+						this.parseLazyObject(l.childNode);
+					}
+					l.childNode = null;
+				}
+				newnode.checkNullEntry();
 			}
-			cur.leftNodeOrErrorPeg = null;
-			cur.childNode = null;
-			cur = cur.next;
+			entryList = null;
 		}
-	}
-
-	protected final void popBack(ObjectLog marker) {
-		popBack(marker, false);
-	}
-
-	protected final void disposeObject(ObjectLog marker) {
-		popBack(marker, true);
-		this.rollback(marker.pos);
-	}
-
-	protected final void disposeObjectAndEraseFailure(ObjectLog marker) {
-		popBack(marker, true);
-		this.rollback(marker.pos);
-		this.foundFailureNode.createdPeg = (Peg)marker.leftNodeOrErrorPeg;
-		this.foundFailureNode.startIndex = marker.pos + marker.index;
-	}
-
-	protected final void popNewObject(PegObject newnode, ObjectLog marker) {
-		UList<ObjectLog> entryList = new UList<ObjectLog>(new ObjectLog[8]);
-		ObjectLog unused = this.logStack;
-		ObjectLog cur = this.logStack;
-		while(cur != null) {
-			if(cur == marker) {
-				this.logStack = marker.next; 
-				marker.next = this.unusedLog;
-				this.unusedLog = unused;
-				break;
-			}
-			if(cur.leftNodeOrErrorPeg == newnode) {
-				entryList.add(cur);
-			}
-			cur = cur.next;
-		}
-		for(int i = entryList.size() - 1; i >= 0; i--) {
-			ObjectLog l = entryList.ArrayValues[i];
-			if(l.index == -1) {
-				newnode.append(l.childNode);
-			}
-			else {
-				newnode.set((int)l.pos, l.childNode);
-			}
-			if(l.childNode.is("#lazy")) {
-				this.parseLazyObject(l.childNode);
-			}
-			l.childNode = null;
-		}
-		newnode.setSource(marker.pos, this.getPosition());
-		newnode.checkNullEntry();
-		entryList = null;
+		newnode.setSource(startIndex, this.getPosition());
 	}
 	
 	public PegObject matchNewObject(PegObject left, PegNewObject e) {
 		PegObject leftNode = left;
-		ObjectLog marker = this.pushNewMarker();
+		long startIndex = this.getPosition();
+		int markerId = this.pushNewMarker();
 		PegObject newnode = this.newPegObject(e.nodeName);
-		newnode.setSource(e, this.source, marker.pos);
+		newnode.setSource(e, this.source, startIndex);
 		if(e.leftJoin) {
 			this.pushSetter(newnode, -1, leftNode);
 		}
 		for(int i = 0; i < e.size(); i++) {
 			PegObject node = e.get(i).performMatch(newnode, this);
 			if(node.isFailure()) {
-				this.disposeObject(marker);
+				this.popBack(markerId);
+				this.rollback(startIndex);
 				return node;
 			}
 			//			if(node != newnode) {
 			//				e.warning("dropping @" + newnode.name + " " + node);
 			//			}
 		}
-		this.popNewObject(newnode, marker);
+		this.popNewObject(newnode, startIndex, markerId);
 		return newnode;
 	}
 
@@ -448,6 +443,7 @@ public abstract class ParserContext {
 			left.startIndex = 0;
 			left.length = (int)left.source.length();
 		}
+		this.parseLazyObject(left);
 		return left;
 	}
 
@@ -485,7 +481,10 @@ public abstract class ParserContext {
 					//System.out.println("[" + this.taskId + "] start parsing: " + left);
 				}
 				PegObject newone = sub.parseNode(left.optionalToken);
-				parent.replace(left, newone);
+				left.tag = newone.tag;
+				left.AST = newone.AST;
+				left.optionalToken = newone.optionalToken;
+//				parent.replace(left, newone);
 				if(Main.VerbosePegMode) {
 					//System.out.println("[" + this.taskId + "] end parsing: " + newone);
 					//sub.endStatInfo(newone);
@@ -560,7 +559,7 @@ public abstract class ParserContext {
 //			}
 			System.gc(); // meaningless ?
 			long length = this.getPosition();
-			System.out.println();
+			System.out.println("parser: " + this.getClass().getSimpleName());
 			System.out.println("erapsed time: " + timer + " msec" + " awaitTime: " + awaitTime + " msec IO: " + this.source.statIOCount);
 			System.out.println("length: " + length + ", consumed: " + this.getPosition() + ", length/backtrack: " + (double)this.backtrackSize / length);
 			System.out.println("backtrack: size= " + this.backtrackSize + " count=" + this.backtrackCount + " average=" + (double)this.backtrackSize / this.backtrackCount);
