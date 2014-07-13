@@ -19,7 +19,7 @@ public class FileSource extends ParserSource {
 			System.out.println("random access file: " + fileName);
 		}
 		this.file = new RandomAccessFile(fileName, "r");
-		this.buffer = new byte[4096];
+		this.buffer = new byte[PageSize];
 		this.buffer_offset = 0;
 		this.readBuffer(this.buffer_offset, this.buffer);
 	}

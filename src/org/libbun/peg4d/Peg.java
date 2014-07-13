@@ -14,9 +14,9 @@ public abstract class Peg {
 	int       flag     = 0;
 	String    ruleName = null;
 	boolean   debug    = false;
-	boolean   hasLeftRecursion = false;
-	boolean   memoizationMode = false;
-	int       clearMemoCounter = 0;
+//	boolean   hasLeftRecursion = false;
+//	boolean   memoizationMode = false;
+//	int       clearMemoCounter = 0;
 
 	ParserSource source = null;
 	int       sourcePosition = 0;
@@ -48,13 +48,13 @@ public abstract class Peg {
 		return sb.toString();
 	}
 	
-	public boolean hasLeftRecursion() {
-		return this.hasLeftRecursion;
-	}
-	
-	public void setLeftRecursion(boolean lrExistense) {
-		this.hasLeftRecursion = lrExistense;
-	}
+//	public boolean hasLeftRecursion() {
+//		return this.hasLeftRecursion;
+//	}
+//	
+//	public void setLeftRecursion(boolean lrExistense) {
+//		this.hasLeftRecursion = lrExistense;
+//	}
 
 	public final PegChoice appendAsChoice(Peg e) {
 		if(this instanceof PegChoice) {
