@@ -1,10 +1,13 @@
 
+_ = [ \t\n\r];
 
-_      = [ \t\n\r];
+TopLevel 
+  = XmlTag
+  ;
 
-TopLevel = XmlTag;
-
-Doc  = XmlTag;
+Doc 
+  = XmlTag
+  ;
 
 XmlTag
   = << '<' XmlName@ XmlAttr@* ('/>' / '>' XmlContent@* '</' XmlName '>') #xml >>

@@ -1,5 +1,7 @@
 package org.libbun;
 
+import org.libbun.peg4d.PegObject;
+
 public class Functor {
 	public final static int _SymbolFunctor = 1;
 	public final static int _ExportFunctor      = (1 << 1);

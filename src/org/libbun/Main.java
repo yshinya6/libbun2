@@ -8,13 +8,21 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.DecimalFormat;
 
 import org.libbun.drv.JvmDriver;
 import org.libbun.drv.PegDumpper;
+import org.libbun.peg4d.FileSource;
+import org.libbun.peg4d.PackratParserContext;
+import org.libbun.peg4d.PrefetchParserContext;
+import org.libbun.peg4d.ParserContext;
+import org.libbun.peg4d.PegObject;
+import org.libbun.peg4d.PegRuleSet;
+import org.libbun.peg4d.ParserSource;
+import org.libbun.peg4d.SimpleParserContext;
+import org.libbun.peg4d.StringSource;
 
 public class Main {
-	public final static String  ProgName  = "libbun";
+	public final static String  ProgName  = "peg4d";
 	public final static String  CodeName  = "yokohama";
 	public final static int     MajorVersion = 2;
 	public final static int     MinerVersion = 0;
@@ -34,6 +42,9 @@ public class Main {
 
 	//
 	private static String InputFileName = null;
+	
+	// --bigdata
+	private static boolean BigDataOption = false;
 
 	// -o
 	private static String OutputFileName = null;
@@ -56,8 +67,8 @@ public class Main {
 	// --disable-memo
 	public static boolean NonMemoPegMode = false;
 	
-	// --fast
-	public static boolean FastMatchMode = false;
+	// --E:engine
+	public static String ParserType = "--parser:Simple";
 
 	private static void parseCommandArguments(String[] args) {
 		int index = 0;
@@ -88,14 +99,8 @@ public class Main {
 			else if (argument.equals("-i")) {
 				ShellMode = true;
 			}
-			else if (argument.equals("--disable-memo")) {
-				NonMemoPegMode = true;
-			}
-			else if (argument.equals("--fast")) {
-				FastMatchMode = true;
-			}
-			else if (argument.equals("--profile")) {
-				ProfileMode = true;
+			else if (argument.equals("--bigdata")) {
+				BigDataOption = true;
 			}
 			else if (argument.equals("--parse-only")) {
 				ParseOnlyMode = true;
@@ -107,6 +112,9 @@ public class Main {
 				else {
 					VerboseMode = true;
 				}
+			}
+			else if(argument.startsWith("--parser:")) {
+				ParserType = argument;
 			}
 			else {
 				ShowUsage("unknown option: " + argument);
@@ -126,10 +134,11 @@ public class Main {
 		System.out.println("  --lang|-l  FILE         Language file");
 		System.out.println("  --driver|-d  NAME       Driver");
 		System.out.println("  --out|-o  FILE          Output filename");
+		System.out.println("  --bigdata               Expecting BigData Processing");
+		System.out.println("  --parser:NAME           (Option) Alternative parser");
 		System.out.println("  --verbose               Printing Debug infomation");
 		System.out.println("  --verbose:peg           Printing Peg/Debug infomation");
 		System.out.println("  --verbose:bun           Printing Peg/Bun infomation");
-		System.out.println("  --profile               Show memory usage and parse time");
 		Main._Exit(0, Message);
 	}
 
@@ -142,6 +151,7 @@ public class Main {
 		driverMap.put("jvm", JvmDriver.class);
 		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
 		driverMap.put("peg", org.libbun.drv.PegDumpper.class);
+		driverMap.put("json", org.libbun.drv.JsonDriver.class);
 	}
 
 	private static BunDriver loadDriverImpl(String driverName) {
@@ -170,25 +180,16 @@ public class Main {
 		return d;
 	}
 
-	public final static ParserContext newParserContext(PegSource source) {
-		if(FastMatchMode) {
-			return new PegParserContext(source);
+	public final static ParserContext newParserContext(ParserSource source) {
+		if(ParserType.equalsIgnoreCase("--parser:packrat")) {
+			return new PackratParserContext(source);
 		}
-		return new SimpleParserContext(source);
+		if(ParserType.equalsIgnoreCase("--parser:simple")) {
+			return new SimpleParserContext(source);
+		}
+		return new PrefetchParserContext(source);  // best parser
 	}
 
-	public final static ParserContext newParserContext(PegSource source, int startIndex, int endIndex, PegRuleSet ruleSet) {
-		if(FastMatchMode) {
-			ParserContext p = new PegParserContext(source, startIndex, endIndex);
-			p.setRuleSet(ruleSet);
-			return p;
-		}
-		else{
-			ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
-			p.setRuleSet(ruleSet);
-			return p;
-		}
-	}
 	
 	public final static void main(String[] args) {
 		parseCommandArguments(args);
@@ -209,33 +210,20 @@ public class Main {
 
 	private static void loadScript(Namespace gamma, BunDriver driver, String fileName) {
 		String startPoint = "TopLevel";
-		PegSource source = Main.loadSource(fileName);
+		ParserSource source = Main.loadSource(fileName);
 		parseLine(gamma, driver, startPoint, source);
 	}
 
-	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, PegSource source) {
+	private static void parseLine(Namespace gamma, BunDriver driver, String startPoint, ParserSource source) {
 		try {
 			ParserContext context = Main.newParserContext(source);
 			gamma.initParserRuleSet(context, "main");
 			driver.startTransaction(OutputFileName);
 			while(context.hasNode()) {
-				ParseProfileStart();
-				PegObject node = context.parsePegObject(new PegObject("#toplevel"), startPoint);
-				if(node.isFailure()) {
-					node = context.newErrorObject();
-				}
+				context.beginStatInfo();
+				PegObject node = context.parseNode(startPoint);
+				context.endStatInfo(node);
 				gamma.setNode(node);
-				if(VerbosePegMode) {
-					System.out.println("parsed:\n" + node.toString());
-					if(context.hasChar()) {
-						System.out.println("** uncosumed: '" + context + "' **");
-					}
-				}
-				if(VerbosePegMode || VerboseMode) {
-					System.out.println();
-					context.showStatInfo(node);
-				}
-				ParseProfileStop();
 				if(!ParseOnlyMode && driver != null) {
 					if(!(driver instanceof PegDumpper)) {
 						node = gamma.tryMatch(node, true);
@@ -261,43 +249,7 @@ public class Main {
 			driver.endTransaction();
 		}
 		catch (Exception e) {
-			PrintStackTrace(e, source.lineNumber);
-		}
-	}
-
-	static long Timer = 0;
-
-	private static void ParseProfileStart() {
-		if(ProfileMode) {
-			Timer = System.currentTimeMillis();
-		}
-	}
-
-	public static String getMemoryInfo() {
-		String info = "";
-		DecimalFormat format_mem =   new DecimalFormat("#,### KB");
-		DecimalFormat format_ratio = new DecimalFormat("##.#");
-		long free =  Runtime.getRuntime().freeMemory() / 1024;
-		long total = Runtime.getRuntime().totalMemory() / 1024;
-		long max =   Runtime.getRuntime().maxMemory() / 1024;
-		long used =  total - free;
-		double ratio = (used * 100 / (double)total);
-
-		info += "Total   = " + format_mem.format(total);
-		info += "\n";
-		info += "Free    = " + format_mem.format(total);
-		info += "\n";
-		info += "use     = " + format_mem.format(used) + " (" + format_ratio.format(ratio) + "%)";
-		info += "\n";
-		info += "can use = " + format_mem.format(max);
-		return info;
-	}
-
-	private static void ParseProfileStop() {
-		if(ProfileMode) {
-			System.out.println("Time    = " + (System.currentTimeMillis() - Timer) + " msec");
-			System.gc();
-			System.out.println(getMemoryInfo());
+			PrintStackTrace(e, source.getLineNumber(0));
 		}
 	}
 
@@ -324,7 +276,7 @@ public class Main {
 				}
 			}
 			if(startPoint != null) {
-				PegSource source = new PegSource("(stdin)", linenum, line);
+				ParserSource source = new StringSource("(stdin)", linenum, line);
 				parseLine(gamma, driver, startPoint, source);
 			}
 			linenum = linenum + 1;
@@ -372,14 +324,14 @@ public class Main {
 		return line;
 	}
 
-	private static void PrintStackTrace(Exception e, int linenum) {
+	private static void PrintStackTrace(Exception e, long linenum) {
 		StackTraceElement[] elements = e.getStackTrace();
 		int size = elements.length + 1;
 		StackTraceElement[] newElements = new StackTraceElement[size];
 		int i = 0;
 		for(; i < size; i++) {
 			if(i == size - 1) {
-				newElements[i] = new StackTraceElement("<TopLevel>", "TopLevelEval", "stdin", linenum);
+				newElements[i] = new StackTraceElement("<TopLevel>", "TopLevelEval", "stdin", (int)linenum);
 				break;
 			}
 			newElements[i] = elements[i];
@@ -404,11 +356,14 @@ public class Main {
 
 	// file
 
-	public final static PegSource loadSource(String fileName) {
+	public final static ParserSource loadSource(String fileName) {
 		//ZLogger.VerboseLog(ZLogger.VerboseFile, "loading " + FileName);
 		InputStream Stream = Main.class.getResourceAsStream("/" + fileName);
 		if (Stream == null) {
 			try {
+				if(BigDataOption) {
+					return new FileSource(fileName);
+				}
 				Stream = new FileInputStream(fileName);
 			} catch (FileNotFoundException e) {
 				Main._Exit(1, "file not found: " + fileName);
@@ -424,7 +379,7 @@ public class Main {
 				builder.append("\n");
 				line = reader.readLine();
 			}
-			return new PegSource(fileName, 1, builder.toString());
+			return new StringSource(fileName, 1, builder.toString());
 		}
 		catch(IOException e) {
 			e.printStackTrace();

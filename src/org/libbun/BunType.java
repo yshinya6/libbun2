@@ -1,5 +1,7 @@
 package org.libbun;
 
+import org.libbun.peg4d.PegObject;
+
 public abstract class BunType  {
 	protected int         typeId    = -1;
 	protected Object      typeInfo  = null;  // used in Class<?> in JVM (for example)

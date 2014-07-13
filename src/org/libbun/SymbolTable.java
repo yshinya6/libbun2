@@ -1,5 +1,8 @@
 package org.libbun;
 
+import org.libbun.peg4d.ParserContext;
+import org.libbun.peg4d.PegObject;
+
 public class SymbolTable {
 	Namespace          root = null;
 	PegObject          scope     = null;
@@ -8,7 +11,7 @@ public class SymbolTable {
 	public SymbolTable(Namespace namespace) {
 		this.root = namespace;
 	}
-	SymbolTable(Namespace root, PegObject node) {
+	public SymbolTable(Namespace root, PegObject node) {
 		this.root = root;
 		this.setNode(node);
 	}

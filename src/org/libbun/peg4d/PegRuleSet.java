@@ -1,4 +1,9 @@
-package org.libbun;
+package org.libbun.peg4d;
+
+import org.libbun.Main;
+import org.libbun.UCharset;
+import org.libbun.UList;
+import org.libbun.UMap;
 
 public final class PegRuleSet {
 	UMap<Peg>           pegMap;
@@ -40,9 +45,9 @@ public final class PegRuleSet {
 			for(int i = 0; i < e.size(); i++) {
 				newnode.add(this.checkPegRule(name, e.get(i)));
 			}
-			if(Main.FastMatchMode) {
-				this.checkMemoMode(newnode, newnode, 0);
-			}
+//			if(Main.FastMatchMode) {
+//				this.checkMemoMode(newnode, newnode, 0);
+//			}
 			if(newnode.size() == 1) {
 				return newnode.get(0);
 			}
@@ -61,35 +66,35 @@ public final class PegRuleSet {
 		return e;
 	}
 	
-	@SuppressWarnings("null")
-	private void checkMemoMode(Peg e, Peg content, int pos) {
-		for(int i = 0; i < content.size(); i++) {
-			if(content.get(i) instanceof PegLabel) {
-				pos += i;
-				PegLabel Label = (PegLabel) content.get(i); 
-				if(checkMemoModeMap.hasKey(Label.symbol)) {
-					CheckData checkData = checkMemoModeMap.get(Label.symbol); 
-					if (checkMemoModeMap.get(Label.symbol).pos == pos) {
-						content.get(i).memoizationMode = true;
-						checkData.e.memoizationMode = true;
-					}
-				}
-				else{
-					CheckData index = new CheckData();
-					index.e = content.get(i);
-					index.pos = pos;
-					checkMemoModeMap.put(Label.symbol, index);
-				}
-				pos -= i;
-			}
-			else if(content.get(i) instanceof PegChoice || content.get(i) instanceof PegSequence) {
-				checkMemoMode(e, content.get(i), pos);
-			}
-			else if(content.get(i) instanceof PegNewObject) {
-				checkMemoMode(e, content.get(i), pos);
-			}
-		}
-	}
+//	@SuppressWarnings("null")
+//	private void checkMemoMode(Peg e, Peg content, int pos) {
+//		for(int i = 0; i < content.size(); i++) {
+//			if(content.get(i) instanceof PegLabel) {
+//				pos += i;
+//				PegLabel Label = (PegLabel) content.get(i); 
+//				if(checkMemoModeMap.hasKey(Label.symbol)) {
+//					CheckData checkData = checkMemoModeMap.get(Label.symbol); 
+//					if (checkMemoModeMap.get(Label.symbol).pos == pos) {
+//						content.get(i).memoizationMode = true;
+//						checkData.e.memoizationMode = true;
+//					}
+//				}
+//				else{
+//					CheckData index = new CheckData();
+//					index.e = content.get(i);
+//					index.pos = pos;
+//					checkMemoModeMap.put(Label.symbol, index);
+//				}
+//				pos -= i;
+//			}
+//			else if(content.get(i) instanceof PegChoice || content.get(i) instanceof PegSequence) {
+//				checkMemoMode(e, content.get(i), pos);
+//			}
+//			else if(content.get(i) instanceof PegNewObject) {
+//				checkMemoMode(e, content.get(i), pos);
+//			}
+//		}
+//	}
 	
 	public final void check() {
 		this.objectLabelMap = new UMap<String>();
@@ -129,6 +134,7 @@ public final class PegRuleSet {
 	}
 	
 	private void parse(ParserContext context, PegObject node) {
+		//System.out.println("DEBUG? parsed: " + node);		
 		if(node.is("#rule")) {
 			String ruleName = node.textAt(0, "");
 			Peg e = toPeg(node.get(1));
@@ -147,7 +153,7 @@ public final class PegRuleSet {
 	private Peg toPeg(PegObject node) {
 		Peg e = this.toPegImpl(node);
 		e.source = node.source;
-		e.sourcePosition = node.startIndex;
+		e.sourcePosition = (int)node.startIndex;
 		return e;
 	}	
 	private Peg toPegImpl(PegObject node) {
@@ -184,10 +190,10 @@ public final class PegRuleSet {
 			return new PegAnd(toPeg(node.get(0)));
 		}
 		if(node.is("#one")) {
-			return new PegOneMore(null, toPeg(node.get(0)));
+			return new PegRepeat(toPeg(node.get(0)), 1);
 		}
 		if(node.is("#zero")) {
-			return new PegZeroMore(toPeg(node.get(0)));
+			return new PegRepeat(toPeg(node.get(0)), 0);
 		}
 		if(node.is("#option")) {
 			return new PegOptional(toPeg(node.get(0)));
@@ -299,16 +305,16 @@ public final class PegRuleSet {
 		return new PegOptional(e);
 	}
 	private final static Peg zero(Peg e) {
-		return new PegZeroMore(e);
+		return new PegRepeat(e, 0);
 	}
 	private final static Peg zero(Peg ... elist) {
-		return new PegZeroMore(seq(elist));
+		return new PegRepeat(seq(elist), 0);
 	}
 	private final static Peg one(Peg e) {
-		return new PegOneMore(null, e);
+		return new PegRepeat(e, 1);
 	}
 	private final static Peg one(Peg ... elist) {
-		return new PegOneMore(null, seq(elist));
+		return new PegRepeat(seq(elist), 1);
 	}
 	private final static Peg seq(Peg ... elist) {
 		PegSequence l = new PegSequence();
@@ -348,7 +354,7 @@ public final class PegRuleSet {
 		return new PegSetter(e, -1);
 	}
 
-	PegRuleSet loadPegRule() {
+	public PegRuleSet loadPegRule() {
 		Peg Any = new PegAny();
 		Peg NewLine = c("\\r\\n");
 //		Comment

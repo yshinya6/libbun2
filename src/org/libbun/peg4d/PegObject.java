@@ -1,29 +1,35 @@
-package org.libbun;
+package org.libbun.peg4d;
+
+import org.libbun.BunType;
+import org.libbun.Functor;
+import org.libbun.Main;
+import org.libbun.SourceBuilder;
+import org.libbun.SymbolTable;
 
 public class PegObject {
-	Peg          createdPeg = null;
-	public PegSource    source = null;
-	int          startIndex = 0;
-	int          endIndex = 0;
-	public String       tag = null;
-	public String       optionalToken = null;
-	PegObject    parent = null;
-	PegObject    AST[] = null;
-	SymbolTable  gamma = null;
-	Functor      matched = null;
-	BunType      typed   = null;
-	boolean      memoizationMode = false;
+	Peg                    createdPeg = null;
+	public ParserSource    source = null;
+	public long            startIndex = 0;
+	public int             length = 0;
+	public String          tag = null;
+	public String          optionalToken = null;
+	public PegObject       parent = null;
+	public PegObject       AST[] = null;
+	public SymbolTable     gamma = null;
+	public Functor         matched = null;
+	public BunType         typed   = null;
+	//boolean                memoizationMode = false;
 
-	PegObject(String tag) {
+	public PegObject(String tag) {
 		this.tag = tag;
 	}
 
-	PegObject(String tag, PegSource source, Peg createdPeg, int startIndex) {
+	public PegObject(String tag, ParserSource source, Peg createdPeg, long startIndex) {
 		this.tag        = tag;
 		this.source     = source;
 		this.createdPeg = createdPeg;
 		this.startIndex = startIndex;
-		this.endIndex   = startIndex;
+		this.length     = 0;
 	}
 
 	public final boolean isFailure() {
@@ -34,19 +40,25 @@ public class PegObject {
 		return this.tag.equals(functor);
 	}
 
-	public final void setSource(Peg createdPeg, PegSource source, int startIndex, int endIndex) {
+	public final void setSource(Peg createdPeg, ParserSource source, long startIndex) {
 		this.createdPeg = createdPeg;
 		this.source     = source;
 		this.startIndex = startIndex;
-		this.endIndex   = endIndex;
+		this.length     = 0;
 	}
 
+	public final void setSource(long startIndex, long endIndex) {
+		this.startIndex = startIndex;
+		this.length     = (int)(endIndex - startIndex);
+	}
+
+	
 	public final String formatSourceMessage(String type, String msg) {
 		return this.source.formatErrorMessage(type, this.startIndex, msg);
 	}
 	
 	public final boolean isEmptyToken() {
-		return this.startIndex == this.endIndex;
+		return this.length == 0;
 	}
 	
 	public final String getText() {
@@ -54,7 +66,7 @@ public class PegObject {
 			return this.optionalToken;
 		}
 		if(this.source != null) {
-			return this.source.substring(this.startIndex, this.endIndex);
+			return this.source.substring(this.startIndex, this.startIndex + this.length);
 		}
 		return "";
 	}
@@ -152,6 +164,14 @@ public class PegObject {
 		}
 	}
 	
+	public void replace(PegObject oldone, PegObject newone) {
+		for(int i = 0; i < this.size(); i++) {
+			if(this.AST[i] == oldone) {
+				this.AST[i] = newone;
+				newone.parent = this;
+			}
+		}
+	}
 	
 	public final int count() {
 		int count = 1;
@@ -302,3 +322,4 @@ public class PegObject {
 		return this.typed == null || this.typed == BunType.UntypedType;
 	}
 }
+

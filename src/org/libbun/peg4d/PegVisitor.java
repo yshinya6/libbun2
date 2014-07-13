@@ -1,4 +1,5 @@
-package org.libbun;
+package org.libbun.peg4d;
+
 
 public interface PegVisitor {
 	public void visitPegString(PegString peg);
@@ -6,7 +7,7 @@ public interface PegVisitor {
 	public void visitPegCharacter(PegCharacter peg);
 	public void visitPegLabel(PegLabel peg);
 	public void visitPegOptional(PegOptional peg);
-	public void visitOneMore(PegOneMore peg);
+	public void visitOneMore(PegRepeat peg);
 	public void visitZeroMore(PegZeroMore peg);
 	public void visitPegAnd(PegAnd peg);
 	public void visitPegNot(PegNot peg);

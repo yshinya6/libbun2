@@ -4,10 +4,10 @@ import org.libbun.BunDriver;
 import org.libbun.BunType;
 import org.libbun.DriverCommand;
 import org.libbun.Main;
-import org.libbun.PegObject;
 import org.libbun.UCharset;
 import org.libbun.UList;
 import org.libbun.UStringBuilder;
+import org.libbun.peg4d.PegObject;
 
 abstract class SourceDriver extends BunDriver {
 
@@ -22,8 +22,9 @@ abstract class SourceDriver extends BunDriver {
 		this.addCommand("quote",     new QuoteCommand());
 		this.addCommand("typeof",    new TypeofCommand());
 		this.addCommand("statement", new StatementCommand());
-		this.addCommand("list",      new ListCommand());
 		this.addCommand("newline",   new NewLineCommand());
+		this.addCommand("list",  new ListCommand());
+		this.addCommand("textlist",  new TextListCommand());
 	}
 
 	@Override
@@ -159,6 +160,22 @@ abstract class SourceDriver extends BunDriver {
 			}
 		}
 	}
-	
+
+	class TextListCommand extends DriverCommand {
+		@Override
+		public void invoke(BunDriver driver, PegObject node, String[] param) {
+			String Separator = "";
+			if(param.length > 0) {
+				Separator = param[0];
+			}
+			for(int i = 0; i < node.size(); i++) {
+				if(i > 0) {
+					driver.pushCode(Separator);
+				}
+				driver.pushCode(node.textAt(i, ""));
+			}
+		}
+	}
+
 
 }

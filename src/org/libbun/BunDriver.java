@@ -1,5 +1,7 @@
 package org.libbun;
 
+import org.libbun.peg4d.PegObject;
+
 public abstract class BunDriver {
 
 	public abstract String getDesc();

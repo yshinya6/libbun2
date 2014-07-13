@@ -12,12 +12,13 @@ import org.libbun.BunDriver;
 import org.libbun.BunType;
 import org.libbun.DriverCommand;
 import org.libbun.Namespace;
-import org.libbun.PegObject;
 import org.libbun.UMap;
 import org.libbun.drv.JvmRuntime.ArrayImpl;
 import org.libbun.drv.JvmRuntime.FuncHolder;
 import org.libbun.drv.JvmRuntime.JvmOperator;
 import org.libbun.drv.JvmRuntime.MapImpl;
+import org.libbun.peg4d.PegObject;
+
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -360,7 +361,6 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			mBuilders.peek().push(Long.parseLong(node.getText()));
-			"".toUpperCase();
 		}
 	}
 
