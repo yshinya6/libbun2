@@ -1,0 +1,480 @@
+typedef String
+typedef void
+typedef Object
+
+typedef long
+typedef double
+typedef boolean
+
+// statement definition
+template #block(*): void {
+	${Block this}
+}
+
+template #Tvar() {
+}
+
+template #Tboolean(): boolean {
+}
+
+template #Tint64() : long {
+}
+
+template #Tint() : long {
+}
+
+template #Tfloat(): double {
+}
+
+template #Tdouble(): double {
+}
+
+template #if(cond : boolean, then : void) : void {
+	${If}
+}
+
+template #if(cond : boolean, then : void, else) : void {
+	${If}
+}
+
+template #while(cond : boolean, block : void) : void {
+	${While}
+}
+
+// expression definition.
+template<T> #group(x : T) : T {
+	${x} ${IsStmtEnd}
+}
+
+template #int(): long {
+	${PushAsLong} ${IsStmtEnd}
+}
+
+template #int64(): long {
+	${PushAsLong} ${IsStmtEnd}
+}
+
+template #integer(): long {
+	${PushAsLong} ${IsStmtEnd}
+}
+
+template #double() : double {
+	${PushAsDouble} ${IsStmtEnd}
+}
+
+template #float() : double {
+	${PushAsDouble} ${IsStmtEnd}
+}
+
+template #true() : boolean {
+	${PushAsBoolean true} ${IsStmtEnd}
+}
+
+template #false() : boolean {
+	${PushAsBoolean false} ${IsStmtEnd}
+}
+
+template #string() : String {
+	${PushAsString} ${IsStmtEnd}
+}
+
+template #error(*) {
+}
+
+// binary op definition
+// ADD
+template #add(x : long, y : long) : long {
+	${x} ${y} ${LADD} ${IsStmtEnd}
+}
+
+template #add(x : long, y : double) : double {
+	${x} ${L2D} ${y} ${DADD} ${IsStmtEnd}
+}
+
+template #add(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DADD} ${IsStmtEnd}
+}
+
+template #add(x : double, y : double) : double {
+	${x} ${y} ${DADD} ${IsStmtEnd}
+}
+// string concat
+template #add(x : String, y : long) : String {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #add(x : String, y : double) : String {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #add(x : String, y : boolean) : String {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #add(x : long, y : String) : String {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #add(x : double, y : String) : String {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #add(x : boolean, y : String) : String {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+
+//SUB
+template #sub(x : long, y : long) : long {
+	${x} ${y} ${LSUB} ${IsStmtEnd}
+}
+
+template #sub(x : long, y : double) : double {
+	${x} ${L2D} ${y} ${DSUB} ${IsStmtEnd}
+}
+
+template #sub(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DSUB} ${IsStmtEnd}
+}
+
+template #sub(x : double, y : double) : double {
+	${x} ${y} ${DSUB} ${IsStmtEnd}
+}
+
+// MUL
+template #mul(x : long, y : long) : long {
+	${x} ${y} ${LMUL} ${IsStmtEnd}
+}
+
+template #mul(x : long, y : double) : double {
+	${x} ${L2D} ${y} ${DMUL}
+}
+
+template #mul(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DMUL}
+}
+
+template #mul(x : double, y : double) : double {
+	${x} ${y} ${DMUL}
+}
+
+// DIV
+template #div(x : long, y : long) : long {
+	${x} ${y} ${LDIV}
+}
+
+template #div(x : long, y : double) : double {
+	${x} ${L2D} ${y} ${DDIV}
+}
+
+template #div(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DDIV}
+}
+
+template #div(x : double, y : double) : double {
+	${x} ${y} ${DDIV} ${IsStmtEnd}
+}
+
+// MOD
+template #mod(x : long, y : long) : long {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #mod(x : long, y : double) : double {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #mod(x : double, y : long) : double {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #mod(x : double, y : double) : double {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+// EQ
+template #eq(x : long, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #eq(x : long, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #eq(x : double, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #eq(x : double, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #eq(x : boolean, y : boolean) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #eq(x : String, y : String) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #eq(x : Object, y : Object) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+// NOTEQ
+template #noteq(x : long, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #noteq(x : long, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #noteq(x : double, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #noteq(x : double, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #noteq(x : boolean, y : boolean) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #noteq(x : String, y : String) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #noteq(x : Object, y : Object) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+// LT
+template #lt(x : long, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #lt(x : long, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #lt(x : double, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #lt(x : double, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+// LTE
+template #lte(x : long, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #lte(x : long, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #lte(x : double, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #lte(x : double, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+// GT
+template #gt(x : long, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #gt(x : long, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #gt(x : double, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #gt(x : double, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+// GTE
+template #gte(x : long, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #gte(x : long, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #gte(x : double, y : long) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+template #gte(x : double, y : double) : boolean {
+	${x} ${y} ${CallOp} ${IsStmtEnd}
+}
+
+// unary op definition
+// NOT
+template #not(x : boolean) : boolean {
+	${x} ${CallOp} ${IsStmtEnd}
+}
+
+// PLUS
+template #plus(x : long) : long {
+	${x} ${IsStmtEnd}
+}
+
+template #plus(x : double) : double {
+	${x} ${IsStmtEnd}
+}
+
+// MINUS
+template #minus(x : long) : long {
+	${x} ${LNEG} ${IsStmtEnd}
+}
+
+template #minus(x : double) : double {
+	${x} ${DNEG} ${IsStmtEnd}
+}
+
+// COMPL
+template #compl(x : long) : long {
+	${x} ${CallOp} ${IsStmtEnd}
+}
+
+// conditional operator
+// And
+template #and(x : boolean, y : boolean) : boolean {
+	${And} ${IsStmtEnd}
+}
+
+// Or
+template #or(x : boolean, y : boolean) : boolean {
+	${Or} ${IsStmtEnd}
+}
+
+// collection
+template #array(*) : any {
+	${NewArray} ${IsStmtEnd}
+}
+
+template #map(*) : any {
+	${NewMap} ${IsStmtEnd}
+}
+
+template #index(recv : any, index : any) :any {
+	${recv} ${index} ${CallDynamic get bsmMethod Object Object Object} ${IsStmtEnd}
+}
+
+// dummy
+template #arguments(*) {
+}
+
+template<T> #apply(t, arg : T) : T {
+	${Apply} ${IsStmtEnd}
+}
+
+// dummy
+template #name() {
+}
+
+template #assign(left : T, right : T) : void {
+	${Assign}
+}
+
+template #trinary(cond : any, then : any, else : any) : any {
+	${Trinary} ${IsStmtEnd}
+}
+
+// dummy
+template #param(name, type): void {
+}
+template #function(name, params, rtype, block) : void {
+	${Defun}
+}
+
+template #return(expr : any) : void {
+	${expr} ${Return}
+}
+
+template #return() : void {
+	${Return}
+}
+
+template<T> #let(name, type : T, value : T): void {
+	${VarDecl}
+}
+
+template<T> #var(name, type : T, value : T): void {
+	${VarDecl}
+}
+
+template #break(): void {
+	${Jump break}
+}
+
+template #continue(): void {
+	${Jump continue}
+}
+
+template #empty(): void {
+}
+
+template #throw(expr): void {
+	${expr} ${Box} ${ATHROW}
+}
+
+// builtin method
+template println(x : any) : void {
+	${x} ${Box} ${INVOKESTATIC JvmOperator void println java.lang.Object}
+}
+
+template assert(x: boolean) :void {
+	${x} ${INVOKESTATIC JvmOperator void assertImpl boolean}
+}
+
+// string api
+template size(x: String): long {
+	${x} ${INVOKEVIRTUAL java.lang.String int length} ${I2L} ${IsStmtEnd method}
+}
+
+template equals(x: String, y: String): boolean {
+	${x} ${y} ${INVOKEVIRTUAL java.lang.String boolean equals java.lang.Object} ${IsStmtEnd method}
+}
+
+template startsWith(x: String, y: String): boolean {
+	${x} ${y} ${INVOKEVIRTUAL java.lang.String boolean startsWith java.lang.String} ${IsStmtEnd method}
+}
+
+template endsWith(x: String, y: String): boolean {
+	${x} ${y} ${INVOKEVIRTUAL java.lang.String boolean endsWith java.lang.String} ${IsStmtEnd method}
+}
+
+template substring(x: String, y: long): String {
+	${x} ${y} ${L2I} ${INVOKEVIRTUAL java.lang.String java.lang.String substring int} ${IsStmtEnd method}
+}
+
+template substring(x: String, y: long, z : long): String {
+	${x} ${y} ${L2I} ${z} ${L2I} ${INVOKEVIRTUAL java.lang.String java.lang.String substring int int} ${IsStmtEnd method}
+}
+
+template indexOf(x: String, y: String): long {
+	${x} ${y} ${INVOKEVIRTUAL java.lang.String int indexOf java.lang.String} ${I2L} ${IsStmtEnd method}
+}
+
+template lastIndexOf(x: String, y: String): long {
+	${x} ${y} ${INVOKEVIRTUAL java.lang.String int lastIndexOf java.lang.String} ${I2L} ${IsStmtEnd method}
+}
+
+template toUpperCase(x: String): String {
+	${x} ${INVOKEVIRTUAL java.lang.String java.lang.String toUpperCase} ${IsStmtEnd method}
+}
+
+template toLowerCase(x: String): String {
+	${x} ${INVOKEVIRTUAL java.lang.String java.lang.String toLowerCase} ${IsStmtEnd method}
+}

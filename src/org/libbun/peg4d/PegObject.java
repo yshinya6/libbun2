@@ -314,6 +314,10 @@ public class PegObject {
 		return c;
 	}
 
+	public final PegObject getParent() {
+		return this.parent;
+	}
+
 	public final boolean isUntyped() {
 		return this.typed == null || this.typed == BunType.UntypedType;
 	}
