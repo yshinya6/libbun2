@@ -21,6 +21,7 @@ import org.libbun.peg4d.PegRuleSet;
 import org.libbun.peg4d.ParserSource;
 import org.libbun.peg4d.SimpleParserContext;
 import org.libbun.peg4d.StringSource;
+import org.libbun.peg4d.ValidParserContext;
 
 public class Main {
 	public final static String  ProgName  = "peg4d";
@@ -199,6 +200,9 @@ public class Main {
 	}
 
 	public final static ParserContext newParserContext(ParserSource source) {
+		if(inParseAndValidateJson) {
+			return new ValidParserContext(source);
+		}
 		if(ParserType.equalsIgnoreCase("--parser:packrat")) {
 			return new PackratParserContext(source);
 		}
@@ -276,7 +280,7 @@ public class Main {
 		}
 	}
 	
-	private static boolean inParseAndValidJson = false;
+	private static boolean inParseAndValidateJson = false;
 	
 	private final static PegObject parseAndValidateJson(PegObject node, Namespace gamma, BunDriver driver, String startPoint) {
 		JsonPegGenerator generator = new JsonPegGenerator();
@@ -284,7 +288,7 @@ public class Main {
 		gamma.loadPegFile("main", language);
 		driver.initTable(gamma);
 		if(InputJsonFile != null) {
-			inParseAndValidJson = true;
+			inParseAndValidateJson = true;
 			ParserSource source = Main.loadSource(InputJsonFile);
 			ParserContext context = Main.newParserContext(source);
 			gamma.initParserRuleSet(context, "main");
@@ -293,6 +297,7 @@ public class Main {
 				node = context.parsePegObject(new PegObject("#toplevel"), startPoint);
 					System.out.println("parsed:\n" + node.toString());
 					if(context.hasChar()) {
+						System.out.println(ValidParserContext.InvalidLine);
 						//System.out.println("** uncosumed: '" + context + "' **");
 					}
 					else {
