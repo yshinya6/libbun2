@@ -2,7 +2,7 @@
 	{
 		"Human" : {
 				"Name" : "honda",
-
+				"Age" : 21,
 				"SingleLife" : true,
 				"School" : {
 						"SchoolName" : "kokudai",
