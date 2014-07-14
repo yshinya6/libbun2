@@ -430,8 +430,8 @@ template #throw(expr): void {
 }
 
 // builtin method
-template println(x : any) : void {
-	${x} ${Box} ${INVOKESTATIC JvmOperator void println java.lang.Object}
+template println(x : String) : void {
+	${x} ${INVOKESTATIC JvmOperator void println java.lang.Object}
 }
 
 template assert(x: boolean) :void {

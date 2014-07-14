@@ -18,7 +18,6 @@ import org.libbun.drv.JvmRuntime.FuncHolder;
 import org.libbun.drv.JvmRuntime.JvmOperator;
 import org.libbun.drv.JvmRuntime.MapImpl;
 import org.libbun.peg4d.PegObject;
-
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Opcodes;
@@ -73,7 +72,12 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	 * contains type descriptor and method descriptor of static method.
 	 */
 	protected final Map<String, Pair<Type, Method>> staticFuncMap;
-	
+
+	/**
+	 * contains method descriptor of main, and holder class.
+	 */
+	protected Pair<Class<?>, Method> mainClassPair;
+
 	public JvmDriver() {
 		this("lib/driver/jvm/common.bun");
 	}
@@ -151,7 +155,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		this.classMap.put("double", double.class);
 		this.classMap.put("boolean", boolean.class);
 		this.classMap.put("String", String.class);
-		this.classMap.put("void", Void.class);
+		this.classMap.put("void", void.class);
 		this.classMap.put("Object", Object.class);
 		this.classMap.put("untyped", Object.class);
 
@@ -203,6 +207,15 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	public void endTopLevel() {
 	}
 
+	@Override
+	public void generateMain() { 
+		if(this.hasMainFunction()) {
+			this.hasMainFunc = false;
+			Class<?> mainHolderClass = this.mainClassPair.getLeft();
+			this.mBuilders.peek().invokeStatic(Type.getType(mainHolderClass), this.mainClassPair.getRight());
+			this.mainClassPair = null;
+		}
+	}
 
 	protected void initBsmHandle(String name) {
 		String bsmName = "bsm" + name;
@@ -302,8 +315,15 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	@Override
-	public void pushApplyNode(String name, PegObject args) {	// invoke static
-		this.pushNode(args.getParent());
+	public void pushApplyNode(String name, PegObject args) {
+		MethodBuilder mBuilder = mBuilders.peek();
+		VarScopes scopes = mBuilder.getScopes();
+		Pair<Type, Method> pair = staticFuncMap.get(((FuncEntry)scopes.getEntry(name)).getInternalName());
+		int paramSize = args.size();
+		for(int i = 0 ; i < paramSize; i++) {
+			this.pushNode(args.get(i));
+		}
+		mBuilder.invokeStatic(pair.getLeft(), pair.getRight());
 	}
 
 	@Override
@@ -745,6 +765,11 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		}
 	}
 
+	/**
+	 * need stacktop class
+	 * @author skgchxngsxyz-osx
+	 *
+	 */
 	protected class UnBoxCommand extends DriverCommand {
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
@@ -755,7 +780,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 	}
 
 	/**
-	 * generate array. acutauly call constructor of ArrayImpl.ArrayImpl(Object[])
+	 * generate array. actually call constructor of ArrayImpl.ArrayImpl(Object[])
 	 * not support primitive value.
 	 * @author skgchxngsxyz-osx
 	 *
@@ -877,7 +902,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			mBuilder.endMethod();
 
 			// static method
-			BunType returnType = node.getType(null).getReturnType();
+			BunType returnType = node.getType(null).getReturnType().getRealType();
 			PegObject paramsNode = node.get(1);
 			Method methodDesc = this.toMethodDesc(returnType, staticFuncMethodName, paramsNode);//TODO:
 			staticFuncMap.put(internalName, new Pair<Type, Method>(fieldTypeDesc, methodDesc));
@@ -903,7 +928,10 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			mBuilder.returnValue();
 			mBuilder.endMethod();
 			
-			loader.generateClassFromByteCode(internalName, cBuilder.toByteArray());
+			Class<?> funcHolderClass = loader.generateClassFromByteCode(internalName, cBuilder.toByteArray());
+			if(funcName.equals("main")) {
+				mainClassPair = new Pair<Class<?>, Method>(funcHolderClass, methodDesc);
+			}
 		}
 
 		// TODO: return type
@@ -965,7 +993,7 @@ public class JvmDriver extends BunDriver implements Opcodes {
 		}
 	}
 
-	protected class ApplyCommand extends DriverCommand {
+	protected class ApplyCommand extends DriverCommand {	//FIXME: method call
 		@Override
 		public void invoke(BunDriver driver, PegObject node, String[] param) {
 			PegObject targetNode = node.get(0);
@@ -983,7 +1011,8 @@ public class JvmDriver extends BunDriver implements Opcodes {
 			}
 			else if(targetNode.is("#name")) {	// func call
 				MethodBuilder mBuilder = mBuilders.peek();
-				Pair<Type, Method> pair = this.lookupFunc(driver, targetNode);
+				String internalFuncName = ((FuncEntry)mBuilder.getScopes().getEntry(targetNode.getText())).getInternalName();
+				Pair<Type, Method> pair = staticFuncMap.get(internalFuncName);
 				int paramSize = argsNode.size();
 				for(int i = 0 ; i < paramSize; i++) {
 					driver.pushNode(argsNode.get(i));
@@ -1002,18 +1031,6 @@ public class JvmDriver extends BunDriver implements Opcodes {
 				paramTypeDescs[i] = Type.getType(Object.class);
 			}
 			return Type.getMethodType(returnTypeDesc, paramTypeDescs);
-		}
-
-		private Pair<Type, Method> lookupFunc(BunDriver driver, PegObject funcNameNode) {
-			VarScopes scopes = mBuilders.peek().getScopes();
-			String funcName = funcNameNode.getText();
-			String key = funcName;
-			if(scopes.hasEntry(funcName)) {
-				//
-				FuncEntry entry = (FuncEntry) scopes.getEntry(funcName);
-				key = entry.getInternalName();
-			}
-			return staticFuncMap.get(key);
 		}
 	}
 
