@@ -1,0 +1,356 @@
+typedef boolean
+typedef long
+typedef double
+typedef String
+typedef void
+typedef Object
+
+
+template #block(*): void {
+	${BLOCK}
+}
+
+template #int64(): long {
+	${PUSH_AS_LONG this} ${IsStmtEnd}
+}
+
+template #double() : double {
+	${PUSH_AS_DOUBLE this} ${IsStmtEnd}
+}
+
+template #true() :boolean {
+	${PUSH_AS_BOOLEAN true} ${IsStmtEnd}
+}
+
+template #false() :boolean {
+	${PUSH_AS_BOOLEAN false} ${IsStmtEnd}
+}
+
+template #string() : String {
+	${PUSH_AS_STRING} ${IsStmtEnd}
+}
+
+template #Tvar() {
+}
+
+// binary op definition
+// ADD
+template #add(x : long, y : long) : long {
+	${x} ${y} ${LADD} ${IsStmtEnd}
+}
+
+template #add(x : long, y : double) : double {
+	${x} ${L2D} ${y} ${DADD} ${IsStmtEnd}
+}
+
+template #add(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DADD} ${IsStmtEnd}
+}
+
+template #add(x : double, y : double) : double {
+	${x} ${y} ${DADD} ${IsStmtEnd}
+}
+// string concat
+template #add(x : String, y : long) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #add(x : String, y : double) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #add(x : String, y : boolean) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #add(x : String, y : Object) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #add(x : long, y : String) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #add(x : double, y : String) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #add(x : boolean, y : String) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #add(x : Object, y : String) : String {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+//SUB
+template #sub(x : long, y : long) : long {
+	${x} ${y} ${LSUB} ${IsStmtEnd}
+}
+
+template #sub(x : long, y : double) : double {
+	${x} ${L2D} ${y} ${DSUB} ${IsStmtEnd}
+}
+
+template #sub(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DSUB} ${IsStmtEnd}
+}
+
+template #sub(x : double, y : double) : double {
+	${x} ${y} ${DSUB} ${IsStmtEnd}
+}
+
+// MUL
+template #mul(x : long, y : long) : long {
+	${x} ${y} ${LMUL} ${IsStmtEnd}
+}
+
+template #mul(x : long, y : double) : double {
+	${x} ${L2D} ${y} ${DMUL}
+}
+
+template #mul(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DMUL}
+}
+
+template #mul(x : double, y : double) : double {
+	${x} ${y} ${DMUL}
+}
+
+// DIV
+template #div(x : long, y : long) : long {
+	${x} ${y} ${LDIV}
+}
+
+template #div(x : long, y : double) : double {
+	${x} ${y} ${DDIV}
+}
+
+template #div(x : double, y : long) : double {
+	${x} ${y} ${L2D} ${DDIV}
+}
+
+template #div(x : double, y : double) : double {
+	${x} ${y} ${DDIV} ${IsStmtEnd}
+}
+
+// MOD
+template #mod(x : long, y : long) : long {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #mod(x : long, y : double) : double {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #mod(x : double, y : long) : double {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #mod(x : double, y : double) : double {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+// EQ
+template #eq(x : long, y : long) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #eq(x : long, y : double) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #eq(x : double, y : long) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #eq(x : double, y : double) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #eq(x : boolean, y : boolean) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #eq(x : String, y : String) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #eq(x : Object, y : Object) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+// NOTEQ
+template #noteq(x : long, y : long) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #noteq(x : long, y : double) : boolean {
+	${x} ${y} ${OP} ${IsStmtEnd}
+}
+
+template #noteq(x : double, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #noteq(x : double, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #noteq(x : boolean, y : boolean) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #noteq(x : String, y : String) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #noteq(x : Object, y : Object) : boolean {
+	${x} ${y} ${OP}
+}
+
+// LT
+template #lt(x : long, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #lt(x : long, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #lt(x : double, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #lt(x : double, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+// LTE
+template #lte(x : long, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #lte(x : long, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #lte(x : double, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #lte(x : double, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+// GT
+template #gt(x : long, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #gt(x : long, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #gt(x : double, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #gt(x : double, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+// GTE
+template #gte(x : long, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #gte(x : long, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #gte(x : double, y : long) : boolean {
+	${x} ${y} ${OP}
+}
+
+template #gte(x : double, y : double) : boolean {
+	${x} ${y} ${OP}
+}
+
+// unary op definition
+// NOT
+template #not(x : boolean) : boolean {
+	${x} ${OP} ${IsStmtEnd}
+}
+
+// PLUS
+template #plus(x : long) : long {
+	${x} ${OP} ${IsStmtEnd}
+}
+
+template #plus(x : double) : double {
+	${x} ${OP} ${IsStmtEnd}
+}
+
+// MINUS
+template #minus(x : long) : long {
+	${x} ${OP} ${IsStmtEnd}
+}
+
+template #minus(x : double) : double {
+	${x} ${OP} ${IsStmtEnd}
+}
+
+// COMPL
+template #compl(x : long) : long {
+	${x} ${OP} ${IsStmtEnd}
+}
+
+// conditional operator
+// And
+template #and(x : boolean, y : boolean) : boolean {
+	${AND} ${IsStmtEnd}
+}
+
+// Or
+template #or(x : boolean, y : boolean) : boolean {
+	${OR} ${IsStmtEnd}
+}
+
+// dummy
+template #name() {
+}
+
+// statement definition
+template #if(cond : untyped, then : void) : void {
+	${IF}
+}
+
+template #if(cond : untyped, then : void, else) : void {
+	${IF}
+}
+
+template #while(cond : untyped, block : void) : void {
+	${WHILE}
+}
+
+template #function(name, params, rtype, block) : void {
+	${DEFUNC}
+}
+
+template #return() : void {
+	${RETURN_STATEMENT}
+}
+
+template #return(expr) : void {
+	${expr} ${RETURN_STATEMENT}
+}
+
+// LET
+template<T> #let(name, type: T, value : T): void {
+	${VAR_DECL LET}
+}
+
+template<T> #var(name, type: T, value : T): void {
+	${VAR_DECL VAR}
+}

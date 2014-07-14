@@ -8,8 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.text.DecimalFormat;
 
+import org.libbun.drv.JvmDriver;
 import org.libbun.drv.PegDumpper;
 import org.libbun.peg4d.FileSource;
 import org.libbun.peg4d.PackratParserContext;
@@ -148,10 +148,8 @@ public class Main {
 		driverMap.put("python", org.libbun.drv.PythonDriver.class);
 		driverMap.put("ll", org.libbun.drv.LLVMDriver.class);
 		driverMap.put("llvm", org.libbun.drv.LLVMDriver.class);
-		driverMap.put("jvm", org.libbun.drv.JvmDriver.class);
-		driverMap.put("jvm-debug", org.libbun.drv.JvmDriver.DebuggableJvmDriver.class);
-		driverMap.put("jvm-indy", org.libbun.drv.JvmIndyDriver.class);
-		driverMap.put("jvm-indy-debug", org.libbun.drv.JvmIndyDriver.DebuggableJvmIndyDriver.class);
+		driverMap.put("jvm", JvmDriver.class);
+		driverMap.put("jvm-debug", JvmDriver.DebuggableJvmDriver.class);
 		driverMap.put("peg", org.libbun.drv.PegDumpper.class);
 		driverMap.put("json", org.libbun.drv.JsonDriver.class);
 	}
