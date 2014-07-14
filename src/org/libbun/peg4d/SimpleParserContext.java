@@ -46,10 +46,20 @@ public class SimpleParserContext extends ParserContext {
 			return ne;
 		}
 		public Peg transformImpl(Peg e) {
+			if(e instanceof PegString) {
+				String symbol = ((PegString) e).symbol;
+				if(symbol.length() == 1) {
+					return new PegString1(e, symbol);
+				}
+				if(symbol.length() == 0) {
+					return new PegEmpty(e);
+				}
+				return null;
+			}
 			if(e instanceof PegNot) {
 				Peg inner = ((PegNot) e).innerExpr;
 				if(inner instanceof PegString) {
-					return new PegNotString(e, ((PegString) inner).symbol);
+					return this.newNotString(e, ((PegString) inner).symbol);
 				}
 				if(inner instanceof PegCharacter) {
 					return new PegNotCharacter(e, ((PegCharacter) inner).charset);
@@ -83,8 +93,8 @@ public class SimpleParserContext extends ParserContext {
 				PegSequence seq = (PegSequence)e;
 				if(seq.size() == 2 && seq.get(1) instanceof PegAny) {
 					Peg ne = this.transform(seq.get(0));
-					if(ne instanceof PegNotString) {
-						((PegNotString) ne).setNextAny(e);
+					if(ne instanceof PegNotAtom) {
+						((PegNotAtom) ne).setNextAny(e);
 						return ne;
 					}
 					if(ne instanceof PegNotCharacter) {
@@ -94,6 +104,12 @@ public class SimpleParserContext extends ParserContext {
 				}
 			}
 			return null;
+		}
+		private final Peg newNotString(Peg orig, String token) {
+			if(token.length() == 1) {
+				return new PegNotString1(orig, token);
+			}
+			return new PegNotString(orig, token);
 		}
 	}
 	
@@ -125,17 +141,59 @@ public class SimpleParserContext extends ParserContext {
 //		}
 		return left;
 	}
-		
-	class PegNotString extends PegOptimized {
-		String symbol;
+	
+	class PegEmpty extends PegOptimized {
+		public PegEmpty(Peg orig) {
+			super(orig);
+		}
+		@Override
+		public PegObject simpleMatch(PegObject left, ParserContext context) {
+			return left;
+		}
+	}
+
+	class PegString1 extends PegOptimized {
+		char symbol;
+		public PegString1(Peg orig, String token) {
+			super(orig);
+			this.symbol = token.charAt(0);
+		}
+		@Override
+		public PegObject simpleMatch(PegObject left, ParserContext context) {
+			long pos = context.getPosition();
+			if(context.charAt(pos) == this.symbol) {
+				context.consume(1);
+				return left;
+			}
+			return context.foundFailure(this);
+		}
+	}
+	
+	abstract class PegNotAtom extends PegOptimized {
 		boolean nextAny = false;
+		public PegNotAtom(Peg orig) {
+			super(orig);
+		}
+		public final void setNextAny(Peg orig) {
+			this.orig = orig;
+			this.nextAny = true;
+		}
+		protected final PegObject matchNextAny(PegObject left, ParserContext context) {
+			if(context.hasChar()) {
+				context.consume(1);
+				return left;
+			}
+			else {
+				return context.foundFailure(this);
+			}
+		}
+	}
+
+	class PegNotString extends PegNotAtom {
+		String symbol;
 		public PegNotString(Peg orig, String token) {
 			super(orig);
 			this.symbol = token;
-		}
-		public void setNextAny(Peg orig) {
-			this.orig = orig;
-			this.nextAny = true;
 		}
 		@Override
 		public PegObject simpleMatch(PegObject left, ParserContext context) {
@@ -145,27 +203,35 @@ public class SimpleParserContext extends ParserContext {
 				return context.foundFailure(this);
 			}
 			if(this.nextAny) {
-				if(context.hasChar()) {
-					context.consume(1);
-				}
-				else {
-					return context.foundFailure(this);
-				}
+				return this.matchNextAny(left, context);
 			}
 			return left;
 		}
 	}
 
-	class PegNotCharacter extends PegOptimized {
+	class PegNotString1 extends PegNotAtom {
+		char symbol;
+		public PegNotString1(Peg orig, String token) {
+			super(orig);
+			this.symbol = token.charAt(0);
+		}
+		@Override
+		public PegObject simpleMatch(PegObject left, ParserContext context) {
+			if(this.symbol == context.getChar()) {
+				return context.foundFailure(this);
+			}
+			if(this.nextAny) {
+				return this.matchNextAny(left, context);
+			}
+			return left;
+		}
+	}	
+	
+	class PegNotCharacter extends PegNotAtom {
 		UCharset charset;
-		boolean nextAny = false;
 		public PegNotCharacter(Peg orig, UCharset charset) {
 			super(orig);
 			this.charset = charset;
-		}
-		public void setNextAny(Peg orig) {
-			this.orig = orig;
-			this.nextAny = true;
 		}
 		@Override
 		public PegObject simpleMatch(PegObject left, ParserContext context) {
@@ -175,12 +241,7 @@ public class SimpleParserContext extends ParserContext {
 				return context.foundFailure(this);
 			}
 			if(this.nextAny) {
-				if(context.hasChar()) {
-					context.consume(1);
-				}
-				else {
-					return context.foundFailure(this);
-				}
+				return this.matchNextAny(left, context);
 			}
 			return left;
 		}
