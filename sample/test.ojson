@@ -1,0 +1,22 @@
+Class Group {
+		Array String
+}
+
+Class Friend {
+		Array Class "Group"
+}
+
+Class School {
+		String "SchoolName",
+		Number "Grade",
+		Number "ID"
+}
+
+Main Human {
+		String "Name",
+		Number "Age",
+		Boolean "SingleLife",
+		Class "School",
+		Class "Friend"
+}
+
