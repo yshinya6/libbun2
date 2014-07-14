@@ -225,6 +225,7 @@ public class Main {
 				context.beginStatInfo();
 				PegObject node = context.parseNode(startPoint);
 				context.endStatInfo(node);
+				System.out.println(node.toString());
 				gamma.setNode(node);
 				if(!ParseOnlyMode && driver != null) {
 					if(!(driver instanceof PegDumpper)) {
