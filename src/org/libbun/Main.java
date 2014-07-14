@@ -245,8 +245,6 @@ public class Main {
 				context.beginStatInfo();
 				PegObject node = context.parseNode(startPoint);
 				context.endStatInfo(node);
-				System.out.println(node.toString());
-				System.out.println("** uncosumed: '" + context + "' **");
 				if(ValidateJsonMode) {
 					parseAndValidateJson(node, gamma, driver, startPoint);
 				}
@@ -295,12 +293,13 @@ public class Main {
 			driver.startTransaction(OutputFileName);
 			while(context.hasNode()) {
 				node = context.parsePegObject(new PegObject("#toplevel"), startPoint);
-					System.out.println("parsed:\n" + node.toString());
 					if(context.hasChar()) {
 						System.out.println(ValidParserContext.InvalidLine);
 						//System.out.println("** uncosumed: '" + context + "' **");
+						break;
 					}
 					else {
+						System.out.println("parsed:\n" + node.toString());
 						System.out.println("\n\nVALID");
 					}
 			}
