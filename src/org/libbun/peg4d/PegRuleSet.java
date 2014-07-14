@@ -104,9 +104,9 @@ public final class PegRuleSet {
 			String ruleName = list.ArrayValues[i];
 			Peg e = this.pegMap.get(ruleName, null);
 			e.verify(ruleName, this);
-			if(Main.VerbosePegMode) {
-				System.out.println(e.toPrintableString(ruleName, "\n  = ", "\n  / ", "\n  ;", true));
-			}
+//			if(Main.VerbosePegMode) {
+//				System.out.println(e.toPrintableString(ruleName, "\n  = ", "\n  / ", "\n  ;", true));
+//			}
 		}
 		if(this.foundError) {
 			Main._Exit(1, "peg error found");
