@@ -12,13 +12,13 @@ import java.io.InputStreamReader;
 import org.libbun.drv.JvmDriver;
 import org.libbun.drv.PegDumpper;
 import org.libbun.peg4d.FileSource;
-import org.libbun.peg4d.PackratParserContext;
-import org.libbun.peg4d.PrefetchParserContext;
+import org.libbun.peg4d.PackratParser;
+import org.libbun.peg4d.Peg4DParser;
 import org.libbun.peg4d.ParserContext;
 import org.libbun.peg4d.PegObject;
 import org.libbun.peg4d.PegRuleSet;
 import org.libbun.peg4d.ParserSource;
-import org.libbun.peg4d.SimpleParserContext;
+import org.libbun.peg4d.SimpleParser;
 import org.libbun.peg4d.StringSource;
 
 public class Main {
@@ -68,7 +68,7 @@ public class Main {
 	public static boolean NonMemoPegMode = false;
 	
 	// --E:engine
-	public static String ParserType = "--parser:Simple";
+	public static String ParserType = "--parser";
 
 	private static void parseCommandArguments(String[] args) {
 		int index = 0;
@@ -182,14 +182,13 @@ public class Main {
 
 	public final static ParserContext newParserContext(ParserSource source) {
 		if(ParserType.equalsIgnoreCase("--parser:packrat")) {
-			return new PackratParserContext(source);
+			return new PackratParser(source);
 		}
 		if(ParserType.equalsIgnoreCase("--parser:simple")) {
-			return new SimpleParserContext(source);
+			return new SimpleParser(source);
 		}
-		return new PrefetchParserContext(source);  // best parser
+		return new Peg4DParser(source);  // best parser
 	}
-
 	
 	public final static void main(String[] args) {
 		parseCommandArguments(args);

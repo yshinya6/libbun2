@@ -454,35 +454,38 @@ public abstract class ParserContext {
 		return left;
 	}
 
-	public final synchronized ParserContext newParserContext(ParserSource source, long startIndex, long endIndex) {
-		ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
-		p.setRuleSet(this.ruleSet);
-		return p;
-	}
+	public abstract ParserContext newParserContext(ParserSource source, long startIndex, long endIndex);
 	
-	private static final int ThreadSiza = 4;
+	private static final int ThreadSiza = 2;
 	private ExecutorService threadPool = null;
-	private ParserContext parserPool[] = null;
 	private int taskCount = 0;
 	public void parseLazyObject(PegObject left) {
 		if(threadPool == null) {
 			threadPool = Executors.newFixedThreadPool(ThreadSiza);
-			parserPool = new ParserContext[ThreadSiza];
-			for(int i = 0; i < ThreadSiza; i++) {
-			}
+//			parserPool = new ParserContext[ThreadSiza];
+//			for(int i = 0; i < ThreadSiza; i++) {
+//			}
 		}
-		threadPool.execute(new Task(taskCount, this, left));
-		taskCount += 1;
+		if(left.optionalToken != null) {
+			//System.out.println("pipe: " + left.optionalToken);
+			threadPool.execute(new Task(taskCount, this, left, left.optionalToken));
+			taskCount += 1;
+		}
+		else {
+			System.out.println("pipe null: " + left);
+		}
 	}
 	
 	class Task implements Runnable {
 		int taskId;
 		ParserContext parser;
 		PegObject left;
-		Task(int taskId, ParserContext parser, PegObject left) {
+		String    pipe;
+		Task(int taskId, ParserContext parser, PegObject left, String pipe) {
 			this.taskId = taskId;
 			this.parser = parser;
 			this.left = left;
+			this.pipe = pipe;
 		}
 		public void run(){
 			try {
@@ -491,10 +494,11 @@ public abstract class ParserContext {
 					//sub.beginStatInfo();
 					//System.out.println("[" + this.taskId + "] start parsing: " + left);
 				}
-				PegObject newone = sub.parseNode(left.optionalToken);
+				//System.out.println("thread pipe: " + this.pipe);
+				PegObject newone = sub.parseNode(this.pipe);
 				left.tag = newone.tag;
 				left.AST = newone.AST;
-				left.optionalToken = newone.optionalToken;
+				//left.optionalToken = newone.optionalToken;
 //				parent.replace(left, newone);
 				if(Main.VerbosePegMode) {
 					//System.out.println("[" + this.taskId + "] end parsing: " + newone);
@@ -547,9 +551,6 @@ public abstract class ParserContext {
 		long free =  Runtime.getRuntime().freeMemory() / 1024;
 		usedMemory =  total - free;
 		timer = System.currentTimeMillis();
-		if(Main.VerboseMode) {
-			System.out.println("start!!" + timer);
-		}
 	}
 
 	public void endStatInfo(PegObject parsedObject) {
@@ -568,18 +569,21 @@ public abstract class ParserContext {
 		timer = (System.currentTimeMillis() - timer);
 		System.gc(); // meaningless ?
 		if(Main.VerboseMode) {
-//			System.out.println("parsed:\n" + parsedObject);
-//			if(this.hasChar()) {
-//				System.out.println("** uncosumed: '" + this.source + "' **");
-//			}
 			System.gc(); // meaningless ?
+//			if(Main.VerbosePegMode) {
+//				System.out.println("parsed:\n" + parsedObject);
+//				if(this.hasChar()) {
+//					System.out.println("** uncosumed: '" + this.source + "' **");
+//				}
+//			}
 			long length = this.getPosition();
 			System.out.println("parser: " + this.getClass().getSimpleName());
-			System.out.println("erapsed time: " + timer + " msec" + " awaitTime: " + awaitTime + " msec IO: " + this.source.statIOCount);
+			System.out.println("erapsed time: " + timer + " msec, paralell awaitTime: " + awaitTime + " msec, Disk reads: " + this.source.statIOCount);
 			System.out.println("length: " + length + ", consumed: " + this.getPosition() + ", length/backtrack: " + (double)this.backtrackSize / length);
 			System.out.println("backtrack: size= " + this.backtrackSize + " count=" + this.backtrackCount + " average=" + (double)this.backtrackSize / this.backtrackCount);
 			System.out.println("created_object: " + this.objectCount + ", used_object: " + parsedObject.count() + " object_logs: " + maxLog);
-			System.out.println("hit: " + this.memoHit + ", miss: " + this.memoMiss + ", consumed memo:" + this.memoSize);
+			System.out.println("memo hit: " + this.memoHit + ", miss: " + this.memoMiss + 
+					", ratio: " + ((double)this.memoHit / (this.memoHit+this.memoMiss)) + ", consumed memo:" + this.memoSize);
 			long total = Runtime.getRuntime().totalMemory() / 1024;
 			long free =  Runtime.getRuntime().freeMemory() / 1024;
 			long used =  total - free;

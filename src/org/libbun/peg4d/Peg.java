@@ -9,9 +9,11 @@ import org.libbun.UMap;
 import org.libbun.UStringBuilder;
 
 public abstract class Peg {
+	public final static int Debug = 1;
+	public final static int TextMatchOnly = 1 << 1;
+	
 	int       flag     = 0;
 	String    ruleName = null;
-	boolean   debug    = false;
 
 	ParserSource source = null;
 	int       sourcePosition = 0;
@@ -23,6 +25,19 @@ public abstract class Peg {
 	protected abstract void verify(String ruleName, PegRuleSet rules);
 	public abstract void accept(PegVisitor visitor);
 
+	public final boolean is(int uflag) {
+		return ((this.flag & uflag) == uflag);
+	}
+	
+	public final void set(int uflag) {
+		this.flag = this.flag | uflag;
+	}
+
+	public final void unset(int uflag) {
+		this.flag = (this.flag & (~uflag));
+	}
+	
+	
 	public int size() {
 		return 0;
 	}
@@ -61,7 +76,7 @@ public abstract class Peg {
 		}
 	}
 	protected PegObject performMatch(PegObject left, ParserContext context) {
-		if(this.debug) {
+		if(this.is(Peg.Debug)) {
 			PegObject node2 = this.simpleMatch(left, context);
 			String msg = "matched";
 			if(node2.isFailure()) {

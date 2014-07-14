@@ -8,16 +8,8 @@ import org.libbun.UMap;
 public final class PegRuleSet {
 	UMap<Peg>           pegMap;
 	UMap<String>        objectLabelMap = null;
-	boolean lrExistence = false;
-	public boolean foundError = false;
-	
-	UMap<CheckData>	  checkMemoModeMap = new UMap<CheckData>();
-
-	class CheckData {
-		Peg e;
-		int pos;
-		int i;
-	}
+	boolean             lrExistence = false;
+	public boolean      foundError = false;
 	
 	public PegRuleSet() {
 		this.pegMap = new UMap<Peg>();
