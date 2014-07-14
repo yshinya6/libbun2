@@ -454,19 +454,24 @@ public abstract class ParserContext {
 		return left;
 	}
 
-	public final ParserContext newParserContext(ParserSource source, long startIndex, long endIndex) {
+	public final synchronized ParserContext newParserContext(ParserSource source, long startIndex, long endIndex) {
 		ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
 		p.setRuleSet(this.ruleSet);
 		return p;
 	}
 	
-	private ExecutorService parserPool = null;
+	private static final int ThreadSiza = 4;
+	private ExecutorService threadPool = null;
+	private ParserContext parserPool[] = null;
 	private int taskCount = 0;
 	public void parseLazyObject(PegObject left) {
-		if(parserPool == null) {
-			parserPool = Executors.newFixedThreadPool(4);
+		if(threadPool == null) {
+			threadPool = Executors.newFixedThreadPool(ThreadSiza);
+			parserPool = new ParserContext[ThreadSiza];
+			for(int i = 0; i < ThreadSiza; i++) {
+			}
 		}
-		parserPool.execute(new Task(taskCount, this, left));
+		threadPool.execute(new Task(taskCount, this, left));
 		taskCount += 1;
 	}
 	
@@ -481,7 +486,6 @@ public abstract class ParserContext {
 		}
 		public void run(){
 			try {
-				PegObject parent = left.parent;
 				ParserContext sub = parser.newParserContext(left.source, left.startIndex, left.startIndex + left.length);
 				if(Main.VerbosePegMode) {
 					//sub.beginStatInfo();
@@ -500,6 +504,7 @@ public abstract class ParserContext {
 			}
 			catch (RuntimeException e) {
 				e.printStackTrace();
+				Main._Exit(1, "bugs");
 			}
 			this.parser = null;
 			this.left = null;
@@ -542,17 +547,20 @@ public abstract class ParserContext {
 		long free =  Runtime.getRuntime().freeMemory() / 1024;
 		usedMemory =  total - free;
 		timer = System.currentTimeMillis();
+		if(Main.VerboseMode) {
+			System.out.println("start!!" + timer);
+		}
 	}
 
 	public void endStatInfo(PegObject parsedObject) {
 		long awaitTime = 0;
-		if(this.parserPool != null) {
-			this.parserPool.shutdown();
+		if(this.threadPool != null) {
+			this.threadPool.shutdown();
 			awaitTime = System.currentTimeMillis();
 			try {
-				this.parserPool.awaitTermination(60000, TimeUnit.MILLISECONDS);
+				this.threadPool.awaitTermination(60000, TimeUnit.MILLISECONDS);
 				awaitTime = (System.currentTimeMillis() - awaitTime);
-				this.parserPool = null;
+				this.threadPool = null;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
