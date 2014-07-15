@@ -9,15 +9,15 @@
 						"Grade" : 4,
 						"ID" : 1164311
 				},
-				"Friend" : {
-						[
-							"Group":{
-								["A", "B", "C"]
-							},
-							"Group":{
-								["D", "E", "F"]
-							}
-						]
+				"Friends" : {
+					"Friends":[
+						{
+							"Name" : "A"
+						},
+						{
+							"Name" : "B"
+						}
+					]
 				}
 		},
 		"Human" : {
@@ -29,15 +29,15 @@
 						"Grade" : 4,
 						"ID" : 1164311
 				},
-				"Friend" : {
-						[
-							"Group":{
-								["A", "B", "C"]
-							},
-							"Group":{
-								["D", "E", "F"]
-							}
-						]
+				"Friends" : {
+					"Friends":[
+						{
+							"Name" : "A"
+						},
+						{
+							"Name" : "B"
+						}
+					]
 				}
 		}
 	}

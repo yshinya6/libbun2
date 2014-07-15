@@ -44,15 +44,18 @@ Member
 Key
 		= StringType WS << String #string >>
 		/ NumberType WS << String #number >> 
-		/ ArrayType WS << ( StringType / NumberType / ArrayType Array@ / ClassLabel ClassName@ ) #array >>
+		/ ArrayType WS << (StringType@ / NumberType@ / ArrayType Array@ / ClassName@ ) WS ArrayKey@  #array >>
 		/ ClassLabel << String@ WS #Class >>
 		/ BooleanType WS << String #boolean >>;
 
 ClassName
-		= WS << String@ WS #Class >>;
+		= ClassLabel WS << String@ #Class >>;
+
+ArrayKey
+		= << String #string >>;
 
 Array
-		= WS << ( StringType / NumberType / ArrayType Array@ ) #array >>;
+		= WS << ( StringType@ / NumberType@ / ArrayType Array@ ) #array >>;
 
 Type
 		= <<(StringType
@@ -62,10 +65,10 @@ ArrayType
 		= "Array";
 		
 StringType
-		= "String";
+		= << "String" #type >>;
 		
 NumberType
-		= "Number";
+		= << "Number" #type >>;
 		
 BooleanType
 		= "Boolean";

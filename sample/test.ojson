@@ -1,9 +1,9 @@
-Class Group {
-		Array String
+Class Friend {
+		String "Name"
 }
 
-Class Friend {
-		Array Class "Group"
+Class Friends {
+		Array Class "Friend" "Friends"
 }
 
 Class School {
@@ -17,6 +17,6 @@ Main Human {
 		Number "Age",
 		Boolean "SingleLife",
 		Class "School",
-		Class "Friend"
+		Class "Friends"
 }
 
