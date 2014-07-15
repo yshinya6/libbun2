@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.libbun.UList;
 
-public class Peg4DParser extends SimpleParser {
+public class Peg4DParser extends RecursiveDecentParser {
 
 	public Peg4DParser(ParserSource source) {
 		super(source);

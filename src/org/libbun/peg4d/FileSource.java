@@ -15,7 +15,7 @@ public class FileSource extends ParserSource {
 	private byte[] buffer;
 	public FileSource(String fileName) throws FileNotFoundException {
 		super(fileName, 1);
-		if(Main.VerbosePegMode) {
+		if(Main.VerbosePeg) {
 			System.out.println("random access file: " + fileName);
 		}
 		this.file = new RandomAccessFile(fileName, "r");

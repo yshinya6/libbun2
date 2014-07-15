@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 
 import org.libbun.UList;
 
-public class PackratParser extends SimpleParser {
+public class PackratParser extends RecursiveDecentParser {
 
 	public PackratParser(ParserSource source) {
 		super(source);

@@ -490,7 +490,7 @@ public abstract class ParserContext {
 		public void run(){
 			try {
 				ParserContext sub = parser.newParserContext(left.source, left.startIndex, left.startIndex + left.length);
-				if(Main.VerbosePegMode) {
+				if(Main.VerbosePeg) {
 					//sub.beginStatInfo();
 					//System.out.println("[" + this.taskId + "] start parsing: " + left);
 				}
@@ -500,7 +500,7 @@ public abstract class ParserContext {
 				left.AST = newone.AST;
 				//left.optionalToken = newone.optionalToken;
 //				parent.replace(left, newone);
-				if(Main.VerbosePegMode) {
+				if(Main.VerbosePeg) {
 					//System.out.println("[" + this.taskId + "] end parsing: " + newone);
 					//sub.endStatInfo(newone);
 				}
@@ -542,6 +542,7 @@ public abstract class ParserContext {
 
 	long timer = 0;
 	long usedMemory;
+	int statOptimized = 0;
 	
 	public void beginStatInfo() {
 		System.gc(); // meaningless ?
@@ -568,18 +569,18 @@ public abstract class ParserContext {
 		}
 		timer = (System.currentTimeMillis() - timer);
 		System.gc(); // meaningless ?
-		if(Main.VerboseMode) {
+		if(Main.VerboseStat) {
 			System.gc(); // meaningless ?
-//			if(Main.VerbosePegMode) {
-//				System.out.println("parsed:\n" + parsedObject);
-//				if(this.hasChar()) {
-//					System.out.println("** uncosumed: '" + this.source + "' **");
-//				}
-//			}
+			if(Main.VerbosePeg) {
+				System.out.println("parsed:\n" + parsedObject);
+				if(this.hasChar()) {
+					System.out.println("** uncosumed: '" + this.source + "' **");
+				}
+			}
 			long length = this.getPosition();
-			System.out.println("parser: " + this.getClass().getSimpleName());
-			System.out.println("erapsed time: " + timer + " msec, paralell awaitTime: " + awaitTime + " msec, Disk reads: " + this.source.statIOCount);
-			System.out.println("length: " + length + ", consumed: " + this.getPosition() + ", length/backtrack: " + (double)this.backtrackSize / length);
+			System.out.println("parser: " + this.getClass().getSimpleName() + " -O" + Main.OptimizedLevel + " optimized peg: " + this.statOptimized );
+			System.out.println("erapsed time: " + timer + " msec, thread awaitTime: " + awaitTime + " msec, Disk reads: " + this.source.statIOCount);
+			System.out.println("length: " + this.source.length() + ", consumed: " + this.getPosition() + ", length/backtrack: " + (double)this.backtrackSize / length);
 			System.out.println("backtrack: size= " + this.backtrackSize + " count=" + this.backtrackCount + " average=" + (double)this.backtrackSize / this.backtrackCount);
 			System.out.println("created_object: " + this.objectCount + ", used_object: " + parsedObject.count() + " object_logs: " + maxLog);
 			System.out.println("memo hit: " + this.memoHit + ", miss: " + this.memoMiss + 
