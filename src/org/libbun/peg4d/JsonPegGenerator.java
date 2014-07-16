@@ -21,7 +21,6 @@ public class JsonPegGenerator {
 				index = this.classNameMap.get(node.AST[i].AST[0].getText());
 					source.sourceText += "Object"+ index +" = << BeginObject Value" + index + "@ EndObject #object>>;\n\n";
 					source = generate(source,node.AST[i], index);
-				
 				break;
 			
 			case "#main":

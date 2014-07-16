@@ -16,9 +16,10 @@ public abstract class ParserContext {
 	public    long        endPosition;
 	public    PegRuleSet ruleSet = null;
 	
-	long backtrackCount = 0;
-	long backtrackSize = 0;
-	int  objectCount = 0;
+	long statBacktrackCount = 0;
+	long statBacktrackSize = 0;
+	long statWorstBacktrack = 0;
+	int  statObjectCount = 0;
 
 	public ParserContext(ParserSource source, long startIndex, long endIndex) {
 		this.source = source;
@@ -36,13 +37,16 @@ public abstract class ParserContext {
 		this.sourcePosition = pos;
 	}
 	protected final void rollback(long pos) {
-		if(this.sourcePosition > pos) {
-			this.backtrackCount = this.backtrackCount + 1;
-			this.backtrackSize = this.backtrackSize + (this.sourcePosition - pos);
+		long len = this.sourcePosition - pos;
+		if(len > 0) {
+			this.statBacktrackCount = this.statBacktrackCount + 1;
+			this.statBacktrackSize = this.statBacktrackSize + len;
+			if(len > this.statWorstBacktrack) {
+				this.statWorstBacktrack = len;
+			}
 		}
 		this.sourcePosition = pos;
 	}
-
 	@Override
 	public final String toString() {
 		if(this.endPosition > this.sourcePosition) {
@@ -50,11 +54,9 @@ public abstract class ParserContext {
 		}
 		return "";
 	}
-
 	public final boolean hasChar() {
 		return this.sourcePosition < this.endPosition;
 	}
-
 	protected final char charAt(long pos) {
 		if(pos < this.endPosition) {
 			return this.source.charAt(pos);
@@ -68,6 +70,14 @@ public abstract class ParserContext {
 		}
 		return '\0';
 	}
+	
+	public String substring(long startIndex, long endIndex) {
+		if(endIndex <= this.endPosition) {
+			return this.source.substring(startIndex, endIndex);
+		}
+		return "";
+	}
+
 
 	protected final void consume(long plus) {
 		this.sourcePosition = this.sourcePosition + plus;
@@ -146,7 +156,7 @@ public abstract class ParserContext {
 	
 	public final PegObject newPegObject(String name) {
 		PegObject node = new PegObject(name, this.source, null, this.sourcePosition);
-		this.objectCount = this.objectCount + 1;
+		this.statObjectCount = this.statObjectCount + 1;
 		return node;
 	}
 	
@@ -295,7 +305,7 @@ public abstract class ParserContext {
 				break;
 			}
 			this.popBack(markerId);
-			this.rollback(pos);
+			this.setPosition(pos);
 		}
 		return node;
 	}
@@ -404,13 +414,23 @@ public abstract class ParserContext {
 	public PegObject matchNewObject(PegObject left, PegNewObject e) {
 		PegObject leftNode = left;
 		long startIndex = this.getPosition();
+		if(e.predictionIndex > 0) {
+			for(int i = 0; i < e.predictionIndex; i++) {
+				PegObject node = e.get(i).performMatch(left, this);
+				if(node.isFailure()) {
+					this.rollback(startIndex);
+					return node;
+				}
+				assert(left == node);
+			}
+		}
 		int markerId = this.pushNewMarker();
 		PegObject newnode = this.newPegObject(e.nodeName);
 		newnode.setSource(e, this.source, startIndex);
 		if(e.leftJoin) {
 			this.pushSetter(newnode, -1, leftNode);
 		}
-		for(int i = 0; i < e.size(); i++) {
+		for(int i = e.predictionIndex; i < e.size(); i++) {
 			PegObject node = e.get(i).performMatch(newnode, this);
 			if(node.isFailure()) {
 				this.popBack(markerId);
@@ -457,49 +477,53 @@ public abstract class ParserContext {
 		return left;
 	}
 
-	public final synchronized ParserContext newParserContext(ParserSource source, long startIndex, long endIndex) {
-		ParserContext p = new SimpleParserContext(source, startIndex, endIndex);
-		p.setRuleSet(this.ruleSet);
-		return p;
-	}
+	public abstract ParserContext newParserContext(ParserSource source, long startIndex, long endIndex);
 	
-	private static final int ThreadSiza = 4;
+	private static final int ThreadSiza = 2;
 	private ExecutorService threadPool = null;
-	private ParserContext parserPool[] = null;
 	private int taskCount = 0;
 	public void parseLazyObject(PegObject left) {
 		if(threadPool == null) {
 			threadPool = Executors.newFixedThreadPool(ThreadSiza);
-			parserPool = new ParserContext[ThreadSiza];
-			for(int i = 0; i < ThreadSiza; i++) {
-			}
+//			parserPool = new ParserContext[ThreadSiza];
+//			for(int i = 0; i < ThreadSiza; i++) {
+//			}
 		}
-		threadPool.execute(new Task(taskCount, this, left));
-		taskCount += 1;
+		if(left.optionalToken != null) {
+			//System.out.println("pipe: " + left.optionalToken);
+			threadPool.execute(new Task(taskCount, this, left, left.optionalToken));
+			taskCount += 1;
+		}
+		else {
+			System.out.println("pipe null: " + left);
+		}
 	}
 	
 	class Task implements Runnable {
 		int taskId;
 		ParserContext parser;
 		PegObject left;
-		Task(int taskId, ParserContext parser, PegObject left) {
+		String    pipe;
+		Task(int taskId, ParserContext parser, PegObject left, String pipe) {
 			this.taskId = taskId;
 			this.parser = parser;
 			this.left = left;
+			this.pipe = pipe;
 		}
 		public void run(){
 			try {
 				ParserContext sub = parser.newParserContext(left.source, left.startIndex, left.startIndex + left.length);
-				if(Main.VerbosePegMode) {
+				if(Main.VerbosePeg) {
 					//sub.beginStatInfo();
 					//System.out.println("[" + this.taskId + "] start parsing: " + left);
 				}
-				PegObject newone = sub.parseNode(left.optionalToken);
+				//System.out.println("thread pipe: " + this.pipe);
+				PegObject newone = sub.parseNode(this.pipe);
 				left.tag = newone.tag;
 				left.AST = newone.AST;
-				left.optionalToken = newone.optionalToken;
+				//left.optionalToken = newone.optionalToken;
 //				parent.replace(left, newone);
-				if(Main.VerbosePegMode) {
+				if(Main.VerbosePeg) {
 					//System.out.println("[" + this.taskId + "] end parsing: " + newone);
 					//sub.endStatInfo(newone);
 				}
@@ -539,20 +563,65 @@ public abstract class ParserContext {
 	protected int memoMiss = 0;
 	protected int memoSize = 0;
 
-	long timer = 0;
+	long statErapsedTime = 0;
 	long usedMemory;
+	int statOptimizedPeg = 0;
 	
 	public void beginStatInfo() {
 		System.gc(); // meaningless ?
-		this.backtrackSize = 0;
-		this.backtrackCount = 0;
+		this.statBacktrackSize = 0;
+		this.statBacktrackCount = 0;
 		long total = Runtime.getRuntime().totalMemory() / 1024;
 		long free =  Runtime.getRuntime().freeMemory() / 1024;
 		usedMemory =  total - free;
-		timer = System.currentTimeMillis();
-		if(Main.VerboseMode) {
-			System.out.println("start!!" + timer);
-		}
+		statErapsedTime = System.currentTimeMillis();
+	}
+
+	private String ratio(double num) {
+		return String.format("%.3f", num);
+	}
+	private String Punit(String unit) {
+		return "[" + unit +"]";
+	}
+
+	private String Kunit(long num) {
+		return String.format("%.3f", (double)num / 1024);
+	}
+	
+	private String Munit(double num) {
+		return String.format("%.3f", (double)num/(1024*1024));
+	}
+
+	private String Nunit(long num, String unit) {
+		return num + Punit(unit);
+	}
+
+	private String Kunit(long num, String unit) {
+		return ratio((double)num / 1024) + Punit(unit);
+	}
+	
+	private String Munit(long num, String unit) {
+		return ratio((double)num/(1024*1024)) + Punit(unit);
+	}
+
+	private String KMunit(long num, String unit, String unit2) {
+		return Kunit(num, unit) + " " + Munit(num, unit2);
+	}
+
+	private String kpx(double num) {
+		return ratio(num / 1024);
+	}
+
+	private String kpx(double num, String unit) {
+		return kpx(num) + Punit(unit);
+	}
+
+	private String mpx(double num) {
+		return ratio(num / (1024*1024));
+	}
+
+	private String mpx(double num, String unit) {
+		return mpx(num) + Punit(unit);
 	}
 
 	public void endStatInfo(PegObject parsedObject) {
@@ -568,28 +637,36 @@ public abstract class ParserContext {
 				e.printStackTrace();
 			}
 		}
-		timer = (System.currentTimeMillis() - timer);
+		statErapsedTime = (System.currentTimeMillis() - statErapsedTime);
 		System.gc(); // meaningless ?
-		if(Main.VerboseMode) {
-//			System.out.println("parsed:\n" + parsedObject);
-//			if(this.hasChar()) {
-//				System.out.println("** uncosumed: '" + this.source + "' **");
-//			}
+		if(Main.VerboseStat) {
 			System.gc(); // meaningless ?
-			long length = this.getPosition();
-			System.out.println("parser: " + this.getClass().getSimpleName());
-			System.out.println("erapsed time: " + timer + " msec" + " awaitTime: " + awaitTime + " msec IO: " + this.source.statIOCount);
-			System.out.println("length: " + length + ", consumed: " + this.getPosition() + ", length/backtrack: " + (double)this.backtrackSize / length);
-			System.out.println("backtrack: size= " + this.backtrackSize + " count=" + this.backtrackCount + " average=" + (double)this.backtrackSize / this.backtrackCount);
-			System.out.println("created_object: " + this.objectCount + ", used_object: " + parsedObject.count() + " object_logs: " + maxLog);
-			System.out.println("hit: " + this.memoHit + ", miss: " + this.memoMiss + ", consumed memo:" + this.memoSize);
+			if(Main.VerbosePeg) {
+				System.out.println("parsed:\n" + parsedObject);
+				if(this.hasChar()) {
+					System.out.println("** uncosumed: '" + this.source + "' **");
+				}
+			}
+			long statCharLength = this.getPosition();
+			long statFileLength = this.source.getFileLength();
+			long statReadLength = this.source.statReadLength;
+			double fileKps = (statFileLength) / (statErapsedTime / 1000.0);
+			System.out.println("parser: " + this.getClass().getSimpleName() + " -O" + Main.OptimizedLevel + " optimized peg: " + this.statOptimizedPeg );
+			System.out.println("file: " + this.source.fileName + " filesize: " + KMunit(statFileLength, "Kb", "Mb"));
+			System.out.println("IO: " + this.source.statIOCount +" read/file: " + ratio((double)statReadLength/statFileLength) + " pagesize: " + Nunit(FileSource.PageSize, "bytes") + " read: " + KMunit(statReadLength, "Kb", "Mb"));
+			System.out.println("erapsed time: " + Nunit(statErapsedTime, "msec") + " speed: " + kpx(fileKps,"KiB/s") + " " + mpx(fileKps, "MiB/s"));
+			System.out.println("backtrack raito: " + ratio((double)this.statBacktrackSize / statCharLength) + " backtrack: " + this.statBacktrackSize + " length: " + this.source.length() + ", consumed: " + statCharLength);
+			System.out.println("backtrack_count: " + this.statBacktrackCount + " average: " + ratio((double)this.statBacktrackSize / this.statBacktrackCount) + " worst: " + this.statWorstBacktrack);
+			System.out.println("created_object: " + this.statObjectCount + ", used_object: " + parsedObject.count() + " object_logs: " + maxLog);
+			System.out.println("memo hit: " + this.memoHit + ", miss: " + this.memoMiss + 
+					", ratio: " + ratio(((double)this.memoHit / (this.memoHit+this.memoMiss))) + ", consumed memo:" + this.memoSize);
 			long total = Runtime.getRuntime().totalMemory() / 1024;
 			long free =  Runtime.getRuntime().freeMemory() / 1024;
 			long used =  total - free;
 			System.out.println("heap: " + used + "KiB/ " + (used/1024) + "MiB");
 			used =  used - usedMemory;
-			length = length / 1024;
-			System.out.println("used: " + used + "KiB/ " + (used/1024) + "MiB,  heap/length: " + (double) used/ length);
+			statCharLength = statCharLength / 1024;
+			System.out.println("used: " + used + "KiB/ " + (used/1024) + "MiB,  heap/length: " + (double) used/ statCharLength);
 			System.out.println();
 		}
 	}

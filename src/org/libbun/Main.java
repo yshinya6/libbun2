@@ -13,18 +13,18 @@ import org.libbun.drv.JvmDriver;
 import org.libbun.drv.PegDumpper;
 import org.libbun.peg4d.FileSource;
 import org.libbun.peg4d.JsonPegGenerator;
-import org.libbun.peg4d.PackratParserContext;
-import org.libbun.peg4d.PrefetchParserContext;
+import org.libbun.peg4d.PackratParser;
+import org.libbun.peg4d.Peg4DParser;
 import org.libbun.peg4d.ParserContext;
 import org.libbun.peg4d.PegObject;
 import org.libbun.peg4d.PegRuleSet;
 import org.libbun.peg4d.ParserSource;
-import org.libbun.peg4d.SimpleParserContext;
+import org.libbun.peg4d.RecursiveDecentParser;
 import org.libbun.peg4d.StringSource;
 import org.libbun.peg4d.ValidParserContext;
 
 public class Main {
-	public final static String  ProgName  = "peg4d";
+	public final static String  ProgName  = "Peg4d";
 	public final static String  CodeName  = "yokohama";
 	public final static int     MajorVersion = 2;
 	public final static int     MinerVersion = 0;
@@ -58,13 +58,19 @@ public class Main {
 	public static boolean VerboseMode    = false;
 
 	// --verbose:peg
-	public static boolean VerbosePegMode = false;
+	public static boolean VerbosePeg = false;
+
+	// --verbose:optimized
+	public static boolean VerboseOptimized = false;
 
 	// --verbose:bun
 	public static boolean VerboseBunMode = false;
+	
+	// --verbose:stat
+	public static boolean VerboseStat = false;
 
-	// --profile
-	public static boolean ProfileMode = false;
+	// --parser
+	public static String ParserType = "--parser";
 
 	// --disable-memo
 	public static boolean NonMemoPegMode = false;
@@ -73,10 +79,11 @@ public class Main {
 	public static boolean ValidateJsonMode = false;
 	
 	public static String InputJsonFile = "";
-	
-	// --E:engine
-	public static String ParserType = "--parser:Simple";
 
+	// --parser
+	public static int OptimizedLevel = 2;
+
+	
 	private static void parseCommandArguments(String[] args) {
 		int index = 0;
 		while (index < args.length) {
@@ -88,7 +95,6 @@ public class Main {
 			if ((argument.equals("-p") || argument.equals("--peg")) && (index < args.length)) {
 				LanguagePeg = args[index];
 				ParseOnlyMode  = true;
-				VerbosePegMode = true;
 				index = index + 1;
 			}
 			else if ((argument.equals("-l") || argument.equals("--lang"))  && (index < args.length)) {
@@ -103,6 +109,23 @@ public class Main {
 				OutputFileName = args[index];
 				index = index + 1;
 			}
+			else if (argument.startsWith("-O")) {
+				if(argument.equals("-O0")) {
+					OptimizedLevel = 0;
+				}
+				if(argument.equals("-O1")) {
+					OptimizedLevel = 1;  // Peephole
+				}
+				if(argument.equals("-O2")) {
+					OptimizedLevel = 2;  // inlining
+				}
+				if(argument.equals("-O3")) {
+					OptimizedLevel = 3;  // prediction
+				}
+				if(argument.equals("-O4")) {
+					OptimizedLevel = 4;  // experimental
+				}
+			}
 			else if (argument.equals("-i")) {
 				ShellMode = true;
 			}
@@ -116,6 +139,15 @@ public class Main {
 				if(argument.equals("--verbose:bun")) {
 					VerboseBunMode = true;
 				}
+				else if(argument.equals("--verbose:stat")) {
+					VerboseStat = true;
+				}
+				else if(argument.equals("--verbose:peg")) {
+					VerbosePeg = true;
+				}
+				else if(argument.equals("--verbose:optimized")) {
+					VerbosePeg = true;
+				}
 				else {
 					VerboseMode = true;
 				}
@@ -123,7 +155,6 @@ public class Main {
 			else if (argument.equals("--valid")) {
 				LanguagePeg = "sample/jsonObject.peg";
 				ParseOnlyMode  = true;
-				VerbosePegMode = true;
 				ValidateJsonMode = true;
 			}
 			else if(argument.startsWith("--parser:")) {
@@ -202,14 +233,13 @@ public class Main {
 			return new ValidParserContext(source);
 		}
 		if(ParserType.equalsIgnoreCase("--parser:packrat")) {
-			return new PackratParserContext(source);
+			return new PackratParser(source);
 		}
 		if(ParserType.equalsIgnoreCase("--parser:simple")) {
-			return new SimpleParserContext(source);
+			return new RecursiveDecentParser(source);
 		}
-		return new PrefetchParserContext(source);  // best parser
+		return new Peg4DParser(source);  // best parser
 	}
-
 	
 	public final static void main(String[] args) {
 		parseCommandArguments(args);
@@ -313,7 +343,7 @@ public class Main {
 		String line = null;
 		while ((line = readMultiLine(">>> ", "    ")) != null) {
 			String startPoint = "TopLevel";
-			if(VerbosePegMode) {
+			if(VerbosePeg) {
 				if(line.startsWith("?")) {
 					int loc = line.indexOf(" ");
 					if(loc > 0) {

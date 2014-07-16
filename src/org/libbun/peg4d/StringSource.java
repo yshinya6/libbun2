@@ -1,5 +1,10 @@
 package org.libbun.peg4d;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+
 import org.libbun.Main;
 
 public class StringSource extends ParserSource {
@@ -8,12 +13,32 @@ public class StringSource extends ParserSource {
 		super(fileName, linenum);
 		this.sourceText = sourceText;
 	}
+	StringSource(String fileName) {
+		super(fileName, 1);
+		try {
+			RandomAccessFile f = new RandomAccessFile(fileName, "r");
+			byte[] b = new byte[(int)f.length()];
+			f.read(b);
+			this.sourceText = new String(b);
+			f.close();
+		}
+		catch(IOException e) {
+		}
+	}
 	public final long length() {
 		return this.sourceText.length();
 	}
+	public final long getFileLength() {
+		try {
+			return new File(this.fileName).length();
+		}
+		catch(Exception e) {
+		}
+		return this.sourceText.getBytes().length;
+	}
 	public final char charAt(long n) {
 		if(0 <= n && n < this.length()) {
-			return Main._GetChar(this.sourceText, (int)n);
+			return this.sourceText.charAt((int)n);
 		}
 		return '\0';
 	}

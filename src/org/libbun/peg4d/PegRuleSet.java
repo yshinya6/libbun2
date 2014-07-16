@@ -8,16 +8,8 @@ import org.libbun.UMap;
 public final class PegRuleSet {
 	UMap<Peg>           pegMap;
 	UMap<String>        objectLabelMap = null;
-	boolean lrExistence = false;
-	public boolean foundError = false;
-	
-	UMap<CheckData>	  checkMemoModeMap = new UMap<CheckData>();
-
-	class CheckData {
-		Peg e;
-		int pos;
-		int i;
-	}
+	boolean             lrExistence = false;
+	public boolean      foundError = false;
 	
 	public PegRuleSet() {
 		this.pegMap = new UMap<Peg>();
@@ -65,54 +57,52 @@ public final class PegRuleSet {
 		}
 		return e;
 	}
-	
-//	@SuppressWarnings("null")
-//	private void checkMemoMode(Peg e, Peg content, int pos) {
-//		for(int i = 0; i < content.size(); i++) {
-//			if(content.get(i) instanceof PegLabel) {
-//				pos += i;
-//				PegLabel Label = (PegLabel) content.get(i); 
-//				if(checkMemoModeMap.hasKey(Label.symbol)) {
-//					CheckData checkData = checkMemoModeMap.get(Label.symbol); 
-//					if (checkMemoModeMap.get(Label.symbol).pos == pos) {
-//						content.get(i).memoizationMode = true;
-//						checkData.e.memoizationMode = true;
-//					}
-//				}
-//				else{
-//					CheckData index = new CheckData();
-//					index.e = content.get(i);
-//					index.pos = pos;
-//					checkMemoModeMap.put(Label.symbol, index);
-//				}
-//				pos -= i;
-//			}
-//			else if(content.get(i) instanceof PegChoice || content.get(i) instanceof PegSequence) {
-//				checkMemoMode(e, content.get(i), pos);
-//			}
-//			else if(content.get(i) instanceof PegNewObject) {
-//				checkMemoMode(e, content.get(i), pos);
-//			}
-//		}
-//	}
-	
+		
 	public final void check() {
 		this.objectLabelMap = new UMap<String>();
 		this.foundError = false;
 		UList<String> list = this.pegMap.keys();
+		UMap<String> visited = new UMap<String>();
 		for(int i = 0; i < list.size(); i++) {
 			String ruleName = list.ArrayValues[i];
 			Peg e = this.pegMap.get(ruleName, null);
-			e.verify(ruleName, this);
-//			if(Main.VerbosePegMode) {
-//				System.out.println(e.toPrintableString(ruleName, "\n  = ", "\n  / ", "\n  ;", true));
-//			}
+			e.ruleName = ruleName;
+			e.verify2(e, this, ruleName, visited);
+			visited.clear();
+			if(Main.VerbosePeg) {
+				if(e.is(Peg.HasNewObject)) {
+					ruleName = "object " + ruleName; 
+				}
+				if(!e.is(Peg.HasNewObject) && !e.is(Peg.HasSetter)) {
+					ruleName = "text " + ruleName; 
+				}
+				if(e.is(Peg.CyclicRule)) {
+					ruleName += "*"; 
+				}
+				System.out.println(e.toPrintableString(ruleName, "\n  = ", "\n  / ", "\n  ;", true));
+			}
+		}
+		/* to complete the verification of cyclic rules */
+		for(int i = 0; i < list.size(); i++) {
+			String ruleName = list.ArrayValues[i];
+			Peg e = this.pegMap.get(ruleName, null);
+			e.verify2(e, this, e.ruleName, null);
 		}
 		if(this.foundError) {
 			Main._Exit(1, "peg error found");
 		}
 	}
 	
+	final void checkCyclicRule(String ruleName, Peg e) {
+		UList<String> list = new UList<String>(new String[100]);
+		UMap<String> set = new UMap<String>();
+		list.add(ruleName);
+		set.put(ruleName, ruleName);
+		if(e.makeList(ruleName, this, list, set)) {
+			e.set(Peg.CyclicRule);
+		}
+	}
+
 	public void addObjectLabel(String objectLabel) {
 		this.objectLabelMap.put(objectLabel, objectLabel);
 	}
@@ -127,28 +117,36 @@ public final class PegRuleSet {
 				Main._Exit(1, "FAILED: " + node);
 				break;
 			}
-			parse(p, node);
+			if(!this.tramsform(p, node)) {
+				break;
+			}
 		}
 		this.check();
 		return this.foundError;
 	}
 	
-	private void parse(ParserContext context, PegObject node) {
+	private boolean tramsform(ParserContext context, PegObject node) {
 		//System.out.println("DEBUG? parsed: " + node);		
 		if(node.is("#rule")) {
 			String ruleName = node.textAt(0, "");
 			Peg e = toPeg(node.get(1));
 			this.setRule(ruleName, e);
 			//System.out.println("#rule** " + node + "\n@@@@ => " + e);
-			return;
+			return true;
 		}
 		if(node.is("#import")) {
 			String ruleName = node.textAt(0, "");
 			String fileName = context.source.checkFileName(node.textAt(1, ""));
 			this.importRuleFromFile(ruleName, fileName);
-			return;
+			return true;
 		}
-		System.out.println("WHAT? parsed: " + node);		
+		if(node.is("#error")) {
+			char c = node.source.charAt(node.startIndex);
+			System.out.println(node.source.formatErrorMessage("error", node.startIndex, "syntax error: ascii=" + (int)c));
+			return false;
+		}
+		System.out.println("Unknown peg node: " + node);
+		return false;
 	}
 	private Peg toPeg(PegObject node) {
 		Peg e = this.toPegImpl(node);
@@ -249,7 +247,7 @@ public final class PegRuleSet {
 	}
 
 	void importRuleFromFile(String label, String fileName) {
-		if(Main.VerbosePegMode) {
+		if(Main.VerbosePeg) {
 			System.out.println("importing " + fileName);
 		}
 		PegRuleSet p = new PegRuleSet();
@@ -276,7 +274,7 @@ public final class PegRuleSet {
 		if(e != null) {
 			list.add(startPoint);
 			set.put(startPoint, startPoint);
-			e.makeList(this, list, set);
+			e.makeList(startPoint, this, list, set);
 		}
 		return list;
 	}
@@ -414,7 +412,7 @@ public final class PegRuleSet {
 //		  ;
 		Peg _SetterTerm = choice(
 			seq(s("("), opt(n("_")), n("Expr"), opt(n("_")), s(")"), opt(n("Setter"))),
-			seq(O(choice(s("8<"), s("<<"), s("{")), choice(seq(choice(s("^"), s("@")), c(" \\t\\n"), L("#newjoin")), seq(s(""), L("#new"))), 
+			seq(O(choice(s("8<"), s("<<"), s("{")), choice(seq(choice(s("^"), s("@")), c(" \\t\\n\\r"), L("#newjoin")), seq(s(""), L("#new"))), 
 					opt(n("_")), set(n("Expr")), opt(n("_")), choice(s(">8"), s(">>"), s("}"))), opt(n("Setter"))),
 			seq(n("RuleName"), opt(n("Setter")))
 		);
@@ -475,6 +473,7 @@ public final class PegRuleSet {
 	}
 	
 	public final static PegRuleSet PegRules = new PegRuleSet().loadPegRule();
+
 
 
 }
