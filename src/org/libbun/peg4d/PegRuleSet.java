@@ -117,28 +117,36 @@ public final class PegRuleSet {
 				Main._Exit(1, "FAILED: " + node);
 				break;
 			}
-			parse(p, node);
+			if(!this.tramsform(p, node)) {
+				break;
+			}
 		}
 		this.check();
 		return this.foundError;
 	}
 	
-	private void parse(ParserContext context, PegObject node) {
+	private boolean tramsform(ParserContext context, PegObject node) {
 		//System.out.println("DEBUG? parsed: " + node);		
 		if(node.is("#rule")) {
 			String ruleName = node.textAt(0, "");
 			Peg e = toPeg(node.get(1));
 			this.setRule(ruleName, e);
 			//System.out.println("#rule** " + node + "\n@@@@ => " + e);
-			return;
+			return true;
 		}
 		if(node.is("#import")) {
 			String ruleName = node.textAt(0, "");
 			String fileName = context.source.checkFileName(node.textAt(1, ""));
 			this.importRuleFromFile(ruleName, fileName);
-			return;
+			return true;
 		}
-		System.out.println("WHAT? parsed: " + node);		
+		if(node.is("#error")) {
+			char c = node.source.charAt(node.startIndex);
+			System.out.println(node.source.formatErrorMessage("error", node.startIndex, "syntax error: ascii=" + (int)c));
+			return false;
+		}
+		System.out.println("Unknown peg node: " + node);
+		return false;
 	}
 	private Peg toPeg(PegObject node) {
 		Peg e = this.toPegImpl(node);
@@ -404,7 +412,7 @@ public final class PegRuleSet {
 //		  ;
 		Peg _SetterTerm = choice(
 			seq(s("("), opt(n("_")), n("Expr"), opt(n("_")), s(")"), opt(n("Setter"))),
-			seq(O(choice(s("8<"), s("<<"), s("{")), choice(seq(choice(s("^"), s("@")), c(" \\t\\n"), L("#newjoin")), seq(s(""), L("#new"))), 
+			seq(O(choice(s("8<"), s("<<"), s("{")), choice(seq(choice(s("^"), s("@")), c(" \\t\\n\\r"), L("#newjoin")), seq(s(""), L("#new"))), 
 					opt(n("_")), set(n("Expr")), opt(n("_")), choice(s(">8"), s(">>"), s("}"))), opt(n("Setter"))),
 			seq(n("RuleName"), opt(n("Setter")))
 		);

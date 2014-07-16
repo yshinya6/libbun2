@@ -22,7 +22,7 @@ import org.libbun.peg4d.RecursiveDecentParser;
 import org.libbun.peg4d.StringSource;
 
 public class Main {
-	public final static String  ProgName  = "peg4d";
+	public final static String  ProgName  = "Peg4d";
 	public final static String  CodeName  = "yokohama";
 	public final static int     MajorVersion = 2;
 	public final static int     MinerVersion = 0;

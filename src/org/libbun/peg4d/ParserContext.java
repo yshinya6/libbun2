@@ -16,9 +16,10 @@ public abstract class ParserContext {
 	public    long        endPosition;
 	public    PegRuleSet ruleSet = null;
 	
-	long backtrackCount = 0;
-	long backtrackSize = 0;
-	int  objectCount = 0;
+	long statBacktrackCount = 0;
+	long statBacktrackSize = 0;
+	long statWorstBacktrack = 0;
+	int  statObjectCount = 0;
 
 	public ParserContext(ParserSource source, long startIndex, long endIndex) {
 		this.source = source;
@@ -36,13 +37,16 @@ public abstract class ParserContext {
 		this.sourcePosition = pos;
 	}
 	protected final void rollback(long pos) {
-		if(this.sourcePosition > pos) {
-			this.backtrackCount = this.backtrackCount + 1;
-			this.backtrackSize = this.backtrackSize + (this.sourcePosition - pos);
+		long len = this.sourcePosition - pos;
+		if(len > 0) {
+			this.statBacktrackCount = this.statBacktrackCount + 1;
+			this.statBacktrackSize = this.statBacktrackSize + len;
+			if(len > this.statWorstBacktrack) {
+				this.statWorstBacktrack = len;
+			}
 		}
 		this.sourcePosition = pos;
 	}
-
 	@Override
 	public final String toString() {
 		if(this.endPosition > this.sourcePosition) {
@@ -50,11 +54,9 @@ public abstract class ParserContext {
 		}
 		return "";
 	}
-
 	public final boolean hasChar() {
 		return this.sourcePosition < this.endPosition;
 	}
-
 	protected final char charAt(long pos) {
 		if(pos < this.endPosition) {
 			return this.source.charAt(pos);
@@ -154,7 +156,7 @@ public abstract class ParserContext {
 	
 	public final PegObject newPegObject(String name) {
 		PegObject node = new PegObject(name, this.source, null, this.sourcePosition);
-		this.objectCount = this.objectCount + 1;
+		this.statObjectCount = this.statObjectCount + 1;
 		return node;
 	}
 	
@@ -558,18 +560,65 @@ public abstract class ParserContext {
 	protected int memoMiss = 0;
 	protected int memoSize = 0;
 
-	long timer = 0;
+	long statErapsedTime = 0;
 	long usedMemory;
-	int statOptimized = 0;
+	int statOptimizedPeg = 0;
 	
 	public void beginStatInfo() {
 		System.gc(); // meaningless ?
-		this.backtrackSize = 0;
-		this.backtrackCount = 0;
+		this.statBacktrackSize = 0;
+		this.statBacktrackCount = 0;
 		long total = Runtime.getRuntime().totalMemory() / 1024;
 		long free =  Runtime.getRuntime().freeMemory() / 1024;
 		usedMemory =  total - free;
-		timer = System.currentTimeMillis();
+		statErapsedTime = System.currentTimeMillis();
+	}
+
+	private String ratio(double num) {
+		return String.format("%.3f", num);
+	}
+	private String Punit(String unit) {
+		return "[" + unit +"]";
+	}
+
+	private String Kunit(long num) {
+		return String.format("%.3f", (double)num / 1024);
+	}
+	
+	private String Munit(double num) {
+		return String.format("%.3f", (double)num/(1024*1024));
+	}
+
+	private String Nunit(long num, String unit) {
+		return num + Punit(unit);
+	}
+
+	private String Kunit(long num, String unit) {
+		return ratio((double)num / 1024) + Punit(unit);
+	}
+	
+	private String Munit(long num, String unit) {
+		return ratio((double)num/(1024*1024)) + Punit(unit);
+	}
+
+	private String KMunit(long num, String unit, String unit2) {
+		return Kunit(num, unit) + " " + Munit(num, unit2);
+	}
+
+	private String kpx(double num) {
+		return ratio(num / 1024);
+	}
+
+	private String kpx(double num, String unit) {
+		return kpx(num) + Punit(unit);
+	}
+
+	private String mpx(double num) {
+		return ratio(num / (1024*1024));
+	}
+
+	private String mpx(double num, String unit) {
+		return mpx(num) + Punit(unit);
 	}
 
 	public void endStatInfo(PegObject parsedObject) {
@@ -585,7 +634,7 @@ public abstract class ParserContext {
 				e.printStackTrace();
 			}
 		}
-		timer = (System.currentTimeMillis() - timer);
+		statErapsedTime = (System.currentTimeMillis() - statErapsedTime);
 		System.gc(); // meaningless ?
 		if(Main.VerboseStat) {
 			System.gc(); // meaningless ?
@@ -595,22 +644,26 @@ public abstract class ParserContext {
 					System.out.println("** uncosumed: '" + this.source + "' **");
 				}
 			}
-			long length = this.getPosition();
-			System.out.println("parser: " + this.getClass().getSimpleName() + " -O" + Main.OptimizedLevel + " optimized peg: " + this.statOptimized );
-			System.out.println("speed: " + (length /1024) / (timer / 1000.0) + " KiB/s  " + (length /1024/1024) / (timer / 1000.0) + "MiB/s");
-			System.out.println("erapsed time: " + timer + " msec, thread awaitTime: " + awaitTime + " msec, Disk reads: " + this.source.statIOCount);
-			System.out.println("length: " + this.source.length() + ", consumed: " + this.getPosition() + ", length/backtrack: " + (double)this.backtrackSize / length);
-			System.out.println("backtrack: size= " + this.backtrackSize + " count=" + this.backtrackCount + " average=" + (double)this.backtrackSize / this.backtrackCount);
-			System.out.println("created_object: " + this.objectCount + ", used_object: " + parsedObject.count() + " object_logs: " + maxLog);
+			long statCharLength = this.getPosition();
+			long statFileLength = this.source.getFileLength();
+			long statReadLength = this.source.statReadLength;
+			double fileKps = (statFileLength) / (statErapsedTime / 1000.0);
+			System.out.println("parser: " + this.getClass().getSimpleName() + " -O" + Main.OptimizedLevel + " optimized peg: " + this.statOptimizedPeg );
+			System.out.println("file: " + this.source.fileName + " filesize: " + KMunit(statFileLength, "Kb", "Mb"));
+			System.out.println("IO: " + this.source.statIOCount +" read/file: " + ratio((double)statReadLength/statFileLength) + " pagesize: " + Nunit(FileSource.PageSize, "bytes") + " read: " + KMunit(statReadLength, "Kb", "Mb"));
+			System.out.println("erapsed time: " + Nunit(statErapsedTime, "msec") + " speed: " + kpx(fileKps,"KiB/s") + " " + mpx(fileKps, "MiB/s"));
+			System.out.println("backtrack raito: " + ratio((double)this.statBacktrackSize / statCharLength) + " backtrack: " + this.statBacktrackSize + " length: " + this.source.length() + ", consumed: " + statCharLength);
+			System.out.println("backtrack_count: " + this.statBacktrackCount + " average: " + ratio((double)this.statBacktrackSize / this.statBacktrackCount) + " worst: " + this.statWorstBacktrack);
+			System.out.println("created_object: " + this.statObjectCount + ", used_object: " + parsedObject.count() + " object_logs: " + maxLog);
 			System.out.println("memo hit: " + this.memoHit + ", miss: " + this.memoMiss + 
-					", ratio: " + ((double)this.memoHit / (this.memoHit+this.memoMiss)) + ", consumed memo:" + this.memoSize);
+					", ratio: " + ratio(((double)this.memoHit / (this.memoHit+this.memoMiss))) + ", consumed memo:" + this.memoSize);
 			long total = Runtime.getRuntime().totalMemory() / 1024;
 			long free =  Runtime.getRuntime().freeMemory() / 1024;
 			long used =  total - free;
 			System.out.println("heap: " + used + "KiB/ " + (used/1024) + "MiB");
 			used =  used - usedMemory;
-			length = length / 1024;
-			System.out.println("used: " + used + "KiB/ " + (used/1024) + "MiB,  heap/length: " + (double) used/ length);
+			statCharLength = statCharLength / 1024;
+			System.out.println("used: " + used + "KiB/ " + (used/1024) + "MiB,  heap/length: " + (double) used/ statCharLength);
 			System.out.println();
 		}
 	}

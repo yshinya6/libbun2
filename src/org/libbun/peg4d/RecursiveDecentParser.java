@@ -57,7 +57,7 @@ public class RecursiveDecentParser extends ParserContext {
 		if(Main.VerbosePeg) {
 			System.out.println("optimized: " + msg);
 		}
-		this.statOptimized += 1;
+		this.statOptimizedPeg += 1;
 	}
 
 	private final boolean isTextMatchOnly(Peg e) {
