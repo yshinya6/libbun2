@@ -1,36 +1,57 @@
+TopLevel
+    = Document
+    ;
 
-_ = [ \t\n\r];
+Document
+    = << Prolog@? Misc* Element@ Misc* #xmlDoc>>
+    ;
 
-TopLevel 
-  = XmlTag
-  ;
+Prolog
+    = << '<?xml' Attribute@* _* '?>' #prolog >>
+    ;
 
-Doc 
-  = XmlTag
-  ;
+Content
+    = _* << ((CharData@ / Element@ / CDATA@ / Comment) _*)* #content >> _*
+    ;
 
-XmlTag
-  = << '<' XmlName@ XmlAttr@* ('/>' / '>' XmlContent@* '</' XmlName '>') #xml >>
-  ;
-XmlName 
-  = << [A-Za-z0-9\-:._]+  #name >>
-  ;
-XmlAttr 
-  = _+ << XmlName '=' String #keyvalue >>
-  ;
-XmlContent
-  = (Text / CDATA / XmlComment / XmlTag)
-  ;
-Text    
-  = << (!'<' !'>' .)+  #string >>
-  ;
-CDATA   
-  = '<![CDATA[' << (!']]>' .)* #cdata >> '[[>'
-  ;
-XmlComment
-  = '<!--' (!'-->' .)* '-->'
-  ;
+Name
+    = << [A-Za-z:] ( '-' / [A-Za-z0-9:._])*  #name >>
+    ;
+
 String
-  = << '"' ('\\"' / !'"' .)* '"' #string >>
-  ;
+    = << '"' ( !'"' . )* '"' #string >>
+    ;
 
+CharData
+    = Text
+    ;
+
+Text
+    = << (![<&] .)+ #string >>
+    ;
+
+Element
+    = << '<' Name@ Attribute@* _* '>' Content@ '</' Name '>' #xml >>
+    / << '<' Name@ Attribute@* _* '/>' #xml >>
+    ;
+
+//Reference //TODO
+
+Attribute
+    = _+ << Name@ '=' String@ #keyvalue >>
+    ;
+
+CDATA
+    = '<![CDATA['  << (!']]>' .)* #cdata >> ']]>'
+    ;
+
+
+Misc
+    = Comment / _+
+    ;
+
+Comment
+    = '<!--' (!'-->' . )* '-->'
+    ;
+
+_ = [ \t\r\n];
