@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import org.libbun.drv.JvmDriver;
 import org.libbun.drv.PegDumpper;
 import org.libbun.peg4d.FileSource;
+import org.libbun.peg4d.JsonPegGenerator;
 import org.libbun.peg4d.PackratParser;
 import org.libbun.peg4d.Peg4DParser;
 import org.libbun.peg4d.ParserContext;
@@ -20,6 +21,7 @@ import org.libbun.peg4d.PegRuleSet;
 import org.libbun.peg4d.ParserSource;
 import org.libbun.peg4d.RecursiveDecentParser;
 import org.libbun.peg4d.StringSource;
+import org.libbun.peg4d.ValidParserContext;
 
 public class Main {
 	public final static String  ProgName  = "Peg4d";
@@ -69,6 +71,14 @@ public class Main {
 
 	// --parser
 	public static String ParserType = "--parser";
+
+	// --disable-memo
+	public static boolean NonMemoPegMode = false;
+	
+	// --valid
+	public static boolean ValidateJsonMode = false;
+	
+	public static String InputJsonFile = "";
 
 	// --parser
 	public static int OptimizedLevel = 2;
@@ -142,6 +152,11 @@ public class Main {
 					VerboseMode = true;
 				}
 			}
+			else if (argument.equals("--valid")) {
+				LanguagePeg = "sample/jsonObject.peg";
+				ParseOnlyMode  = true;
+				ValidateJsonMode = true;
+			}
 			else if(argument.startsWith("--parser:")) {
 				ParserType = argument;
 			}
@@ -151,6 +166,10 @@ public class Main {
 		}
 		if (index < args.length) {
 			InputFileName = args[index];
+			index++;
+			if(ValidateJsonMode && index < args.length) {
+				InputJsonFile = args[index];
+			}
 		}
 		else {
 			ShellMode = true;
@@ -210,6 +229,9 @@ public class Main {
 	}
 
 	public final static ParserContext newParserContext(ParserSource source) {
+		if(inParseAndValidateJson) {
+			return new ValidParserContext(source);
+		}
 		if(ParserType.equalsIgnoreCase("--parser:packrat")) {
 			return new PackratParser(source);
 		}
@@ -251,6 +273,9 @@ public class Main {
 				context.beginStatInfo();
 				PegObject node = context.parseNode(startPoint);
 				context.endStatInfo(node);
+				if(ValidateJsonMode) {
+					parseAndValidateJson(node, gamma, driver, startPoint);
+				}
 				gamma.setNode(node);
 				if(!ParseOnlyMode && driver != null) {
 					if(!(driver instanceof PegDumpper)) {
@@ -279,6 +304,35 @@ public class Main {
 		catch (Exception e) {
 			PrintStackTrace(e, source.getLineNumber(0));
 		}
+	}
+	
+	private static boolean inParseAndValidateJson = false;
+	
+	private final static PegObject parseAndValidateJson(PegObject node, Namespace gamma, BunDriver driver, String startPoint) {
+		JsonPegGenerator generator = new JsonPegGenerator();
+		String language = generator.generateJsonPegFile(node);
+		gamma.loadPegFile("main", language);
+		driver.initTable(gamma);
+		if(InputJsonFile != null) {
+			inParseAndValidateJson = true;
+			ParserSource source = Main.loadSource(InputJsonFile);
+			ParserContext context = Main.newParserContext(source);
+			gamma.initParserRuleSet(context, "main");
+			driver.startTransaction(OutputFileName);
+			while(context.hasNode()) {
+				node = context.parsePegObject(new PegObject("#toplevel"), startPoint);
+					if(context.hasChar()) {
+						System.out.println(ValidParserContext.InvalidLine);
+						//System.out.println("** uncosumed: '" + context + "' **");
+						break;
+					}
+					else {
+						System.out.println("parsed:\n" + node.toString());
+						System.out.println("\n\nVALID");
+					}
+			}
+		}
+		return node;
 	}
 
 	public final static void performShell(Namespace gamma, BunDriver driver) {

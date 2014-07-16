@@ -1,0 +1,44 @@
+[
+	{
+		"Human" : {
+				"Name" : "honda",
+				"Age" : 21,
+				"SingleLife" : true,
+				"School" : {
+						"SchoolName" : "kokudai",
+						"Grade" : 4,
+						"ID" : 1164311
+				},
+				"Friends" : {
+					"Friends":[
+						{
+							"Name" : "A"
+						},
+						{
+							"Name" : "B"
+						}
+					]
+				}
+		},
+		"Human" : {
+				"Name" : "honda",
+				"Age" : 21,
+				"SingleLife" : false,
+				"School" : {
+						"SchoolName" : "kokudai",
+						"Grade" : 4,
+						"ID" : 1164311
+				},
+				"Friends" : {
+					"Friends":[
+						{
+							"Name" : "A"
+						},
+						{
+							"Name" : "B"
+						}
+					]
+				}
+		}
+	}
+]

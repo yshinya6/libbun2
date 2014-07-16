@@ -249,6 +249,9 @@ public abstract class ParserContext {
 				break;
 			}
 			count = count + 1;
+			if(!this.hasChar()) {
+				markerId = this.pushNewMarker();
+			}
 		}
 		this.popBack(markerId);
 		return prevNode;

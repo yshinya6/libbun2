@@ -1,0 +1,105 @@
+TopLevel 
+		= << WS Class@ (WS Class@ WS)* #toplevel >>;
+		
+BeginArray
+		= WS '[' WS;
+			
+BeginClass
+		= WS '{' WS;
+			
+EndArray
+		= WS ']' WS;
+			
+EndClass
+		= WS '}' WS;
+			
+NameSeparator
+		= WS ':' WS;
+			
+ValueSeparator
+		= WS ',' WS;
+			
+WS			
+		= [ \t\n\r]*;	
+
+Class
+		= << ClassLabel Name@ BeginClass Member@ EndClass #class>>
+		/ << MainLabel Name@ BeginClass Member@ EndClass #main >>;
+		
+ClassLabel
+		= WS "Class" WS;
+
+ObjectId
+		= << [0-9]+ #id >> WS;
+		
+MainLabel
+		= WS "Main" WS;
+		
+Name
+		= << [A-Za-z_] [A-Za-z0-9]* #name >>;
+		
+Member
+		= << Key@  (ValueSeparator Key@)* #member >>;
+		
+Key
+		= StringType WS << String #string >>
+		/ NumberType WS << String #number >> 
+		/ ArrayType WS << (StringType@ / NumberType@ / ArrayType Array@ / ClassName@ ) WS ArrayKey@  #array >>
+		/ ClassLabel << String@ WS #Class >>
+		/ BooleanType WS << String #boolean >>;
+
+ClassName
+		= ClassLabel WS << String@ #Class >>;
+
+ArrayKey
+		= << String #string >>;
+
+Array
+		= WS << ( StringType@ / NumberType@ / ArrayType Array@ ) #array >>;
+
+Type
+		= <<(StringType
+		/ NumberType) #type >>;
+
+ArrayType
+		= "Array";
+		
+StringType
+		= << "String" #type >>;
+		
+NumberType
+		= << "Number" #type >>;
+		
+BooleanType
+		= "Boolean";
+		
+String
+		= QuotationMark << Char* #string >> QuotationMark;
+		
+Char
+		= Unescaped
+		/ Escape
+		(
+					'"'
+				/	"\\"
+				/	'/'
+				/	'b'
+				/	'f'
+				/	'n'
+				/	'r'
+				/	't'
+				/	'u' (HEXDIG HEXDIG HEXDIG HEXDIG)
+		);
+		
+Escape
+		= "\\";
+		
+QuotationMark
+		= '"';
+		
+Unescaped
+		= [\u0020-\u0021]/[\u0023-\u005B]/[\u005D-\uFFFF];
+			
+HEXDIG
+		= [0-9a-fA-F];
+		
