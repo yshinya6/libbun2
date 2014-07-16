@@ -25,7 +25,8 @@ public class JsonPegGenerator {
 				break;
 			
 			case "#main":
-				source.sourceText += "Object0 = BeginObject Object0_0@ ( ValueSeparator Object0_0@) EndObject;\n\n";
+				source.sourceText += "Object0 = BeginObject << Member0@ ( ValueSeparator Member0@ )  #object >> EndObject;\n\n";
+				source.sourceText += "Member0 = << Object0_0@ #member>>;\n\n";
 				source.sourceText += "Object0" + "_" + count + " = << QuotationMark Name0@ QuotationMark NameSeparator BeginObject Value0@ EndObject #object >>;\n\n";
 				source = generate(source,node.AST[i], 0);
 				break;
