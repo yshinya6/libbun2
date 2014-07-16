@@ -244,7 +244,7 @@ public class PegObject {
 
 	private String info() {
 		if(this.matched == null) {
-			if(this.source != null && Main.VerbosePegMode) {
+			if(this.source != null && Main.VerbosePeg) {
 				return "         ## by peg : " + this.createdPeg;
 			}
 			return "";

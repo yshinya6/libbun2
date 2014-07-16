@@ -9,23 +9,23 @@ public class UCharset {
 	public final static UCharset NotWhiteSpaceNewLine = new UCharset("!-:<-~");
 	public final static UCharset NodeLabel = new UCharset("A-Za-z0-9_./");
 
-	String    charSet;
-	boolean[] asciiSet;
+	String    text;
+	boolean[] asciiBitMap;
 	UMap<String> utfBitMap = null;
 
 	public UCharset(String charSet) {
-		this.charSet = charSet;
-		this.asciiSet = new boolean[128];
+		this.text = charSet;
+		this.asciiBitMap = new boolean[128];
 		this.parse(charSet);
 	}
 
 	public final String toString() {
-		return this.charSet;
+		return this.text;
 	}
 	
 	public final boolean match(char ch) {
 		if(ch < 128) {
-			return this.asciiSet[ch];
+			return this.asciiBitMap[ch];
 		}
 		if(this.utfBitMap != null) {
 			return this.utfBitMap.hasKey(Main._CharToString(ch));
@@ -33,10 +33,10 @@ public class UCharset {
 		return false;
 	}
 
-	private void set(char ch) {
+	final void set(char ch) {
 		if(ch < 128) {
 			//System.out.println("charSet='"+this.charSet+"' : ch = '" + ch + "'");
-			this.asciiSet[ch] = true;
+			this.asciiBitMap[ch] = true;
 		}
 		else {
 			if(this.utfBitMap == null) {
@@ -68,6 +68,27 @@ public class UCharset {
 			this.set((char)ch);
 		}
 	}
+	
+	public final void append(UCharset charset) {
+		for(int i = 0; i < this.asciiBitMap.length; i++) {
+			if(charset.asciiBitMap[i]) {
+				this.asciiBitMap[i] = true;
+			}
+		}
+		if(charset.utfBitMap != null) {
+			UList<String> l = charset.utfBitMap.keys();
+			for(int i = 0; i < l.size(); i++) {
+				this.set(l.ArrayValues[i].charAt(0));
+			}
+		}
+		this.text += charset.text;
+	}
+
+	public final void append(char ch) {
+		this.set(ch);
+		this.text += ch;
+	}
+
 
 	public static final String _QuoteString(char OpenChar, String Text, char CloseChar) {
 		char SlashChar = '\\';
@@ -168,6 +189,7 @@ public class UCharset {
 		}
 		return 0L;
 	}
+
 
 }
 

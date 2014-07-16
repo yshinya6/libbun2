@@ -3,6 +3,7 @@ package org.libbun.peg4d;
 public abstract class ParserSource {
 	public String fileName;
 	long statIOCount = 0;
+	long statReadLength = 0;
 	
 	public ParserSource(String fileName, long linenum) {
 		this.fileName = fileName;
@@ -10,6 +11,7 @@ public abstract class ParserSource {
 	}
 
 	public abstract long length();
+	public abstract long getFileLength();
 	public abstract char charAt(long n);
 	public abstract String substring(long startIndex, long endIndex);
 	public abstract ParserSource trim(long startIndex, long endIndex);
@@ -170,5 +172,6 @@ public abstract class ParserSource {
 		}
 		return fileName;
 	}
+
 
 }
