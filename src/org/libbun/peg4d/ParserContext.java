@@ -68,6 +68,14 @@ public abstract class ParserContext {
 		}
 		return '\0';
 	}
+	
+	public String substring(long startIndex, long endIndex) {
+		if(endIndex <= this.endPosition) {
+			return this.source.substring(startIndex, endIndex);
+		}
+		return "";
+	}
+
 
 	protected final void consume(long plus) {
 		this.sourcePosition = this.sourcePosition + plus;
@@ -292,7 +300,7 @@ public abstract class ParserContext {
 				break;
 			}
 			this.popBack(markerId);
-			this.rollback(pos);
+			this.setPosition(pos);
 		}
 		return node;
 	}
@@ -401,13 +409,23 @@ public abstract class ParserContext {
 	public PegObject matchNewObject(PegObject left, PegNewObject e) {
 		PegObject leftNode = left;
 		long startIndex = this.getPosition();
+		if(e.predictionIndex > 0) {
+			for(int i = 0; i < e.predictionIndex; i++) {
+				PegObject node = e.get(i).performMatch(left, this);
+				if(node.isFailure()) {
+					this.rollback(startIndex);
+					return node;
+				}
+				assert(left == node);
+			}
+		}
 		int markerId = this.pushNewMarker();
 		PegObject newnode = this.newPegObject(e.nodeName);
 		newnode.setSource(e, this.source, startIndex);
 		if(e.leftJoin) {
 			this.pushSetter(newnode, -1, leftNode);
 		}
-		for(int i = 0; i < e.size(); i++) {
+		for(int i = e.predictionIndex; i < e.size(); i++) {
 			PegObject node = e.get(i).performMatch(newnode, this);
 			if(node.isFailure()) {
 				this.popBack(markerId);
@@ -579,6 +597,7 @@ public abstract class ParserContext {
 			}
 			long length = this.getPosition();
 			System.out.println("parser: " + this.getClass().getSimpleName() + " -O" + Main.OptimizedLevel + " optimized peg: " + this.statOptimized );
+			System.out.println("speed: " + (length /1024) / (timer / 1000.0) + " KiB/s  " + (length /1024/1024) / (timer / 1000.0) + "MiB/s");
 			System.out.println("erapsed time: " + timer + " msec, thread awaitTime: " + awaitTime + " msec, Disk reads: " + this.source.statIOCount);
 			System.out.println("length: " + this.source.length() + ", consumed: " + this.getPosition() + ", length/backtrack: " + (double)this.backtrackSize / length);
 			System.out.println("backtrack: size= " + this.backtrackSize + " count=" + this.backtrackCount + " average=" + (double)this.backtrackSize / this.backtrackCount);

@@ -104,10 +104,16 @@ public class Main {
 					OptimizedLevel = 0;
 				}
 				if(argument.equals("-O1")) {
-					OptimizedLevel = 1;
+					OptimizedLevel = 1;  // Peephole
+				}
+				if(argument.equals("-O2")) {
+					OptimizedLevel = 2;  // inlining
 				}
 				if(argument.equals("-O3")) {
-					OptimizedLevel = 3;
+					OptimizedLevel = 3;  // prediction
+				}
+				if(argument.equals("-O4")) {
+					OptimizedLevel = 4;  // experimental
 				}
 			}
 			else if (argument.equals("-i")) {

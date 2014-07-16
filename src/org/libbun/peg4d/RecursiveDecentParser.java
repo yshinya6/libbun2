@@ -54,9 +54,9 @@ public class RecursiveDecentParser extends ParserContext {
 	}
 
 	final void log(Peg orig, String msg) {
-		//if(Main.VerbosePeg) {
+		if(Main.VerbosePeg) {
 			System.out.println("optimized: " + msg);
-		//}
+		}
 		this.statOptimized += 1;
 	}
 
@@ -93,6 +93,9 @@ public class RecursiveDecentParser extends ParserContext {
 				if(e instanceof PegChoice) {
 					return this.predictChoice(((PegChoice) e));
 				}
+				if(e instanceof PegNewObject) {
+					return this.predictNewObject(((PegNewObject) e));
+				}
 				if(e instanceof PegUnary) {
 					Peg inner = ((PegUnary) e).innerExpr;
 					if(e instanceof PegNot) {
@@ -118,43 +121,137 @@ public class RecursiveDecentParser extends ParserContext {
 				n = next.clone(this);
 				pegCache.put(ruleName, n);
 			}				
-			// log(label, "inlining: " + n + " in " + ruleName);
+			log(label, "inlining: " + ruleName);
 			return n;
-//			return null;
 		}
 
-		private final Peg predictChoice(PegChoice e) {
-			PegChoice choice = new PegChoice();
-			PegCharacter prev = null;
-			for(int i = 0; i < e.size(); i++) {
-				Peg sub = e.get(i).clone(this);
-				if(prev != null) {
-					if(sub instanceof PegCharacter) {
-						prev.charset.append(((PegCharacter) sub).charset);
-						log(prev, "merged character: " + prev + "/" + sub);
-						continue;
-					}
-					if(sub instanceof PegString1) {
-						prev.charset.append(((PegString1) sub).symbol);
-						log(prev, "merged character: " + prev + "/" + sub);
-						continue;
-					}
+		private final void appendChoiceList(UList<Peg> flatList, Peg e) {
+			if(flatList.size() > 0 && (e instanceof PegString1 || e instanceof PegCharacter)) {
+				Peg prev = flatList.ArrayValues[flatList.size()-1];
+				if(prev instanceof PegString1) {
+					PegCharacter c = new PegCharacter("");
+					c.charset.append(((PegString1) prev).symbol);
+					flatList.ArrayValues[flatList.size()-1] = c;
+					prev = c;
 				}
-				if(sub instanceof PegString1 && isCharacter(e.get(i+1, null))) {
-					prev = new PegCharacter("");
-					prev.charset.append(((PegString1) sub).symbol);
-					sub = prev;
-				}
-				choice.list.add(sub);
-				prev = null;
-				if(sub instanceof PegCharacter) {
-					prev = (PegCharacter)sub;
+				if(prev instanceof PegCharacter) {
+					UCharset charset = ((PegCharacter) prev).charset;
+					if(e instanceof PegCharacter) {
+						charset.append(((PegCharacter) e).charset);
+						log(prev, "merged character: " + prev);
+					}
+					else {
+						charset.append(((PegString1) e).symbol);
+						log(prev, "merged character: " + prev);
+					}
+					return;
 				}
 			}
-			if(choice.size() == 1) {
-				return choice.get(0);
+			flatList.add(e);
+		}
+		
+		private final Peg predictChoice(PegChoice orig) {
+			UList<Peg> flatList = new UList<Peg>(new Peg[orig.size()]);
+			for(int i = 0; i < orig.size(); i++) {
+				Peg sub = orig.get(i).clone(this);
+				if(sub instanceof PegChoice) {
+					log(orig, "flaten choice: " + sub);
+					for(int j = 0; j < sub.size(); j++) {
+						this.appendChoiceList(flatList, sub.get(j));
+					}
+				}
+				else {
+					this.appendChoiceList(flatList, sub);
+				}
 			}
-			return choice;
+			if(flatList.size() == 1) {
+				log(orig, "removed choice: " + flatList.ArrayValues[0]);
+				return flatList.ArrayValues[0];
+			}
+			if(Main.OptimizedLevel >= 3) {
+				int unpredicatableCount = 0;
+				for(int i = 0; i < flatList.size(); i++) {
+					Peg sub = flatList.ArrayValues[i];
+					Object p = sub.getPrediction();
+					if(p == null) {
+						unpredicatableCount += 1;
+					}
+					if(p instanceof UCharset) {
+						unpredicatableCount += 1;
+					}
+				}
+				if(unpredicatableCount == 0) {
+					PegMappedChoice choice = new PegMappedChoice();
+					choice.flag = orig.flag;
+					choice.list = flatList;
+					choice.makeMemo();
+					log(orig, "mapped choice: " + choice.map.keys());
+					return choice;
+				}
+				else {
+					//System.out.println("@@@@@@@@@@@@@@@@@");
+					//System.out.println("Predictable: " + orig);
+//					int min = 100000;
+//					for(int i = 0; i < flatList.size(); i++) {
+//						Peg sub = flatList.ArrayValues[i];
+//						String p = sub.getPrediction().toString();
+//						System.out.println("\t: '" + p + "'");
+//						if(p.length() < min) {
+//							min = p.length();
+//						}
+//					}
+//					System.out.println("min: " + min);
+//					System.out.println("@@@@@@@@@@@@@@@@@");
+					//System.out.println("####### " + unpredicatableCount + " < " + flatList.size());
+				}
+			}
+			PegChoice p = new PegChoice();
+			p.flag = orig.flag;
+			p.list = flatList;
+			return p;
+		}
+
+		private final void order(PegList list) {
+			for(int i = 0; i < list.size() -1; i++) {
+				Peg e0 = list.get(i);
+				Peg e1 = list.get(i+1);
+				if(e0 instanceof PegTag) {
+					if(e1 instanceof PegString) {
+						list.swap(i, i+1);
+					}
+				}
+				if(e0 instanceof PegMessage) {
+					
+				}
+			}
+		}
+		
+		private final Peg predictNewObject(PegNewObject orig) {
+			PegNewObject ne = new PegNewObject(orig.leftJoin);
+			ne.flag = orig.flag;
+			int predictionIndex = -1;
+			for(int i = 0; i < orig.size(); i++) {
+				Peg sub = orig.get(i).clone(this);
+				ne.list.add(sub);
+				if(isNeedsObjectCreation(sub) && predictionIndex == -1) {
+					predictionIndex = i;
+				}
+			}
+			if(predictionIndex == -1) {
+				predictionIndex=0;
+			}
+			if(Main.OptimizedLevel >= 3 && predictionIndex > 0) {
+				log(orig, "prediction index: " + predictionIndex);
+				ne.predictionIndex = predictionIndex;
+			}
+			return ne;
+		}
+		
+		private boolean isNeedsObjectCreation(Peg e) {
+			if(e.is(Peg.HasNewObject) || e.is(Peg.HasSetter) || e.is(Peg.HasTagging) || e.is(Peg.HasMessage) || e.is(Peg.HasContext)) {
+				return true;
+			}
+			return false;
 		}
 		
 		public Peg peepHoleTransform(Peg e) {
@@ -306,6 +403,9 @@ public class RecursiveDecentParser extends ParserContext {
 				return left;
 			}
 			return context.foundFailure(this);
+		}
+		public Object getPrediction() {
+			return ""+symbol;
 		}
 	}
 	
@@ -505,6 +605,42 @@ public class RecursiveDecentParser extends ParserContext {
 			}
 			context.setPosition(pos);
 			return left;
+		}
+	}
+	
+	class PegMappedChoice extends PegChoice {
+		private int tokenSize;
+		private UMap<Peg> map = new UMap<Peg>();
+		public void makeMemo() {
+			int min = 1000000;
+			for(int i = 0; i < this.list.size(); i++) {
+				Peg sub = this.list.ArrayValues[i];
+				String p = sub.getPrediction().toString();
+				if(p.length() < min) {
+					min = p.length();
+				}
+			}
+			this.tokenSize = min;
+			this.map = new UMap<Peg>();
+			for(int i = 0; i < this.list.size(); i++) {
+				Peg sub = this.list.ArrayValues[i];
+				String token = sub.getPrediction().toString().substring(0, min);
+				Peg.addAsChoice(this.map, token, sub);
+			}
+		}
+		@Override
+		public PegObject simpleMatch(PegObject left, ParserContext context) {
+			long pos = context.getPosition();
+			String token = context.substring(pos, pos + this.tokenSize);
+			Peg e = this.map.get(token);
+			if(e != null) {
+				PegObject node2 = e.simpleMatch(left, context);
+				if(node2.isFailure()) {
+					context.setPosition(pos);
+				}
+				return node2;
+			}
+			return context.foundFailure(this);
 		}
 	}
 	
