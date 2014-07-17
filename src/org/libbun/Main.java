@@ -44,7 +44,7 @@ public class Main {
 
 	//
 	private static String InputFileName = null;
-	
+
 	// --bigdata
 	private static boolean BigDataOption = false;
 
@@ -65,7 +65,7 @@ public class Main {
 
 	// --verbose:bun
 	public static boolean VerboseBunMode = false;
-	
+
 	// --verbose:stat
 	public static boolean VerboseStat = false;
 
@@ -74,16 +74,16 @@ public class Main {
 
 	// --disable-memo
 	public static boolean NonMemoPegMode = false;
-	
+
 	// --valid
 	public static boolean ValidateJsonMode = false;
-	
+
 	public static String InputJsonFile = "";
 
 	// --parser
 	public static int OptimizedLevel = 2;
 
-	
+
 	private static void parseCommandArguments(String[] args) {
 		int index = 0;
 		while (index < args.length) {
@@ -210,7 +210,7 @@ public class Main {
 		}
 		return null;
 	}
-	
+
 	private static BunDriver loadDriver(String driverName) {
 		BunDriver d = loadDriverImpl(driverName);
 		if(d == null) {
@@ -240,7 +240,7 @@ public class Main {
 		}
 		return new Peg4DParser(source);  // best parser
 	}
-	
+
 	public final static void main(String[] args) {
 		parseCommandArguments(args);
 		BunDriver driver = loadDriver(DriverName);
@@ -272,6 +272,7 @@ public class Main {
 			while(context.hasNode()) {
 				context.beginStatInfo();
 				PegObject node = context.parseNode(startPoint);
+				System.out.println(node.toString());
 				context.endStatInfo(node);
 				if(ValidateJsonMode) {
 					parseAndValidateJson(node, gamma, driver, startPoint);
@@ -305,9 +306,9 @@ public class Main {
 			PrintStackTrace(e, source.getLineNumber(0));
 		}
 	}
-	
+
 	private static boolean inParseAndValidateJson = false;
-	
+
 	private final static PegObject parseAndValidateJson(PegObject node, Namespace gamma, BunDriver driver, String startPoint) {
 		JsonPegGenerator generator = new JsonPegGenerator();
 		String language = generator.generateJsonPegFile(node);
