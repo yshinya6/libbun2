@@ -22,6 +22,7 @@ import org.libbun.peg4d.ParserSource;
 import org.libbun.peg4d.RecursiveDecentParser;
 import org.libbun.peg4d.StringSource;
 import org.libbun.peg4d.ValidParserContext;
+import org.libbun.peg4d.XmlPegGenerator;
 
 public class Main {
 	public final static String  ProgName  = "Peg4d";
@@ -76,9 +77,13 @@ public class Main {
 	public static boolean NonMemoPegMode = false;
 
 	// --valid
+	public static boolean ValidateMode = false;
+
 	public static boolean ValidateJsonMode = false;
 
-	public static String InputJsonFile = "";
+	public static boolean ValidateXMLMode = false;
+
+	public static String InputDataFile = "";
 
 	// --parser
 	public static int OptimizedLevel = 2;
@@ -156,6 +161,13 @@ public class Main {
 				LanguagePeg = "sample/jsonObject.peg";
 				ParseOnlyMode  = true;
 				ValidateJsonMode = true;
+				ValidateMode = true;
+			}
+			else if (argument.equals("--valid:xml")) {
+				LanguagePeg = "sample/xml_dtd.peg";
+				ParseOnlyMode  = true;
+				ValidateXMLMode = true;
+				ValidateMode = true;
 			}
 			else if(argument.startsWith("--parser:")) {
 				ParserType = argument;
@@ -167,8 +179,8 @@ public class Main {
 		if (index < args.length) {
 			InputFileName = args[index];
 			index++;
-			if(ValidateJsonMode && index < args.length) {
-				InputJsonFile = args[index];
+			if(ValidateMode && index < args.length) {
+				InputDataFile = args[index];
 			}
 		}
 		else {
@@ -274,8 +286,8 @@ public class Main {
 				PegObject node = context.parseNode(startPoint);
 				System.out.println(node.toString());
 				context.endStatInfo(node);
-				if(ValidateJsonMode) {
-					parseAndValidateJson(node, gamma, driver, startPoint);
+				if(ValidateMode) {
+					parseAndValidate(node, gamma, driver, startPoint);
 				}
 				gamma.setNode(node);
 				if(!ParseOnlyMode && driver != null) {
@@ -309,14 +321,21 @@ public class Main {
 
 	private static boolean inParseAndValidateJson = false;
 
-	private final static PegObject parseAndValidateJson(PegObject node, Namespace gamma, BunDriver driver, String startPoint) {
+	private final static PegObject parseAndValidate(PegObject node, Namespace gamma, BunDriver driver, String startPoint) {
+		String language = null;
+		if (ValidateXMLMode) {
+		XmlPegGenerator generator = new XmlPegGenerator();
+		language = generator.generateXmlPegFile(node);
+		}
+		else if (ValidateJsonMode) {
 		JsonPegGenerator generator = new JsonPegGenerator();
-		String language = generator.generateJsonPegFile(node);
+		language = generator.generateJsonPegFile(node);
+		}
 		gamma.loadPegFile("main", language);
 		driver.initTable(gamma);
-		if(InputJsonFile != null) {
+		if(InputDataFile != null) {
 			inParseAndValidateJson = true;
-			ParserSource source = Main.loadSource(InputJsonFile);
+			ParserSource source = Main.loadSource(InputDataFile);
 			ParserContext context = Main.newParserContext(source);
 			gamma.initParserRuleSet(context, "main");
 			driver.startTransaction(OutputFileName);

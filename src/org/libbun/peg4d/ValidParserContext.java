@@ -12,7 +12,7 @@ public class ValidParserContext extends RecursiveDecentParser {
 	public ValidParserContext(ParserSource source) {
 		super(source);
 	}
-	
+
 	private ValidParserContext(ParserSource source, long startIndex, long endIndex, UList<Peg> pegList) {
 		super(source, startIndex, endIndex, pegList);
 	}
@@ -30,14 +30,14 @@ public class ValidParserContext extends RecursiveDecentParser {
 //				if(this.size() > FifoSize) {
 //					//System.out.println("removed pos="+eldest.getKey());
 //					unusedMemo(eldest.getValue());
-//					return true;			
+//					return true;
 //				}
 //	            return false;
 //	        }
 //	    };
 		this.memoMap = new HashMap<Long, ObjectMemo>();
 	}
-	
+
 	public PegObject matchLabel(PegObject left, PegLabel e) {
 		long pos = this.getPosition();
 		ObjectMemo m = this.getMemo(e, pos);
@@ -58,7 +58,7 @@ public class ValidParserContext extends RecursiveDecentParser {
 		return generated;
 	}
 
-	
+
 	public PegObject matchNewObject(PegObject left, PegNewObject e) {
 		PegObject leftNode = left;
 		long startIndex = this.getPosition();
@@ -71,7 +71,7 @@ public class ValidParserContext extends RecursiveDecentParser {
 		for(int i = 0; i < e.size(); i++) {
 			PegObject node = e.get(i).performMatch(newnode, this);
 			if(node.isFailure()) {
-				if(Main.ValidateJsonMode) {
+				if(Main.ValidateMode) {
 					String inValidName = node.createdPeg.toString();
 					this.setInvalidLine((int) sourcePosition, source, inValidName);
 				}
@@ -86,13 +86,13 @@ public class ValidParserContext extends RecursiveDecentParser {
 		this.popNewObject(newnode, startIndex, markerId);
 		return newnode;
 	}
-	
+
 	public static String InvalidLine = "";
-	
+
 	public void setInvalidLine(int pos, ParserSource source, String inValidName) {
 		InvalidLine = "\nINVALID" + "\nnot found : " + inValidName
 					+ "(error " + source.fileName + " line" + source.getLineNumber(pos) + ")";
-		Main.ValidateJsonMode = false;
+		Main.ValidateMode = false;
 	}
 
 }
