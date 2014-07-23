@@ -1,0 +1,59 @@
+TopLevel
+    = Document
+    ;
+
+Document
+    = << Prolog@? Misc* Content@ Misc* #xmlDoc>>
+    ;
+
+Prolog
+    = << '<?xml' _* Attribute@* _* '?>' #prolog >>
+    ;
+
+Content
+    = _* << ((Element0 / Comment) _*)* #content >> _*
+    ;
+
+Name
+    = << [A-Za-z:] ( '-' / [A-Za-z0-9:._])*  #name >>
+    ;
+
+String
+    = << '"' ( !'"' . )* '"' #string >>
+    ;
+
+CharData
+    = [A-Za-z0-9:._]+
+    ;
+
+
+//Reference //TODO
+
+Attribute
+    = _* << Name@ '=' String@ #keyvalue >>
+    ;
+
+CDATA
+    = '<![CDATA['  << (!']]>' .)* #cdata >> ']]>'
+    ;
+
+
+Misc
+    = Comment / _+
+    ;
+
+Comment
+    = '<!--' (!'-->' . )* '-->'
+    ;
+    
+QuotationMark
+		= '"'
+		;
+
+ValueSeparator
+	= _* ',' _*
+	;
+
+_ = [ \t\r\n];
+
+//Generated Part

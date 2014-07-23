@@ -1,0 +1,82 @@
+TopLevel
+    = Document
+    ;
+
+Document
+    = Misc* DocType Misc* 
+    ;
+
+Attribute
+    = _+ << Name@ '=' String@ #keyvalue >>
+    ;
+
+DocType
+    = '<!DOCTYPE' _* <<DocTypeName@ '[' DTD* #doctype >> ']>'
+    ;
+
+DTD
+    = _*  '<!' (Element@/Entity@/Attlist@) '>' _*
+    ;
+
+Element
+	= _* 'ELEMENT' _* <<ElementName@ _* '(' Model (ValueSeparator Model)* ')' #element>> _*
+	;
+
+Model
+	= _* (Member@) _*
+	;
+	
+Member
+	= << (MemberName@/Data@) (ValueSeparator (MemberName@/Data@))* #member>> 
+	;
+	
+Data
+	= <<( '#PCDATA' / 'EMPTY' / 'ANY' ) #data>>
+	;
+	
+Entity
+	= _* 'ENTITY' _* <<EntityName@ _* String@ #entity>> _*
+	;
+	
+Attlist
+	= _* 'ATTLIST' _* <<Name@ _* Name@ _* Name@ _* String@>> _*
+	;
+
+ElementName
+	= <<Name #elementName>>
+	;
+MemberName
+	= <<Name #memberName>>
+	;
+EntityName
+	= <<Name #entityName>>
+	;
+DocTypeName
+	= <<Name #docTypeName>>
+	;
+
+Name
+    = << [A-Za-z:] ( '-' / [A-Za-z0-9:._])*  #name >>
+    ;
+
+String
+    = << '"' ( !'"' . )* '"' #string >>
+    ;
+
+
+//Reference //TODO
+
+
+Misc
+    = Comment / _+
+    ;
+
+Comment
+    = '<!--' (!'-->' . )* '-->'
+    ;
+    
+ValueSeparator
+	= _* ',' _*
+	;
+
+_ = [ \t\r\n];

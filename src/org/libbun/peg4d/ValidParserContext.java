@@ -58,6 +58,26 @@ public class ValidParserContext extends RecursiveDecentParser {
 		return generated;
 	}
 
+//	public PegObject matchSequence(PegObject left, PegSequence e) {
+//		long pos = this.getPosition();
+//		int markerId = this.pushNewMarker();
+//		for(int i = 0; i < e.size(); i++) {
+//			PegObject parsedNode = e.get(i).performMatch(left, this);
+//			if(parsedNode.isFailure()) {
+//				if(this.getPosition() - pos > 2) {
+//					if(Main.ValidateMode) {
+//						String inValidName = parsedNode.createdPeg.toString();
+//						this.setInvalidLine((int) sourcePosition, source, inValidName);
+//					}
+//				}
+//				this.popBack(markerId);
+//				this.rollback(pos);
+//				return parsedNode;
+//			}
+//			left = parsedNode;
+//		}
+//		return left;
+//	}
 
 	public PegObject matchNewObject(PegObject left, PegNewObject e) {
 		PegObject leftNode = left;
@@ -71,9 +91,11 @@ public class ValidParserContext extends RecursiveDecentParser {
 		for(int i = 0; i < e.size(); i++) {
 			PegObject node = e.get(i).performMatch(newnode, this);
 			if(node.isFailure()) {
-				if(Main.ValidateMode) {
-					String inValidName = node.createdPeg.toString();
-					this.setInvalidLine((int) sourcePosition, source, inValidName);
+				if(startIndex != this.getPosition()) {
+					if(Main.ValidateMode) {
+						String inValidName = node.createdPeg.toString();
+						this.setInvalidLine((int) sourcePosition, source, inValidName);
+					}
 				}
 				this.popBack(markerId);
 				this.rollback(startIndex);
