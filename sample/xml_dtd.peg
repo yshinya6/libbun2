@@ -22,26 +22,45 @@ Element
 	= _* 'ELEMENT' _* <<ElementName@ _* '(' Model (ValueSeparator Model)* ')' #element>> _*
 	;
 
-Model
-	= _* (Member@) _*
-	;
-	
-Member
-	= << (MemberName@/Data@) (ValueSeparator (MemberName@/Data@))* #member>> 
-	;
-	
-Data
-	= <<( '#PCDATA' / 'EMPTY' / 'ANY' ) #data>>
+Attlist
+	= _* 'ATTLIST' _* <<ElementName@ _* (AttParameter@)* #attlist>> _*
 	;
 	
 Entity
 	= _* 'ENTITY' _* <<EntityName@ _* String@ #entity>> _*
 	;
-	
-Attlist
-	= _* 'ATTLIST' _* <<Name@ _* Name@ _* Name@ _* String@>> _*
+
+
+//for Element
+Model
+	= _* (Member@) _*
+	;
+Member
+	= << (MemberName@/Data@) (ValueSeparator (MemberName@/Data@))* #member>> 
+	;
+Data
+	= << ( '#PCDATA' / 'EMPTY' / 'ANY' ) #data>>
 	;
 
+//for Attlist
+AttParameter
+	= << _* AttName@ _* DataType@ _* Default@ _* #attParameter>>
+	; 
+DataType
+	= << ('CDATA'/'ID'/'IDREF'/'ENTITY'/'ENTITIES'/'NMTOKEN'/'NMTOKENS'/'Enumerated') #dataType>>
+	;
+Default
+	= << ('#REQUIRED' / '#IMPLIED' / '#FIXED' )  _* (DefaultValue@)* #Default>>
+	;
+DefaultValue
+	= << String #defaultValue>>
+	;
+
+
+//Name
+AttName
+	= <<Name #attName>>
+	;
 ElementName
 	= <<Name #elementName>>
 	;
