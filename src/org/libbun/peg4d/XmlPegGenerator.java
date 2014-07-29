@@ -67,7 +67,8 @@ public class XmlPegGenerator {
 				break;
 
 			case "#attParameter":
-				source.sourceText += "attParameter"+ index + "_" + count + " = << " + "'" + node.AST[i].AST[0].getText() + "'" + " '=' String #att >>; \n\n";
+				source.sourceText += "attParameter"+ index + "_" + count + " = << attName" + index + "_" + count + "@ '=' String@ #att >>; \n\n";
+				source.sourceText += "attName" + index + "_" + count + " = << '" + node.AST[i].AST[0].getText() + "' #attName >>; \n\n";
 				count++;
 				break;
 		}
