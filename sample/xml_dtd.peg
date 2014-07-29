@@ -32,10 +32,13 @@ Model
 	= _* (Member@) _*
 	;
 Member
-	= << (Data@/MemberName@) (ValueSeparator (Data@/MemberName@))* #member>> 
+	= << (Data@/MemberName@ (Regex@)?) (ValueSeparator (Data@/MemberName@) (Regex@)?)* #member>> 
 	;
 Data
 	= << ( '#PCDATA' / 'EMPTY' / 'ANY' ) #data>>
+	;
+Regex
+	= << ( '*' / '+' / '|' / '?') #regex>>
 	;
 
 //for Attlist

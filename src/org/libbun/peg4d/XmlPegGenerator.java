@@ -53,7 +53,7 @@ public class XmlPegGenerator {
 				break;
 
 			case "#data":
-				source.sourceText += "Member" + index + "_" + count + " = << CharData #data >>;\n\n";
+				source.sourceText += "Member" + index + "_" + count + " = << CharData? #data >>;\n\n";
 				count++;
 				break;
 
