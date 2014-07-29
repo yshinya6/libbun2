@@ -12,6 +12,7 @@ public class XmlPegGenerator {
 
 	int arrayCount = 0;
 	UMap<Integer> NameMap = new UMap<Integer>();
+	UMap<Integer> AttMap = new UMap<Integer>();
 
 	public final StringSource generate(StringSource source, PegObject node, int index) {
 		int count = 0;
@@ -19,7 +20,12 @@ public class XmlPegGenerator {
 			switch (node.AST[i].tag) {
 			case "#element":
 				index = this.NameMap.get(node.AST[i].AST[0].getText());
-				source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@'>' _* " + "Members" + index + " _* '</' ElementName" + index + "'>' _* #element >>;\n\n";
+				if (this.AttMap.hasKey(node.AST[i].AST[0].getText())) {
+					source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _+ Attribute" + index + " _* ( '/>' / '>' " + "Members" + index + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
+				}
+				else{
+					source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _* ( '/>' / '>' " + "Members" + index + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
+				}
 				source = generate(source,node.AST[i], index);
 				break;
 
@@ -50,7 +56,21 @@ public class XmlPegGenerator {
 				source.sourceText += "Member" + index + "_" + count + " = << CharData #data >>;\n\n";
 				count++;
 				break;
-			}
+
+			case "#attlist":
+				source = generate(source, node.AST[i], index);
+				source.sourceText += "Attribute" + index + " =";
+				for(int j = 0; j < node.AST[i].AST.length - 2; j++){
+					source.sourceText += " attParameter" + index + "_" + j + "@ _*";
+				}
+				source.sourceText += " attParameter" + index + "_" + (node.AST[i].AST.length - 2) + "@;\n\n";
+				break;
+
+			case "#attParameter":
+				source.sourceText += "attParameter"+ index + "_" + count + " = << " + "'" + node.AST[i].AST[0].getText() + "'" + " '=' String #att >>; \n\n";
+				count++;
+				break;
+		}
 		}
 		return source;
 	}
@@ -78,7 +98,10 @@ public class XmlPegGenerator {
 			if(node.AST[i].tag.equals("#docTypeName")) {
 				this.NameMap.put(node.AST[i].getText(), 0);
 			}
-			else {
+			else if(node.AST[i].tag.equals("#attlist")){
+				this.AttMap.put(node.AST[i].AST[0].getText(), i);
+			}
+			else if(node.AST[i].tag.equals("#element")){
 				this.NameMap.put(node.AST[i].AST[0].getText(), i);
 			}
 		}

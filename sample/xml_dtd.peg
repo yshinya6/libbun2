@@ -5,11 +5,7 @@ TopLevel
 Document
     = Misc* DocType Misc* 
     ;
-
-Attribute
-    = _+ << Name@ '=' String@ #keyvalue >>
-    ;
-
+    
 DocType
     = '<!DOCTYPE' _* <<DocTypeName@ '[' DTD* #doctype >> ']>'
     ;
@@ -36,7 +32,7 @@ Model
 	= _* (Member@) _*
 	;
 Member
-	= << (MemberName@/Data@) (ValueSeparator (MemberName@/Data@))* #member>> 
+	= << (Data@/MemberName@) (ValueSeparator (Data@/MemberName@))* #member>> 
 	;
 Data
 	= << ( '#PCDATA' / 'EMPTY' / 'ANY' ) #data>>
@@ -50,8 +46,13 @@ DataType
 	= << ('CDATA'/'ID'/'IDREF'/'ENTITY'/'ENTITIES'/'NMTOKEN'/'NMTOKENS'/'Enumerated') #dataType>>
 	;
 Default
-	= << ('#REQUIRED' / '#IMPLIED' / '#FIXED' )  _* (DefaultValue@)* #Default>>
+	= << DefaultType@  _* (DefaultValue@)* #default>>
 	;
+	
+DefaultType
+	= <<('#REQUIRED' / '#IMPLIED' / '#FIXED' ) #defaultType>>	
+	;
+	
 DefaultValue
 	= << String #defaultValue>>
 	;
