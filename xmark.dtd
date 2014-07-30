@@ -1,0 +1,8 @@
+<!DOCTYPE XMark[
+<!ELEMENT person     (name, profession*)>
+<!ATTLIST person      born CDATA #REQUIRED died CDATA #IMPLIED>
+<!ELEMENT name       (first,last)>
+<!ELEMENT first      (#PCDATA)>
+<!ELEMENT last       (#PCDATA)>
+<!ELEMENT profession (#PCDATA)>
+]>
