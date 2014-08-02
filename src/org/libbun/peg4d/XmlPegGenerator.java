@@ -15,6 +15,7 @@ public class XmlPegGenerator {
 	UMap<Integer> AttMap = new UMap<Integer>();
 
 	public final StringSource generate(StringSource source, PegObject node, int index) {
+
 		int count = 0;
 		for(int i = 0; i < node.AST.length; i++) {
 			switch (node.AST[i].tag) {
@@ -22,18 +23,18 @@ public class XmlPegGenerator {
 				index = this.NameMap.get(node.AST[i].AST[0].getText());
 				if (this.AttMap.hasKey(node.AST[i].AST[0].getText())) {
 					if (node.AST[i].AST.length == 3) {
-						source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _+ Attribute" + index + " _* ( '/>' / '>' " + "Members" + index  + node.AST[i].AST[2].getText() + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
+						source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _+ Attribute" + index + " _* ( '/>' / '>' _* " + "Members" + index  + node.AST[i].AST[2].getText() + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
 					}
 					else{
-					source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _+ Attribute" + index + " _* ( '/>' / '>' " + "Members" + index + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
+					source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _+ Attribute" + index + " _* ( '/>' / '>' _* " + "Members" + index + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
 					}
 				}
 				else{
 					if (node.AST[i].AST.length == 3) {
-						source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _* ( '/>' / '>' " + "Members" + index + node.AST[i].AST[2].getText() + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
+						source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _* ( '/>' / '>' _* " + "Members" + index + node.AST[i].AST[2].getText() + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
 						}
 					else{
-						source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _* ( '/>' / '>' " + "Members" + index + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
+						source.sourceText += "Element" + index + " = << _* '<' ElementName" + index + "@ _* ( '/>' / '>' _* " + "Members" + index + " _* '</' ElementName" + index + "'>' ) _* #element >>;\n\n";
 						}
 					}
 				source = generate(source,node.AST[i], index);
@@ -47,13 +48,28 @@ public class XmlPegGenerator {
 				source = generate(source, node.AST[i], index);
 				source.sourceText += "Members" + index + " =";
 				for(int j = 0; j < node.AST[i].AST.length - 1; j++) {
+					if (node.AST[i].AST.length >= j+2  && node.AST[i].AST[j+1].tag.equals("#or")) {
+						source.sourceText += " Member" + index + "_" + j + "@ /";
+						j++;
+					}
+					else{
 					source.sourceText += " Member" + index + "_" + j + "@";
+					}
 				}
 				source.sourceText += " Member" + index + "_" + (node.AST[i].AST.length - 1) + "@;\n\n";
 				break;
 
+			case "#others":
+				source.sourceText += "Members" + index + " =";
+				if (node.AST[i].getText().equals("EMPTY")) {
+					source.sourceText += " Empty ;\n\n";
+				}else if(node.AST[i].getText().equals("ANY")){
+					source.sourceText += " Any ;\n\n";
+				}
+				break;
+
 			case "#docTypeName": //top of DTD
-				source.sourceText += "Element0 = '<'\""+ node.AST[i].getText() + "\"'>' _*  Member0@ _* '</'\"" + node.AST[i].getText() + "\"'>';\n\n";
+				source.sourceText += "Element0 = _*  Member0@ _* ;\n\n";
 				source.sourceText += "Member0 = << Element1@ #member>>;\n\n";
 				break;
 
@@ -67,17 +83,26 @@ public class XmlPegGenerator {
 				break;
 
 			case "#data":
+				if (node.AST.length > 1) {
+					source.sourceText += "Member" + index + "_" + count + " = << CharData #data >>;\n\n";
+				}
+				else{
 				source.sourceText += "Member" + index + "_" + count + " = << CharData? #data >>;\n\n";
+				}
 				count++;
 				break;
 
 			case "#attlist":
 				source = generate(source, node.AST[i], index);
 				source.sourceText += "Attribute" + index + " =";
-				for(int j = 0; j < node.AST[i].AST.length - 2; j++){
-					source.sourceText += " attParameter" + index + "_" + j + "@ _*";
+				for(int j = 0; j <= node.AST[i].AST.length - 2; j++){
+					if (node.AST[i].AST[j+1].AST[2].AST[0].getText().equals("#IMPLIED")) {
+						source.sourceText += " (attParameter" + index + "_" + j + "@)? _* ";
+					}else{
+					source.sourceText += " attParameter" + index + "_" + j + "@ _* ";
+					}
 				}
-				source.sourceText += " attParameter" + index + "_" + (node.AST[i].AST.length - 2) + "@;\n\n";
+				source.sourceText += ";\n\n";
 				break;
 
 			case "#attParameter":
@@ -85,12 +110,16 @@ public class XmlPegGenerator {
 					source.sourceText += "attParameter"+ index + "_" + count + " = << attName" + index + "_" + count + "@ '=' (String@)? #att >>; \n\n";
 				}
 				else {
-				source.sourceText += "attParameter"+ index + "_" + count + " = << attName" + index + "_" + count + "@ '=' String@ #att >>; \n\n";
+					source.sourceText += "attParameter"+ index + "_" + count + " = << attName" + index + "_" + count + "@ '=' String@ #att >>; \n\n";
 				}
 				source.sourceText += "attName" + index + "_" + count + " = << '" + node.AST[i].AST[0].getText() + "' #attName >>; \n\n";
 				count++;
 				break;
-		}
+
+			case "#or":
+				count++;
+				break;
+			}
 		}
 		return source;
 	}

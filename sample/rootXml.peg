@@ -23,7 +23,11 @@ String
     ;
 
 CharData
-    = [A-Za-z0-9:._]+
+    = Text  
+    ;
+    
+Text
+    = (![<&] .)+
     ;
 
 
@@ -53,6 +57,14 @@ QuotationMark
 ValueSeparator
 	= _* ',' _*
 	;
+	
+Empty
+	= _*
+	;
+
+Any
+	= _* CharData _*
+	;	
 
 _ = [ \t\r\n];
 

@@ -15,7 +15,7 @@ DTD
     ;
 
 Element
-	= _* 'ELEMENT' _* <<ElementName@ _* '(' Model (ValueSeparator Model)* ')' (Regex@)? #element>> _*
+	= _* 'ELEMENT' _* <<ElementName@ _*  ( '(' Model (ValueSeparator Model)* ')' (Regex@)? / OtherMember@ ) #element>> _*
 	;
 
 Attlist
@@ -32,30 +32,34 @@ Model
 	= _* (Member@) _*
 	;
 Member
-	= << (Data@/MemberName@) (ValueSeparator (Data@/MemberName@))* #member>> 
+	= << (Data@/MemberName@) (OR@)? (ValueSeparator? (Data@/MemberName@) (OR@)?)* #member>> 
 	;
 Data
-	= << ( '#PCDATA' / 'EMPTY' / 'ANY' ) #data>>
+	= << '#PCDATA'  #data>>
 	;
 Regex
-	= << ( '*' / '+' / '|' / '?') #regex>>
+	= << ( '*' / '+' / '?') #regex>>
 	;
-
+OR
+	= << _* '|'  _* #or>>
+	;
+OtherMember
+	= << ('EMPTY' / 'ANY') #others>>
+	;
+	
 //for Attlist
 AttParameter
 	= << _* AttName@ _* DataType@ _* Default@ _* #attParameter>>
 	; 
 DataType
-	= << ('CDATA'/'ID'/'IDREF'/'ENTITY'/'ENTITIES'/'NMTOKEN'/'NMTOKENS'/'Enumerated') #dataType>>
+	= << ('CDATA'/'IDREF'/'ID'/'ENTITY'/'ENTITIES'/'NMTOKENS'/'NMTOKEN'/'Enumerated') #dataType>>
 	;
 Default
 	= << DefaultType@  _* (DefaultValue@)* #default>>
 	;
-	
 DefaultType
 	= <<('#REQUIRED' / '#IMPLIED' / '#FIXED' ) #defaultType>>	
 	;
-	
 DefaultValue
 	= << String #defaultValue>>
 	;
